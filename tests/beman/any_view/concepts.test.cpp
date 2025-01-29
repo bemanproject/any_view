@@ -14,7 +14,7 @@ struct options {
 #elif BEMAN_ANY_VIEW_USE_NAMED()
 
 template <class IterConceptT>
-using options = beman::any_view::any_view_options options{
+inline constexpr beman::any_view::any_view_options options{
     .reference_type   = beman::any_view::type<int&>,
     .iterator_concept = beman::any_view::type<IterConceptT>,
 };

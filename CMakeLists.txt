@@ -68,6 +68,9 @@ include(GNUInstallDirs)
 
 add_library(beman.any_view INTERFACE)
 add_library(beman::any_view ALIAS beman.any_view)
+# TODO: implement non-template friend function and remove this suppression
+target_compile_options(
+  beman.any_view INTERFACE $<$<CXX_COMPILER_ID:GNU>:-Wno-non-template-friend>)
 target_include_directories(
   beman.any_view
   INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
