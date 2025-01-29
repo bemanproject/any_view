@@ -1,0 +1,20 @@
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#ifndef BEMAN_ANY_VIEW_CONFIG_HPP
+#define BEMAN_ANY_VIEW_CONFIG_HPP
+
+#cmakedefine01 BEMAN_ANY_VIEW_USE_FLAGS()
+#cmakedefine01 BEMAN_ANY_VIEW_USE_TRAITS()
+#cmakedefine01 BEMAN_ANY_VIEW_USE_NAMED()
+
+#cmakedefine01 BEMAN_ANY_VIEW_USE_COPYABLE()
+#cmakedefine01 BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+
+// clang-format off
+#define BEMAN_ANY_VIEW_OPTION() @BEMAN_ANY_VIEW_OPTION@
+#define BEMAN_ANY_VIEW_OPTION_(suffix) @BEMAN_ANY_VIEW_OPTION@_##suffix
+// clang-format on
+
+#define BEMAN_ANY_VIEW_CAT(a, b) a##b
+
+#endif // BEMAN_ANY_VIEW_CONFIG_HPP
