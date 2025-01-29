@@ -37,16 +37,42 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV,
     using iterator_concept = detail::iterator_concept_t<OptionsV>;
     using iterator         = detail::iterator<iterator_concept, ElementT, RefT, RValueRefT, DiffT>;
     using sentinel         = std::default_sentinel_t;
+    using size_type        = std::make_unsigned_t<DiffT>;
 
     static constexpr bool sized    = (OptionsV & any_view_options::sized) == any_view_options::sized;
     static constexpr bool borrowed = (OptionsV & any_view_options::borrowed) == any_view_options::borrowed;
-    static constexpr bool BEMAN_ANY_VIEW_OPTION() =
-        (OptionsV & any_view_options::BEMAN_ANY_VIEW_OPTION()) == any_view_options::BEMAN_ANY_VIEW_OPTION();
+    static constexpr bool copyable =
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+        not
+#endif
+        ((OptionsV & any_view_options::BEMAN_ANY_VIEW_OPTION()) == any_view_options::BEMAN_ANY_VIEW_OPTION());
     static constexpr bool simple = (OptionsV & any_view_options::simple) == any_view_options::simple;
 
   public:
-    auto begin() -> iterator;
-    auto end() -> sentinel;
+    constexpr any_view(const any_view&)
+        requires copyable
+    = default;
+
+    constexpr any_view(any_view&&) noexcept = default;
+
+    constexpr auto operator=(const any_view&) -> any_view&
+        requires copyable
+    = default;
+
+    constexpr auto operator=(any_view&&) noexcept -> any_view& = default;
+
+    auto begin() -> iterator
+        requires(not simple);
+    auto end() -> sentinel
+        requires(not simple);
+
+    auto begin() const -> iterator
+        requires simple;
+    auto end() const -> sentinel
+        requires simple;
+
+    auto size() const -> size_type
+        requires sized;
 };
 
 #elif BEMAN_ANY_VIEW_USE_TRAITS()
@@ -60,16 +86,43 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
     using difference_type = detail::difference_type_or_t<std::ptrdiff_t, RangeTraitsT>;
     using iterator =
         detail::iterator<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
-    using sentinel = std::default_sentinel_t;
+    using sentinel  = std::default_sentinel_t;
+    using size_type = std::make_unsigned_t<difference_type>;
 
-    static constexpr bool sized                   = detail::sized_or_v<false, RangeTraitsT>;
-    static constexpr bool borrowed                = detail::borrowed_or_v<false, RangeTraitsT>;
-    static constexpr bool BEMAN_ANY_VIEW_OPTION() = detail::BEMAN_ANY_VIEW_OPTION_(or_v)<false, RangeTraitsT>;
-    static constexpr bool simple                  = detail::simple_or_v<false, RangeTraitsT>;
+    static constexpr bool sized    = detail::sized_or_v<false, RangeTraitsT>;
+    static constexpr bool borrowed = detail::borrowed_or_v<false, RangeTraitsT>;
+    static constexpr bool copyable =
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+        not
+#endif
+        detail::BEMAN_ANY_VIEW_OPTION_(or_v)<false, RangeTraitsT>;
+    static constexpr bool simple = detail::simple_or_v<false, RangeTraitsT>;
 
   public:
-    auto begin() -> iterator;
-    auto end() -> sentinel;
+    constexpr any_view(const any_view&)
+        requires copyable
+    = default;
+
+    constexpr any_view(any_view&&) noexcept = default;
+
+    constexpr auto operator=(const any_view&) -> any_view&
+        requires copyable
+    = default;
+
+    constexpr auto operator=(any_view&&) noexcept -> any_view& = default;
+
+    auto begin() -> iterator
+        requires(not simple);
+    auto end() -> sentinel
+        requires(not simple);
+
+    auto begin() const -> iterator
+        requires simple;
+    auto end() const -> sentinel
+        requires simple;
+
+    auto size() const -> size_type
+        requires sized;
 };
 
 #elif BEMAN_ANY_VIEW_USE_NAMED()
@@ -82,20 +135,68 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
     using difference_type       = decltype(OptionsV.difference_type)::type;
     using iterator =
         detail::iterator<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
-    using sentinel = std::default_sentinel_t;
+    using sentinel  = std::default_sentinel_t;
+    using size_type = std::make_unsigned_t<difference_type>;
 
-    static constexpr bool sized                   = OptionsV.sized;
-    static constexpr bool borrowed                = OptionsV.borrowed;
-    static constexpr bool BEMAN_ANY_VIEW_OPTION() = OptionsV.BEMAN_ANY_VIEW_OPTION();
-    static constexpr bool simple                  = OptionsV.simple;
+    static constexpr bool sized    = OptionsV.sized;
+    static constexpr bool borrowed = OptionsV.borrowed;
+    static constexpr bool copyable =
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+        not
+#endif
+        OptionsV.BEMAN_ANY_VIEW_OPTION();
+    static constexpr bool simple = OptionsV.simple;
 
   public:
-    auto begin() -> iterator;
-    auto end() -> sentinel;
+    constexpr any_view(const any_view&)
+        requires copyable
+    = default;
+
+    constexpr any_view(any_view&&) noexcept = default;
+
+    constexpr auto operator=(const any_view&) -> any_view&
+        requires copyable
+    = default;
+
+    constexpr auto operator=(any_view&&) noexcept -> any_view& = default;
+
+    auto begin() -> iterator
+        requires(not simple);
+    auto end() -> sentinel
+        requires(not simple);
+
+    auto begin() const -> iterator
+        requires simple;
+    auto end() const -> sentinel
+        requires simple;
+
+    auto size() const -> size_type
+        requires sized;
 };
 
 #endif
 
 } // namespace beman::any_view
+
+#if BEMAN_ANY_VIEW_USE_FLAGS()
+
+template <class ElementT, auto OptionsV, class RefT, class RValueRefT, class DiffT>
+inline constexpr bool
+    std::ranges::enable_borrowed_range<beman::any_view::any_view<ElementT, OptionsV, RefT, RValueRefT, DiffT>> =
+        (OptionsV & beman::any_view::any_view_options::borrowed) == beman::any_view::any_view_options::borrowed;
+
+#elif BEMAN_ANY_VIEW_USE_TRAITS()
+
+template <class ElementT, class RangeTraitsT>
+inline constexpr bool std::ranges::enable_borrowed_range<beman::any_view::any_view<ElementT, RangeTraitsT>> =
+    beman::any_view::detail::borrowed_or_v<false, RangeTraitsT>;
+
+#elif BEMAN_ANY_VIEW_USE_NAMED()
+
+template <class ElementT, auto OptionsV>
+inline constexpr bool std::ranges::enable_borrowed_range<beman::any_view::any_view<ElementT, OptionsV>> =
+    OptionsV.borrowed;
+
+#endif
 
 #endif // BEMAN_ANY_VIEW_ANY_VIEW_HPP
