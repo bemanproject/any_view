@@ -14,7 +14,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Usage
 
-`std::ranges::any_view` is a class template that provides a type-erased interface for `std::ranges::view`. It may additionally model other concepts like `std::ranges::contiguous_range`, `std::ranges::sized_range`, `std::ranges::borrowed_range`, and `std::copyable` depending on the instantiation.
+`std::ranges::any_view` is a class template that provides a type-erased interface for `std::ranges::view`.
+It may additionally model other concepts like `std::ranges::contiguous_range`, `std::ranges::sized_range`,
+`std::ranges::borrowed_range`, and `std::copyable` depending on the instantiation.
 
 ## Integrate beman.any_view into your project
 
@@ -34,7 +36,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(beman.any_view)
 ```
 
-You will also need to add `beman::any_view` to the link libraries of any targets that include `beman/any_view/*.hpp` in their source or header files:
+You will also need to add `beman::any_view` to the link libraries of any targets that include `beman/any_view/*.hpp` in
+their source or header files:
 
 ```cmake
 target_link_libraries(yourlib PUBLIC beman::any_view)
