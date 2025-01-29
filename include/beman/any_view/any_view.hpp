@@ -49,11 +49,19 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV,
     static constexpr bool simple = (OptionsV & any_view_options::simple) == any_view_options::simple;
 
   public:
+    any_view(const any_view&)
+        requires(not copyable)
+    = delete;
+
     constexpr any_view(const any_view&)
         requires copyable
     = default;
 
     constexpr any_view(any_view&&) noexcept = default;
+
+    auto operator=(const any_view&) -> any_view&
+        requires(not copyable)
+    = delete;
 
     constexpr auto operator=(const any_view&) -> any_view&
         requires copyable

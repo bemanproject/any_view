@@ -97,13 +97,13 @@ template <class RefT,
           class DiffT        = std::ptrdiff_t>
 struct any_view_options {
     type_t<RefT>         reference_type;
-    type_t<IterConceptT> iterator_concept;
-    bool                 sized;
-    bool                 BEMAN_ANY_VIEW_OPTION();
-    bool                 borrowed;
-    bool                 simple;
-    type_t<RValueRefT>   rvalue_reference_type;
-    type_t<DiffT>        difference_type;
+    type_t<IterConceptT> iterator_concept        = {};
+    bool                 sized                   = false;
+    bool                 BEMAN_ANY_VIEW_OPTION() = false;
+    bool                 borrowed                = false;
+    bool                 simple                  = false;
+    type_t<RValueRefT>   rvalue_reference_type   = {};
+    type_t<DiffT>        difference_type         = {};
 };
 
 #endif
