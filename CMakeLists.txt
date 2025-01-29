@@ -58,8 +58,6 @@ else()
     )
 endif()
 
-string(TOLOWER "${BEMAN_ANY_VIEW_OPTION}" BEMAN_ANY_VIEW_OPTION)
-
 configure_file(
     "${PROJECT_SOURCE_DIR}/include/beman/any_view/config.hpp.in"
     "${PROJECT_BINARY_DIR}/include/beman/any_view/config.hpp"
