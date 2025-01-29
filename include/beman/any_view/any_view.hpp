@@ -22,6 +22,8 @@
 
 #endif
 
+#include <ranges>
+
 namespace beman::any_view {
 
 #if BEMAN_ANY_VIEW_USE_FLAGS()
