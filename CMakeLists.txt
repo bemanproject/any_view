@@ -70,6 +70,7 @@ include(GNUInstallDirs)
 add_library(beman.any_view INTERFACE)
 add_library(beman::any_view ALIAS beman.any_view)
 set_target_properties(beman.any_view PROPERTIES CXX_EXTENSIONS OFF)
+target_compile_features(beman.any_view INTERFACE cxx_std_20)
 # TODO: implement non-template friend function and remove this suppression
 target_compile_options(
     beman.any_view
