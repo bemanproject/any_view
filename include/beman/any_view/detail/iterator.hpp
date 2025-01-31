@@ -3,6 +3,8 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_ITERATOR_HPP
 #define BEMAN_ANY_VIEW_DETAIL_ITERATOR_HPP
 
+#include <beman/any_view/detail/type_traits.hpp>
+
 #include <compare>
 #include <type_traits>
 #include <iterator>
@@ -51,6 +53,9 @@ class iterator {
 
     auto operator==(std::default_sentinel_t) const -> bool;
 };
+
+template <class IterConceptT, class ElementT, class RefT, class RValueRefT, class DiffT>
+auto iter_move(const iterator<IterConceptT, ElementT, RefT, RValueRefT, DiffT>&) -> RValueRefT;
 
 } // namespace beman::any_view::detail
 
