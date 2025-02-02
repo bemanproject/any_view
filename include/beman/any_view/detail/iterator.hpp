@@ -13,8 +13,9 @@ namespace beman::any_view::detail {
 
 template <class IterConceptT, class ElementT, class RefT, class RValueRefT, class DiffT>
 class iterator {
-    using reference = RefT;
-    using pointer   = std::add_pointer_t<RefT>;
+    using reference        = RefT;
+    using rvalue_reference = RValueRefT;
+    using pointer          = std::add_pointer_t<RefT>;
 
   public:
     using iterator_concept = IterConceptT;
@@ -22,6 +23,8 @@ class iterator {
     using difference_type  = DiffT;
 
     auto operator*() const -> reference;
+
+    friend auto iter_move(const iterator&) -> rvalue_reference;
 
     auto operator->() const -> pointer;
 
@@ -53,9 +56,6 @@ class iterator {
 
     auto operator==(std::default_sentinel_t) const -> bool;
 };
-
-template <class IterConceptT, class ElementT, class RefT, class RValueRefT, class DiffT>
-auto iter_move(const iterator<IterConceptT, ElementT, RefT, RValueRefT, DiffT>&) -> RValueRefT;
 
 } // namespace beman::any_view::detail
 

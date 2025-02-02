@@ -4,22 +4,14 @@
 #define BEMAN_ANY_VIEW_RANGE_TRAITS_HPP
 
 #include <beman/any_view/config.hpp>
-
-#if BEMAN_ANY_VIEW_USE_TRAITS()
-
 #include <beman/any_view/detail/concepts.hpp>
 
 #include <ranges>
 
-#endif
-
 namespace beman::any_view {
-
-#if BEMAN_ANY_VIEW_USE_TRAITS()
-
 namespace detail {
 
-template <std::ranges::input_range RangeT>
+template <std::ranges::range RangeT>
 consteval auto get_range_concept() {
     if constexpr (std::ranges::contiguous_range<RangeT>) {
         return std::contiguous_iterator_tag{};
@@ -30,12 +22,11 @@ consteval auto get_range_concept() {
     } else if constexpr (std::ranges::forward_range<RangeT>) {
         return std::forward_iterator_tag{};
     } else {
-        static_assert(std::ranges::input_range<RangeT>);
         return std::input_iterator_tag{};
     }
 }
 
-template <std::ranges::range RangeT>
+template <class RangeT>
 using range_concept_t = decltype(detail::get_range_concept<RangeT>());
 
 template <class DefaultT, template <class...> class OpT, class... ArgsT>
@@ -88,13 +79,15 @@ struct range_traits {
     using rvalue_reference_type = std::ranges::range_rvalue_reference_t<RangeT>;
     using difference_type       = std::ranges::range_difference_t<RangeT>;
 
-    static constexpr bool sized                   = std::ranges::sized_range<RangeT>;
-    static constexpr bool borrowed                = std::ranges::enable_borrowed_range<RangeT>;
-    static constexpr bool BEMAN_ANY_VIEW_OPTION() = detail::BEMAN_ANY_VIEW_OPTION_(range)<RangeT>;
-    static constexpr bool simple                  = detail::simple_range<RangeT>;
+    static constexpr bool sized    = std::ranges::sized_range<RangeT>;
+    static constexpr bool borrowed = std::ranges::borrowed_range<RangeT>;
+    static constexpr bool BEMAN_ANY_VIEW_OPTION() =
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+        not
+#endif
+        std::copyable<RangeT>;
+    static constexpr bool simple = detail::simple_range<RangeT>;
 };
-
-#endif // BEMAN_ANY_VIEW_USE_TRAITS()
 
 } // namespace beman::any_view
 

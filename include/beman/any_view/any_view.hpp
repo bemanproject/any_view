@@ -3,6 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_ANY_VIEW_HPP
 #define BEMAN_ANY_VIEW_ANY_VIEW_HPP
 
+#include <beman/any_view/concepts.hpp>
 #include <beman/any_view/config.hpp>
 #include <beman/any_view/detail/iterator.hpp>
 
@@ -25,6 +26,13 @@
 #include <ranges>
 
 namespace beman::any_view {
+namespace detail {
+
+template <class RangeT, class AnyViewT>
+concept viewable_range_compatible_with = not std::same_as<std::remove_cvref_t<RangeT>, AnyViewT> and
+                                         ext_viewable_range_compatible_with<RangeT, range_traits<AnyViewT>>;
+
+} // namespace detail
 
 #if BEMAN_ANY_VIEW_USE_FLAGS()
 
@@ -34,13 +42,12 @@ template <class ElementT,
           class RValueRefT          = detail::as_rvalue_t<RefT>,
           class DiffT               = std::ptrdiff_t>
 class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV, RefT, RValueRefT, DiffT>> {
-    using iterator_concept = detail::iterator_concept_t<OptionsV>;
+    using iterator_concept = decltype(detail::get_iterator_concept<OptionsV>());
     using iterator         = detail::iterator<iterator_concept, ElementT, RefT, RValueRefT, DiffT>;
     using sentinel         = std::default_sentinel_t;
     using size_type        = std::make_unsigned_t<DiffT>;
 
-    static constexpr bool sized    = (OptionsV & any_view_options::sized) == any_view_options::sized;
-    static constexpr bool borrowed = (OptionsV & any_view_options::borrowed) == any_view_options::borrowed;
+    static constexpr bool sized = (OptionsV & any_view_options::sized) == any_view_options::sized;
     static constexpr bool copyable =
 #if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
         not
@@ -49,6 +56,9 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV,
     static constexpr bool simple = (OptionsV & any_view_options::simple) == any_view_options::simple;
 
   public:
+    template <detail::viewable_range_compatible_with<any_view> RangeT>
+    any_view(RangeT&&);
+
     any_view(const any_view&)
         requires(not copyable)
     = delete;
@@ -97,8 +107,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
     using sentinel  = std::default_sentinel_t;
     using size_type = std::make_unsigned_t<difference_type>;
 
-    static constexpr bool sized    = detail::sized_or_v<false, RangeTraitsT>;
-    static constexpr bool borrowed = detail::borrowed_or_v<false, RangeTraitsT>;
+    static constexpr bool sized = detail::sized_or_v<false, RangeTraitsT>;
     static constexpr bool copyable =
 #if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
         not
@@ -107,6 +116,9 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
     static constexpr bool simple = detail::simple_or_v<false, RangeTraitsT>;
 
   public:
+    template <detail::viewable_range_compatible_with<any_view> RangeT>
+    any_view(RangeT&&);
+
     constexpr any_view(const any_view&)
         requires copyable
     = default;
@@ -146,8 +158,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
     using sentinel  = std::default_sentinel_t;
     using size_type = std::make_unsigned_t<difference_type>;
 
-    static constexpr bool sized    = OptionsV.sized;
-    static constexpr bool borrowed = OptionsV.borrowed;
+    static constexpr bool sized = OptionsV.sized;
     static constexpr bool copyable =
 #if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
         not
@@ -156,6 +167,9 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
     static constexpr bool simple = OptionsV.simple;
 
   public:
+    template <detail::viewable_range_compatible_with<any_view> RangeT>
+    any_view(RangeT&&);
+
     constexpr any_view(const any_view&)
         requires copyable
     = default;

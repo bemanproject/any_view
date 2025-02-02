@@ -10,4 +10,5 @@ function(beman_add_test)
 endfunction()
 
 beman_add_test(TARGET concepts SOURCES concepts.test.cpp)
+beman_add_test(TARGET sfinae SOURCES sfinae.test.cpp)
 beman_add_test(TARGET type_traits SOURCES type_traits.test.cpp)

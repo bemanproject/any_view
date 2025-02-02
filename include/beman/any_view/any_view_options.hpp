@@ -22,15 +22,15 @@ namespace beman::any_view {
 #if BEMAN_ANY_VIEW_USE_FLAGS()
 
 enum class any_view_options {
-    input                   = 0b000000001,
-    forward                 = 0b000000011,
-    bidirectional           = 0b000000111,
-    random_access           = 0b000001111,
-    contiguous              = 0b000011111,
-    sized                   = 0b000100000,
-    borrowed                = 0b001000000,
-    BEMAN_ANY_VIEW_OPTION() = 0b010000000,
-    simple                  = 0b100000000,
+    input                   = 0b00000000,
+    forward                 = 0b00000001,
+    bidirectional           = 0b00000011,
+    random_access           = 0b00000111,
+    contiguous              = 0b00001111,
+    sized                   = 0b00010000,
+    borrowed                = 0b00100000,
+    BEMAN_ANY_VIEW_OPTION() = 0b01000000,
+    simple                  = 0b10000000,
 };
 
 constexpr auto operator|(any_view_options l, any_view_options r) noexcept -> any_view_options {
@@ -71,13 +71,9 @@ consteval auto get_iterator_concept() {
     } else if constexpr (iterator_concept == forward) {
         return std::forward_iterator_tag{};
     } else {
-        static_assert(iterator_concept == input);
         return std::input_iterator_tag{};
     }
 }
-
-template <any_view_options OptionsV>
-using iterator_concept_t = decltype(detail::get_iterator_concept<OptionsV>());
 
 } // namespace detail
 

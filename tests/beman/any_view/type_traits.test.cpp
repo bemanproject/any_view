@@ -18,6 +18,12 @@ TEST(TypeTraitsTest, value_type) {
     static_assert(std::same_as<range_value_t<any_view<const value>>, value>);
 }
 
+#if BEMAN_ANY_VIEW_USE_FLAGS()
+
+using enum beman::any_view::any_view_options;
+
+#elif BEMAN_ANY_VIEW_USE_TRAITS()
+
 struct value_traits {
     using reference_type = value;
 };
@@ -26,6 +32,12 @@ struct lvalue_traits {
     using reference_type = lvalue;
 };
 
+#elif BEMAN_ANY_VIEW_USE_NAMED()
+
+using beman::any_view::type;
+
+#endif
+
 TEST(TypeTraitsTest, reference_type) {
     using std::ranges::range_reference_t;
 
@@ -33,24 +45,24 @@ TEST(TypeTraitsTest, reference_type) {
     static_assert(std::same_as<range_reference_t<any_view<const value>>, const value&>);
 
 #if BEMAN_ANY_VIEW_USE_FLAGS()
-    using enum beman::any_view::any_view_options;
-
     static_assert(std::same_as<range_reference_t<any_view<value, input, value>>, value>);
     static_assert(std::same_as<range_reference_t<any_view<value, input, lvalue>>, lvalue>);
 #elif BEMAN_ANY_VIEW_USE_TRAITS()
     static_assert(std::same_as<range_reference_t<any_view<value, value_traits>>, value>);
     static_assert(std::same_as<range_reference_t<any_view<value, lvalue_traits>>, lvalue>);
 #elif BEMAN_ANY_VIEW_USE_NAMED()
-    using beman::any_view::type;
-
     static_assert(std::same_as<range_reference_t<any_view<value, {.reference_type = type<value>}>>, value>);
     static_assert(std::same_as<range_reference_t<any_view<lvalue, {.reference_type = type<lvalue>}>>, lvalue>);
 #endif
 }
 
+#if BEMAN_ANY_VIEW_USE_TRAITS()
+
 struct rvalue_traits {
     using rvalue_reference_type = rvalue;
 };
+
+#endif
 
 TEST(TypeTraitsTest, rvalue_reference_type) {
     using std::ranges::range_rvalue_reference_t;
@@ -59,8 +71,6 @@ TEST(TypeTraitsTest, rvalue_reference_type) {
     static_assert(std::same_as<range_rvalue_reference_t<any_view<const value>>, const value&&>);
 
 #if BEMAN_ANY_VIEW_USE_FLAGS()
-    using enum beman::any_view::any_view_options;
-
     static_assert(std::same_as<range_rvalue_reference_t<any_view<value, input, value>>, value>);
     static_assert(std::same_as<range_rvalue_reference_t<any_view<value, input, lvalue>>, lvalue>);
     static_assert(std::same_as<range_rvalue_reference_t<any_view<value, input, lvalue, rvalue>>, rvalue>);
@@ -69,8 +79,6 @@ TEST(TypeTraitsTest, rvalue_reference_type) {
     static_assert(std::same_as<range_rvalue_reference_t<any_view<value, lvalue_traits>>, lvalue>);
     static_assert(std::same_as<range_rvalue_reference_t<any_view<value, rvalue_traits>>, rvalue>);
 #elif BEMAN_ANY_VIEW_USE_NAMED()
-    using beman::any_view::type;
-
     static_assert(std::same_as<range_rvalue_reference_t<any_view<value, {.reference_type = type<value>}>>, value>);
     static_assert(std::same_as<range_rvalue_reference_t<any_view<value, {.reference_type = type<lvalue>}>>, lvalue>);
     static_assert(
@@ -80,9 +88,13 @@ TEST(TypeTraitsTest, rvalue_reference_type) {
 #endif
 }
 
+#if BEMAN_ANY_VIEW_USE_TRAITS()
+
 struct difference_traits {
     using difference_type = short;
 };
+
+#endif
 
 TEST(TypeTraitsTest, difference_type) {
     using std::ranges::range_difference_t;
@@ -90,20 +102,18 @@ TEST(TypeTraitsTest, difference_type) {
     static_assert(std::same_as<range_difference_t<any_view<value>>, std::ptrdiff_t>);
 
 #if BEMAN_ANY_VIEW_USE_FLAGS()
-    using enum beman::any_view::any_view_options;
-
     static_assert(std::same_as<range_difference_t<any_view<value, input, lvalue, rvalue, short>>, short>);
 #elif BEMAN_ANY_VIEW_USE_TRAITS()
     static_assert(std::same_as<range_difference_t<any_view<value, difference_traits>>, short>);
 #elif BEMAN_ANY_VIEW_USE_NAMED()
-    using beman::any_view::type;
-
     static_assert(
         std::same_as<
             range_difference_t<any_view<value, {.reference_type = type<lvalue>, .difference_type = type<short>}>>,
             short>);
 #endif
 }
+
+#if BEMAN_ANY_VIEW_USE_TRAITS()
 
 struct sized_traits {
     static constexpr bool sized = true;
@@ -113,33 +123,35 @@ struct sized_difference_traits : sized_traits {
     using difference_type = short;
 };
 
+#endif
+
 TEST(TypeTraitsTest, size_type) {
     using std::ranges::range_size_t;
 
 #if BEMAN_ANY_VIEW_USE_FLAGS()
-    using enum beman::any_view::any_view_options;
-
     static_assert(std::same_as<range_size_t<any_view<value, input | sized>>, std::size_t>);
-    static_assert(std::same_as<range_size_t<any_view<value, input | sized, lvalue, rvalue, short>>, unsigned short>);
+    static_assert(std::same_as<range_size_t<any_view<value, input | sized, value&, value&&, short>>, unsigned short>);
 #elif BEMAN_ANY_VIEW_USE_TRAITS()
     static_assert(std::same_as<range_size_t<any_view<value, sized_traits>>, std::size_t>);
     static_assert(std::same_as<range_size_t<any_view<value, sized_difference_traits>>, unsigned short>);
 #elif BEMAN_ANY_VIEW_USE_NAMED()
-    using beman::any_view::type;
-
     static_assert(
-        std::same_as<range_size_t<any_view<value, {.reference_type = type<lvalue>, .sized = true}>>, std::size_t>);
+        std::same_as<range_size_t<any_view<value, {.reference_type = type<value&>, .sized = true}>>, std::size_t>);
     static_assert(
         std::same_as<
             range_size_t<
-                any_view<value, {.reference_type = type<lvalue>, .sized = true, .difference_type = type<short>}>>,
+                any_view<value, {.reference_type = type<value&>, .sized = true, .difference_type = type<short>}>>,
             unsigned short>);
 #endif
 }
 
+#if BEMAN_ANY_VIEW_USE_TRAITS()
+
 struct borrowed_traits {
     static constexpr bool borrowed = true;
 };
+
+#endif
 
 TEST(TypeTraitsTest, borrowed_iterator_type) {
     using std::ranges::borrowed_iterator_t;
@@ -148,18 +160,14 @@ TEST(TypeTraitsTest, borrowed_iterator_type) {
     static_assert(std::same_as<borrowed_iterator_t<any_view<value>>, std::ranges::dangling>);
 
 #if BEMAN_ANY_VIEW_USE_FLAGS()
-    using enum beman::any_view::any_view_options;
-
     static_assert(std::same_as<borrowed_iterator_t<any_view<value, input | borrowed>>,
                                iterator_t<any_view<value, input | borrowed>>>);
 #elif BEMAN_ANY_VIEW_USE_TRAITS()
     static_assert(std::same_as<borrowed_iterator_t<any_view<value, borrowed_traits>>,
                                iterator_t<any_view<value, borrowed_traits>>>);
 #elif BEMAN_ANY_VIEW_USE_NAMED()
-    using beman::any_view::type;
-
     static_assert(
-        std::same_as<borrowed_iterator_t<any_view<value, {.reference_type = type<lvalue>, .borrowed = true}>>,
-                     iterator_t<any_view<value, {.reference_type = type<lvalue>, .borrowed = true}>>>);
+        std::same_as<borrowed_iterator_t<any_view<value, {.reference_type = type<value&>, .borrowed = true}>>,
+                     iterator_t<any_view<value, {.reference_type = type<value&>, .borrowed = true}>>>);
 #endif
 }
