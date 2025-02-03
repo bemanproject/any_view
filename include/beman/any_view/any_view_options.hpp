@@ -33,19 +33,19 @@ enum class any_view_options {
     simple                  = 0b10000000,
 };
 
-constexpr auto operator|(any_view_options l, any_view_options r) noexcept -> any_view_options {
+[[nodiscard]] constexpr auto operator|(any_view_options l, any_view_options r) noexcept -> any_view_options {
     return any_view_options(static_cast<int>(l) | static_cast<int>(r));
 }
 
-constexpr auto operator&(any_view_options l, any_view_options r) noexcept -> any_view_options {
+[[nodiscard]] constexpr auto operator&(any_view_options l, any_view_options r) noexcept -> any_view_options {
     return any_view_options(static_cast<int>(l) & static_cast<int>(r));
 }
 
-constexpr auto operator^(any_view_options l, any_view_options r) noexcept -> any_view_options {
+[[nodiscard]] constexpr auto operator^(any_view_options l, any_view_options r) noexcept -> any_view_options {
     return any_view_options(static_cast<int>(l) ^ static_cast<int>(r));
 }
 
-constexpr auto operator~(any_view_options k) noexcept -> any_view_options {
+[[nodiscard]] constexpr auto operator~(any_view_options k) noexcept -> any_view_options {
     return any_view_options(~static_cast<int>(k));
 }
 
@@ -58,7 +58,7 @@ constexpr auto operator^=(any_view_options& l, any_view_options r) noexcept -> a
 namespace detail {
 
 template <any_view_options OptionsV>
-consteval auto get_iterator_concept() {
+[[nodiscard]] consteval auto get_iterator_concept() {
     using enum any_view_options;
     constexpr auto iterator_concept = OptionsV & contiguous;
 

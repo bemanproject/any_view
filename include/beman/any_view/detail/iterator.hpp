@@ -22,39 +22,39 @@ class iterator {
     using element_type     = ElementT;
     using difference_type  = DiffT;
 
-    auto operator*() const -> reference;
+    [[nodiscard]] constexpr auto operator*() const -> reference;
 
-    friend auto iter_move(const iterator&) -> rvalue_reference;
+    friend constexpr auto iter_move(const iterator&) -> rvalue_reference;
 
-    auto operator->() const -> pointer;
+    [[nodiscard]] constexpr auto operator->() const -> pointer;
 
-    auto operator++() -> iterator&;
+    constexpr auto operator++() -> iterator&;
 
-    auto operator++(int) -> iterator;
+    [[nodiscard]] constexpr auto operator++(int) -> iterator;
 
-    auto operator==(const iterator&) const -> bool;
+    [[nodiscard]] constexpr auto operator==(const iterator&) const -> bool;
 
-    auto operator--() -> iterator&;
+    constexpr auto operator--() -> iterator&;
 
-    auto operator--(int) -> iterator;
+    [[nodiscard]] constexpr auto operator--(int) -> iterator;
 
-    auto operator<=>(const iterator&) const -> std::partial_ordering;
+    [[nodiscard]] constexpr auto operator<=>(const iterator&) const -> std::partial_ordering;
 
-    auto operator-(const iterator&) const -> difference_type;
+    [[nodiscard]] constexpr auto operator-(const iterator&) const -> difference_type;
 
-    auto operator+=(difference_type) -> iterator&;
+    constexpr auto operator+=(difference_type) -> iterator&;
 
-    auto operator+(difference_type) const -> iterator;
+    [[nodiscard]] constexpr auto operator+(difference_type) const -> iterator;
 
-    friend auto operator+(difference_type, const iterator&) -> iterator;
+    friend constexpr auto operator+(difference_type, const iterator&) -> iterator;
 
-    auto operator-=(difference_type) -> iterator&;
+    constexpr auto operator-=(difference_type) -> iterator&;
 
-    auto operator-(difference_type) const -> iterator;
+    [[nodiscard]] constexpr auto operator-(difference_type) const -> iterator;
 
-    auto operator[](difference_type) const -> reference;
+    [[nodiscard]] constexpr auto operator[](difference_type) const -> reference;
 
-    auto operator==(std::default_sentinel_t) const -> bool;
+    [[nodiscard]] constexpr auto operator==(std::default_sentinel_t) const -> bool;
 };
 
 } // namespace beman::any_view::detail

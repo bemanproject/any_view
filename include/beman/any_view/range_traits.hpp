@@ -12,7 +12,7 @@ namespace beman::any_view {
 namespace detail {
 
 template <std::ranges::range RangeT>
-consteval auto get_range_concept() {
+[[nodiscard]] consteval auto get_range_concept() {
     if constexpr (std::ranges::contiguous_range<RangeT>) {
         return std::contiguous_iterator_tag{};
     } else if constexpr (std::ranges::random_access_range<RangeT>) {

@@ -57,11 +57,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV,
 
   public:
     template <detail::viewable_range_compatible_with<any_view> RangeT>
-    any_view(RangeT&&);
-
-    any_view(const any_view&)
-        requires(not copyable)
-    = delete;
+    constexpr any_view(RangeT&&);
 
     constexpr any_view(const any_view&)
         requires copyable
@@ -69,27 +65,23 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV,
 
     constexpr any_view(any_view&&) noexcept = default;
 
-    auto operator=(const any_view&) -> any_view&
-        requires(not copyable)
-    = delete;
-
     constexpr auto operator=(const any_view&) -> any_view&
         requires copyable
     = default;
 
     constexpr auto operator=(any_view&&) noexcept -> any_view& = default;
 
-    auto begin() -> iterator
+    [[nodiscard]] constexpr auto begin() -> iterator
         requires(not simple);
-    auto end() -> sentinel
+    [[nodiscard]] constexpr auto end() -> sentinel
         requires(not simple);
 
-    auto begin() const -> iterator
+    [[nodiscard]] constexpr auto begin() const -> iterator
         requires simple;
-    auto end() const -> sentinel
+    [[nodiscard]] constexpr auto end() const -> sentinel
         requires simple;
 
-    auto size() const -> size_type
+    [[nodiscard]] constexpr auto size() const -> size_type
         requires sized;
 };
 
@@ -117,7 +109,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
 
   public:
     template <detail::viewable_range_compatible_with<any_view> RangeT>
-    any_view(RangeT&&);
+    constexpr any_view(RangeT&&);
 
     constexpr any_view(const any_view&)
         requires copyable
@@ -131,17 +123,17 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
 
     constexpr auto operator=(any_view&&) noexcept -> any_view& = default;
 
-    auto begin() -> iterator
+    [[nodiscard]] constexpr auto begin() -> iterator
         requires(not simple);
-    auto end() -> sentinel
+    [[nodiscard]] constexpr auto end() -> sentinel
         requires(not simple);
 
-    auto begin() const -> iterator
+    [[nodiscard]] constexpr auto begin() const -> iterator
         requires simple;
-    auto end() const -> sentinel
+    [[nodiscard]] constexpr auto end() const -> sentinel
         requires simple;
 
-    auto size() const -> size_type
+    [[nodiscard]] constexpr auto size() const -> size_type
         requires sized;
 };
 
@@ -168,7 +160,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
 
   public:
     template <detail::viewable_range_compatible_with<any_view> RangeT>
-    any_view(RangeT&&);
+    constexpr any_view(RangeT&&);
 
     constexpr any_view(const any_view&)
         requires copyable
@@ -182,17 +174,17 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
 
     constexpr auto operator=(any_view&&) noexcept -> any_view& = default;
 
-    auto begin() -> iterator
+    [[nodiscard]] constexpr auto begin() -> iterator
         requires(not simple);
-    auto end() -> sentinel
+    [[nodiscard]] constexpr auto end() -> sentinel
         requires(not simple);
 
-    auto begin() const -> iterator
+    [[nodiscard]] constexpr auto begin() const -> iterator
         requires simple;
-    auto end() const -> sentinel
+    [[nodiscard]] constexpr auto end() const -> sentinel
         requires simple;
 
-    auto size() const -> size_type
+    [[nodiscard]] constexpr auto size() const -> size_type
         requires sized;
 };
 
