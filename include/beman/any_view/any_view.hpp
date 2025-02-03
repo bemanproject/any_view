@@ -44,7 +44,6 @@ template <class ElementT,
 class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV, RefT, RValueRefT, DiffT>> {
     using iterator_concept = decltype(detail::get_iterator_concept<OptionsV>());
     using iterator         = detail::iterator<iterator_concept, ElementT, RefT, RValueRefT, DiffT>;
-    using sentinel         = std::default_sentinel_t;
     using size_type        = std::make_unsigned_t<DiffT>;
 
     static constexpr bool sized = (OptionsV & any_view_options::sized) == any_view_options::sized;
@@ -73,13 +72,11 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV,
 
     [[nodiscard]] constexpr auto begin() -> iterator
         requires(not simple);
-    [[nodiscard]] constexpr auto end() -> sentinel
-        requires(not simple);
 
     [[nodiscard]] constexpr auto begin() const -> iterator
         requires simple;
-    [[nodiscard]] constexpr auto end() const -> sentinel
-        requires simple;
+
+    [[nodiscard]] constexpr auto end() const { return std::default_sentinel; }
 
     [[nodiscard]] constexpr auto size() const -> size_type
         requires sized;
@@ -96,7 +93,6 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
     using difference_type = detail::difference_type_or_t<std::ptrdiff_t, RangeTraitsT>;
     using iterator =
         detail::iterator<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
-    using sentinel  = std::default_sentinel_t;
     using size_type = std::make_unsigned_t<difference_type>;
 
     static constexpr bool sized = detail::sized_or_v<false, RangeTraitsT>;
@@ -125,13 +121,11 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
 
     [[nodiscard]] constexpr auto begin() -> iterator
         requires(not simple);
-    [[nodiscard]] constexpr auto end() -> sentinel
-        requires(not simple);
 
     [[nodiscard]] constexpr auto begin() const -> iterator
         requires simple;
-    [[nodiscard]] constexpr auto end() const -> sentinel
-        requires simple;
+
+    [[nodiscard]] constexpr auto end() const { return std::default_sentinel; }
 
     [[nodiscard]] constexpr auto size() const -> size_type
         requires sized;
@@ -147,7 +141,6 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
     using difference_type       = decltype(OptionsV.difference_type)::type;
     using iterator =
         detail::iterator<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
-    using sentinel  = std::default_sentinel_t;
     using size_type = std::make_unsigned_t<difference_type>;
 
     static constexpr bool sized = OptionsV.sized;
@@ -176,13 +169,11 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
 
     [[nodiscard]] constexpr auto begin() -> iterator
         requires(not simple);
-    [[nodiscard]] constexpr auto end() -> sentinel
-        requires(not simple);
 
     [[nodiscard]] constexpr auto begin() const -> iterator
         requires simple;
-    [[nodiscard]] constexpr auto end() const -> sentinel
-        requires simple;
+
+    [[nodiscard]] constexpr auto end() const { return std::default_sentinel; }
 
     [[nodiscard]] constexpr auto size() const -> size_type
         requires sized;
