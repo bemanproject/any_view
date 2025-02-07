@@ -23,9 +23,6 @@ concept interface_copyable = interface_movable<InterfaceT> and requires(const In
     { instance.copy() } -> std::same_as<InterfaceT*>;
 };
 
-template <class T>
-using value_type_t = T::value_type;
-
 enum class index_type : bool {
     is_inplace,
     is_pointer,
@@ -33,22 +30,23 @@ enum class index_type : bool {
 
 template <interface_movable InterfaceT, std::size_t SizeV = sizeof(void*), std::size_t AlignV = alignof(void*)>
 class intrusive_small_ptr {
-    struct alignas(AlignV) inplace_type {
-        std::byte data[SizeV];
+    struct inplace_type {
+        alignas(AlignV) std::byte data[SizeV];
     };
 
     using pointer_type = InterfaceT*;
 
     union {
-        // mutable inplace storage allows "shallow const" semantics consistent with a pointer type
-        mutable inplace_type inplace;
-        pointer_type         pointer;
+        inplace_type inplace;
+        pointer_type pointer;
     };
 
     index_type index;
 
-    [[nodiscard]] auto get_inplace_ptr() const -> pointer_type {
-        return static_cast<pointer_type>(static_cast<void*>(&inplace));
+    [[nodiscard]] auto get_inplace() noexcept { return static_cast<InterfaceT*>(static_cast<void*>(&inplace)); }
+
+    [[nodiscard]] auto get_inplace() const noexcept {
+        return static_cast<const InterfaceT*>(static_cast<const void*>(&inplace));
     }
 
   public:
@@ -59,7 +57,7 @@ class intrusive_small_ptr {
     constexpr intrusive_small_ptr([[maybe_unused]] std::in_place_type_t<AdaptorT> tag, ArgsT&&... args) {
         if constexpr (sizeof(AdaptorT) <= sizeof(inplace_type) and alignof(AdaptorT) <= alignof(inplace_type) and
                       // SBO requires nothrow move construction
-                      std::is_nothrow_move_constructible_v<value_type_t<AdaptorT>>) {
+                      std::is_nothrow_constructible_v<AdaptorT, ArgsT&&...>) {
             // placement new is not allowed in a constant expression
             if (not std::is_constant_evaluated()) {
                 ::new (&inplace) AdaptorT(std::forward<ArgsT>(args)...);
@@ -76,7 +74,7 @@ class intrusive_small_ptr {
         requires interface_copyable<InterfaceT>
         : index(other.index) {
         if (index == index_type::is_inplace) {
-            other.get_inplace_ptr()->copy_to(&inplace);
+            other.get_inplace()->copy_to(&inplace);
         } else {
             pointer = other.pointer->copy();
         }
@@ -84,7 +82,7 @@ class intrusive_small_ptr {
 
     constexpr intrusive_small_ptr(intrusive_small_ptr&& other) noexcept : index(other.index) {
         if (index == index_type::is_inplace) {
-            other.get_inplace_ptr()->move_to(&inplace);
+            other.get_inplace()->move_to(&inplace);
         } else {
             pointer = std::exchange(other.pointer, nullptr);
         }
@@ -113,21 +111,31 @@ class intrusive_small_ptr {
         return index == index_type::is_inplace or pointer != nullptr;
     }
 
-    [[nodiscard]] constexpr auto get() const noexcept -> InterfaceT* {
+    [[nodiscard]] constexpr auto get() noexcept -> InterfaceT* {
         if (index == index_type::is_inplace) {
-            return get_inplace_ptr();
+            return get_inplace();
         }
 
         return pointer;
     }
 
-    [[nodiscard]] constexpr auto operator*() const noexcept -> InterfaceT& { return *get(); }
+    [[nodiscard]] constexpr auto get() const noexcept -> const InterfaceT* {
+        if (index == index_type::is_inplace) {
+            return get_inplace();
+        }
 
-    [[nodiscard]] constexpr auto operator->() const noexcept -> InterfaceT* { return get(); }
+        return pointer;
+    }
+
+    [[nodiscard]] constexpr auto operator*() noexcept -> InterfaceT& { return *get(); }
+    [[nodiscard]] constexpr auto operator*() const noexcept -> const InterfaceT& { return *get(); }
+
+    [[nodiscard]] constexpr auto operator->() noexcept -> InterfaceT* { return get(); }
+    [[nodiscard]] constexpr auto operator->() const noexcept -> const InterfaceT* { return get(); }
 
     constexpr ~intrusive_small_ptr() noexcept {
         if (index == index_type::is_inplace) {
-            get_inplace_ptr()->~InterfaceT();
+            get_inplace()->~InterfaceT();
         } else {
             delete pointer;
         }

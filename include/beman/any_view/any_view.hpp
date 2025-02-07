@@ -5,7 +5,10 @@
 
 #include <beman/any_view/concepts.hpp>
 #include <beman/any_view/config.hpp>
+#include <beman/any_view/detail/intrusive_small_ptr.hpp>
 #include <beman/any_view/detail/iterator.hpp>
+#include <beman/any_view/detail/view_adaptor.hpp>
+#include <beman/any_view/detail/view_interface.hpp>
 
 #if BEMAN_ANY_VIEW_USE_FLAGS()
 
@@ -54,9 +57,23 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV,
         ((OptionsV & any_view_options::BEMAN_ANY_VIEW_OPTION()) == any_view_options::BEMAN_ANY_VIEW_OPTION());
     static constexpr bool simple = (OptionsV & any_view_options::simple) == any_view_options::simple;
 
+    using interface_type = detail::view_interface<iterator_concept, ElementT, RefT, RValueRefT, DiffT>;
+    // inplace storage sufficient for a vtable pointer and a std::vector<T>
+    detail::intrusive_small_ptr<interface_type, 4 * sizeof(void*)> view_ptr;
+
+    template <class RangeT>
+    using adaptor_type =
+        detail::view_adaptor<iterator_concept, ElementT, RefT, RValueRefT, DiffT, std::views::all_t<RangeT>>;
+
+    template <class RangeT>
+    static consteval auto get_in_place_adaptor_type() {
+        return std::in_place_type<adaptor_type<RangeT>>;
+    }
+
   public:
     template <detail::viewable_range_compatible_with<any_view> RangeT>
-    constexpr any_view(RangeT&&);
+    constexpr any_view(RangeT&& range)
+        : view_ptr(get_in_place_adaptor_type<RangeT>(), std::views::all(std::forward<RangeT>(range))) {}
 
     constexpr any_view(const any_view&)
         requires copyable
@@ -71,15 +88,24 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV,
     constexpr auto operator=(any_view&&) noexcept -> any_view& = default;
 
     [[nodiscard]] constexpr auto begin() -> iterator
-        requires(not simple);
+        requires(not simple)
+    {
+        return view_ptr->begin();
+    }
 
     [[nodiscard]] constexpr auto begin() const -> iterator
-        requires simple;
+        requires simple
+    {
+        return view_ptr->begin();
+    }
 
     [[nodiscard]] constexpr auto end() const { return std::default_sentinel; }
 
     [[nodiscard]] constexpr auto size() const -> size_type
-        requires sized;
+        requires sized
+    {
+        return view_ptr->size();
+    }
 };
 
 #elif BEMAN_ANY_VIEW_USE_TRAITS()
@@ -103,9 +129,28 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
         detail::BEMAN_ANY_VIEW_OPTION_(or_v)<false, RangeTraitsT>;
     static constexpr bool simple = detail::simple_or_v<false, RangeTraitsT>;
 
+    using interface_type =
+        detail::view_interface<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
+    // inplace storage sufficient for a vtable pointer and a std::vector<T>
+    detail::intrusive_small_ptr<interface_type, 4 * sizeof(void*)> view_ptr;
+
+    template <class RangeT>
+    using adaptor_type = detail::view_adaptor<iterator_concept,
+                                              ElementT,
+                                              reference_type,
+                                              rvalue_reference_type,
+                                              difference_type,
+                                              std::views::all_t<RangeT>>;
+
+    template <class RangeT>
+    static consteval auto get_in_place_adaptor_type() {
+        return std::in_place_type<adaptor_type<RangeT>>;
+    }
+
   public:
     template <detail::viewable_range_compatible_with<any_view> RangeT>
-    constexpr any_view(RangeT&&);
+    constexpr any_view(RangeT&& range)
+        : view_ptr(get_in_place_adaptor_type<RangeT>(), std::views::all(std::forward<RangeT>(range))) {}
 
     constexpr any_view(const any_view&)
         requires copyable
@@ -120,15 +165,24 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
     constexpr auto operator=(any_view&&) noexcept -> any_view& = default;
 
     [[nodiscard]] constexpr auto begin() -> iterator
-        requires(not simple);
+        requires(not simple)
+    {
+        return view_ptr->begin();
+    }
 
     [[nodiscard]] constexpr auto begin() const -> iterator
-        requires simple;
+        requires simple
+    {
+        return view_ptr->begin();
+    }
 
     [[nodiscard]] constexpr auto end() const { return std::default_sentinel; }
 
     [[nodiscard]] constexpr auto size() const -> size_type
-        requires sized;
+        requires sized
+    {
+        return view_ptr->size();
+    }
 };
 
 #elif BEMAN_ANY_VIEW_USE_NAMED()
@@ -151,9 +205,28 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
         OptionsV.BEMAN_ANY_VIEW_OPTION();
     static constexpr bool simple = OptionsV.simple;
 
+    using interface_type =
+        detail::view_interface<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
+    // inplace storage sufficient for a vtable pointer and a std::vector<T>
+    detail::intrusive_small_ptr<interface_type, 4 * sizeof(void*)> view_ptr;
+
+    template <class RangeT>
+    using adaptor_type = detail::view_adaptor<iterator_concept,
+                                              ElementT,
+                                              reference_type,
+                                              rvalue_reference_type,
+                                              difference_type,
+                                              std::views::all_t<RangeT>>;
+
+    template <class RangeT>
+    static consteval auto get_in_place_adaptor_type() {
+        return std::in_place_type<adaptor_type<RangeT>>;
+    }
+
   public:
     template <detail::viewable_range_compatible_with<any_view> RangeT>
-    constexpr any_view(RangeT&&);
+    constexpr any_view(RangeT&& range)
+        : view_ptr(get_in_place_adaptor_type<RangeT>(), std::views::all(std::forward<RangeT>(range))) {}
 
     constexpr any_view(const any_view&)
         requires copyable
@@ -168,15 +241,24 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
     constexpr auto operator=(any_view&&) noexcept -> any_view& = default;
 
     [[nodiscard]] constexpr auto begin() -> iterator
-        requires(not simple);
+        requires(not simple)
+    {
+        return view_ptr->begin();
+    }
 
     [[nodiscard]] constexpr auto begin() const -> iterator
-        requires simple;
+        requires simple
+    {
+        return view_ptr->begin();
+    }
 
     [[nodiscard]] constexpr auto end() const { return std::default_sentinel; }
 
     [[nodiscard]] constexpr auto size() const -> size_type
-        requires sized;
+        requires sized
+    {
+        return view_ptr->size();
+    }
 };
 
 #endif
