@@ -13,15 +13,16 @@ namespace beman::any_view::detail {
 
 template <class InterfaceT>
 concept interface_movable =
-    std::has_virtual_destructor_v<InterfaceT> and requires(InterfaceT instance, void* destination) {
+    std::has_virtual_destructor_v<InterfaceT> and requires(InterfaceT& instance, void* destination) {
         { instance.move_to(destination) } noexcept -> std::same_as<void>;
     };
 
 template <class InterfaceT>
-concept interface_copyable = interface_movable<InterfaceT> and requires(const InterfaceT instance, void* destination) {
-    { instance.copy_to(destination) } -> std::same_as<void>;
-    { instance.copy() } -> std::same_as<InterfaceT*>;
-};
+concept interface_copyable =
+    interface_movable<InterfaceT> and requires(const InterfaceT& instance, void* destination) {
+        { instance.copy_to(destination) } -> std::same_as<void>;
+        { instance.copy() } -> std::same_as<InterfaceT*>;
+    };
 
 enum class index_type : bool {
     is_inplace,
