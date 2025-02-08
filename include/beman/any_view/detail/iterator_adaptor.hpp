@@ -102,7 +102,15 @@ class iterator_adaptor : public iterator_interface<ElementT, RefT, RValueRefT, D
     [[nodiscard]] constexpr auto operator<=>(const iterator_interface& other) const -> std::partial_ordering override {
         if constexpr (random_access) {
             if (const auto adaptor = down_cast(other)) {
-                return iterator <=> adaptor->iterator;
+                // std::__wrap_iter is not three-way comparable in Apple Clang
+                if constexpr (std::three_way_comparable<IteratorT>) {
+                    return iterator <=> adaptor->iterator;
+                } else {
+                    return iterator < adaptor->iterator    ? std::partial_ordering::less
+                           : iterator > adaptor->iterator  ? std::partial_ordering::greater
+                           : iterator == adaptor->iterator ? std::partial_ordering::equivalent
+                                                           : std::partial_ordering::unordered;
+                }
             }
         }
 
