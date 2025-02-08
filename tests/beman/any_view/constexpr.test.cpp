@@ -56,7 +56,10 @@ constexpr auto sum(proxy_any_view<proxy_any_view<int>> views) {
 }
 
 TEST(ConstexprTest, sum_vector_of_vector) {
+#ifndef _MSC_VER
+    // ICE on MSVC
     static_assert(15 == sum(std::vector{std::vector{1, 2}, std::vector{3, 4}, std::vector{5}}));
+#endif
     EXPECT_EQ(15, sum(std::vector{std::vector{1, 2}, std::vector{3, 4}, std::vector{5}}));
 }
 
@@ -64,6 +67,9 @@ TEST(ConstexprTest, sum_transform_view_of_iota) {
     constexpr auto iota = [](int n) { return std::views::iota(1) | std::views::take(n); };
     constexpr auto view = iota(5) | std::views::transform(iota);
 
+#ifndef _MSC_VER
+    // ICE on MSVC
     static_assert(35 == sum(view));
+#endif
     EXPECT_EQ(35, sum(view));
 }
