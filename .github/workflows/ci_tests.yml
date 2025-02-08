@@ -85,7 +85,7 @@ jobs:
       matrix:
         design:
         - description: Enum Flags
-          arg: -DBEMAN_ANY_VIEW_DESIGN=FLAGS
+          arg: -DBEMAN_ANY_VIEW_DESIGN=ENUM
         - description: Range Traits
           arg: -DBEMAN_ANY_VIEW_DESIGN=TRAITS
         - description: Named Template Arguments

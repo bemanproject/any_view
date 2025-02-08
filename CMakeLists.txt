@@ -17,9 +17,9 @@ option(
 
 # [CPP.NO_FLAG_FORKING]
 set(BEMAN_ANY_VIEW_DESIGN
-    "FLAGS"
+    "ENUM"
     CACHE STRING
-    "Enable alternative design for any_view_options. Default: FLAGS. Values: { FLAGS, TRAITS, NAMED }."
+    "Enable alternative design for any_view_options. Default: ENUM. Values: { ENUM, TRAITS, NAMED }."
 )
 
 set(BEMAN_ANY_VIEW_OPTION
@@ -28,14 +28,14 @@ set(BEMAN_ANY_VIEW_OPTION
     "Enable opt-in option for any_view. Default: COPYABLE. Values: { COPYABLE, MOVE_ONLY }."
 )
 
-set(BEMAN_ANY_VIEW_USE_FLAGS OFF)
+set(BEMAN_ANY_VIEW_USE_ENUM OFF)
 set(BEMAN_ANY_VIEW_USE_TRAITS OFF)
 set(BEMAN_ANY_VIEW_USE_NAMED OFF)
 set(BEMAN_ANY_VIEW_USE_COPYABLE OFF)
 set(BEMAN_ANY_VIEW_USE_MOVE_ONLY OFF)
 
-if(BEMAN_ANY_VIEW_DESIGN STREQUAL "FLAGS")
-    set(BEMAN_ANY_VIEW_USE_FLAGS ON)
+if(BEMAN_ANY_VIEW_DESIGN STREQUAL "ENUM")
+    set(BEMAN_ANY_VIEW_USE_ENUM ON)
 elseif(BEMAN_ANY_VIEW_DESIGN STREQUAL "TRAITS")
     set(BEMAN_ANY_VIEW_USE_TRAITS ON)
 elseif(BEMAN_ANY_VIEW_DESIGN STREQUAL "NAMED")
@@ -43,7 +43,7 @@ elseif(BEMAN_ANY_VIEW_DESIGN STREQUAL "NAMED")
 else()
     message(
         FATAL_ERROR
-        "BEMAN_ANY_VIEW_DESIGN must be one of { FLAGS, TRAITS, NAMED }; got ${BEMAN_ANY_VIEW_DESIGN}"
+        "BEMAN_ANY_VIEW_DESIGN must be one of { ENUM, TRAITS, NAMED }; got ${BEMAN_ANY_VIEW_DESIGN}"
     )
 endif()
 

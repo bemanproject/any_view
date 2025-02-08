@@ -5,7 +5,7 @@
 
 #include <beman/any_view/config.hpp>
 
-#if BEMAN_ANY_VIEW_USE_FLAGS()
+#if BEMAN_ANY_VIEW_USE_ENUM()
 
 #include <beman/any_view/any_view_options.hpp>
 

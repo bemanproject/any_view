@@ -10,7 +10,7 @@
 #include <beman/any_view/detail/view_adaptor.hpp>
 #include <beman/any_view/detail/view_interface.hpp>
 
-#if BEMAN_ANY_VIEW_USE_FLAGS()
+#if BEMAN_ANY_VIEW_USE_ENUM()
 
 #include <beman/any_view/detail/type_traits.hpp>
 #include <beman/any_view/any_view_options.hpp>
@@ -37,7 +37,7 @@ concept viewable_range_compatible_with = not std::same_as<std::remove_cvref_t<Ra
 
 } // namespace detail
 
-#if BEMAN_ANY_VIEW_USE_FLAGS()
+#if BEMAN_ANY_VIEW_USE_ENUM()
 
 template <class ElementT,
           any_view_options OptionsV = any_view_options::input,
@@ -226,7 +226,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
 
 } // namespace beman::any_view
 
-#if BEMAN_ANY_VIEW_USE_FLAGS()
+#if BEMAN_ANY_VIEW_USE_ENUM()
 
 template <class ElementT, auto OptionsV, class RefT, class RValueRefT, class DiffT>
 inline constexpr bool

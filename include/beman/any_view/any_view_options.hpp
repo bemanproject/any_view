@@ -5,7 +5,7 @@
 
 #include <beman/any_view/config.hpp>
 
-#if BEMAN_ANY_VIEW_USE_FLAGS()
+#if BEMAN_ANY_VIEW_USE_ENUM()
 
 #include <iterator>
 
@@ -19,7 +19,7 @@
 
 namespace beman::any_view {
 
-#if BEMAN_ANY_VIEW_USE_FLAGS()
+#if BEMAN_ANY_VIEW_USE_ENUM()
 
 enum class any_view_options {
     input                   = 0b0000000,

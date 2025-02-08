@@ -75,7 +75,7 @@ struct traits : BaseTraitsT {
 };
 
 TEST(SfinaeTest, vector_of_bool) {
-#if BEMAN_ANY_VIEW_USE_FLAGS()
+#if BEMAN_ANY_VIEW_USE_ENUM()
     static_assert(std::constructible_from<any_view<bool, random_access_options, bool>, std::vector<bool>>);
     static_assert(std::constructible_from<any_view<bool, sized_options, bool>, std::vector<bool>>);
     static_assert(not std::constructible_from<any_view<bool, borrowed_options, bool>, std::vector<bool>>);
