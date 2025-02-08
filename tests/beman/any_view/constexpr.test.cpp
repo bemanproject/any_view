@@ -12,11 +12,20 @@ using beman::any_view::any_view;
 using enum beman::any_view::any_view_options;
 
 template <class ValueT>
-using proxy_any_view = any_view<ValueT, input, ValueT>;
+using proxy_any_view = any_view<ValueT,
+                                input
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+                                    | move_only
+#endif
+                                ,
+                                ValueT>;
 #elif BEMAN_ANY_VIEW_USE_TRAITS()
 template <class ValueT>
 struct proxy_traits {
     using reference_type = ValueT;
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+    static constexpr bool move_only = true;
+#endif
 };
 
 template <class ValueT>
@@ -25,7 +34,13 @@ using proxy_any_view = any_view<ValueT, proxy_traits<ValueT>>;
 using beman::any_view::type;
 
 template <class ValueT>
-using proxy_any_view = any_view<ValueT, {.reference_type = type<ValueT>}>;
+using proxy_any_view = any_view<ValueT,
+                                {
+                                    .reference_type = type<ValueT>,
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+                                    .move_only = true,
+#endif
+                                }>;
 #endif
 
 constexpr auto sum(proxy_any_view<proxy_any_view<int>> views) {
