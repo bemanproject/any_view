@@ -13,7 +13,7 @@ namespace beman::any_view::detail {
 
 template <class IterConceptT, class ElementT, class RefT, class RValueRefT, class DiffT, std::ranges::view ViewT>
 class view_adaptor : public view_interface<IterConceptT, ElementT, RefT, RValueRefT, DiffT> {
-    using iterator  = detail::iterator<IterConceptT, ElementT, RefT, RValueRefT, DiffT>;
+    using iterator  = detail::any_iterator<IterConceptT, ElementT, RefT, RValueRefT, DiffT>;
     using size_type = std::make_unsigned_t<DiffT>;
 
     [[no_unique_address]] ViewT view;

@@ -6,7 +6,7 @@
 #include <beman/any_view/concepts.hpp>
 #include <beman/any_view/config.hpp>
 #include <beman/any_view/detail/intrusive_small_ptr.hpp>
-#include <beman/any_view/detail/iterator.hpp>
+#include <beman/any_view/detail/any_iterator.hpp>
 #include <beman/any_view/detail/view_adaptor.hpp>
 #include <beman/any_view/detail/view_interface.hpp>
 
@@ -46,7 +46,7 @@ template <class ElementT,
           class DiffT               = std::ptrdiff_t>
 class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV, RefT, RValueRefT, DiffT>> {
     using iterator_concept = decltype(detail::get_iterator_concept<OptionsV>());
-    using iterator         = detail::iterator<iterator_concept, ElementT, RefT, RValueRefT, DiffT>;
+    using iterator         = detail::any_iterator<iterator_concept, ElementT, RefT, RValueRefT, DiffT>;
     using size_type        = std::make_unsigned_t<DiffT>;
 
     static constexpr bool sized = (OptionsV & any_view_options::sized) == any_view_options::sized;
@@ -62,12 +62,9 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV,
     detail::intrusive_small_ptr<interface_type, 4 * sizeof(void*)> view_ptr;
 
     template <class RangeT>
-    using adaptor_type =
-        detail::view_adaptor<iterator_concept, ElementT, RefT, RValueRefT, DiffT, std::views::all_t<RangeT>>;
-
-    template <class RangeT>
     static consteval auto get_in_place_adaptor_type() {
-        return std::in_place_type<adaptor_type<RangeT>>;
+        return std::in_place_type<
+            detail::view_adaptor<iterator_concept, ElementT, RefT, RValueRefT, DiffT, std::views::all_t<RangeT>>>;
     }
 
   public:
@@ -118,7 +115,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
         detail::rvalue_reference_type_or_t<detail::as_rvalue_t<reference_type>, RangeTraitsT>;
     using difference_type = detail::difference_type_or_t<std::ptrdiff_t, RangeTraitsT>;
     using iterator =
-        detail::iterator<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
+        detail::any_iterator<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
     using size_type = std::make_unsigned_t<difference_type>;
 
     static constexpr bool sized = detail::sized_or_v<false, RangeTraitsT>;
@@ -135,16 +132,13 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
     detail::intrusive_small_ptr<interface_type, 4 * sizeof(void*)> view_ptr;
 
     template <class RangeT>
-    using adaptor_type = detail::view_adaptor<iterator_concept,
-                                              ElementT,
-                                              reference_type,
-                                              rvalue_reference_type,
-                                              difference_type,
-                                              std::views::all_t<RangeT>>;
-
-    template <class RangeT>
     static consteval auto get_in_place_adaptor_type() {
-        return std::in_place_type<adaptor_type<RangeT>>;
+        return std::in_place_type<detail::view_adaptor<iterator_concept,
+                                                       ElementT,
+                                                       reference_type,
+                                                       rvalue_reference_type,
+                                                       difference_type,
+                                                       std::views::all_t<RangeT>>>;
     }
 
   public:
@@ -194,7 +188,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
     using rvalue_reference_type = decltype(OptionsV.rvalue_reference_type)::type;
     using difference_type       = decltype(OptionsV.difference_type)::type;
     using iterator =
-        detail::iterator<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
+        detail::any_iterator<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
     using size_type = std::make_unsigned_t<difference_type>;
 
     static constexpr bool sized = OptionsV.sized;
@@ -211,16 +205,13 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
     detail::intrusive_small_ptr<interface_type, 4 * sizeof(void*)> view_ptr;
 
     template <class RangeT>
-    using adaptor_type = detail::view_adaptor<iterator_concept,
-                                              ElementT,
-                                              reference_type,
-                                              rvalue_reference_type,
-                                              difference_type,
-                                              std::views::all_t<RangeT>>;
-
-    template <class RangeT>
     static consteval auto get_in_place_adaptor_type() {
-        return std::in_place_type<adaptor_type<RangeT>>;
+        return std::in_place_type<detail::view_adaptor<iterator_concept,
+                                                       ElementT,
+                                                       reference_type,
+                                                       rvalue_reference_type,
+                                                       difference_type,
+                                                       std::views::all_t<RangeT>>>;
     }
 
   public:

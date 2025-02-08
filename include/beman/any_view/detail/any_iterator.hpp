@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef BEMAN_ANY_VIEW_DETAIL_ITERATOR_HPP
-#define BEMAN_ANY_VIEW_DETAIL_ITERATOR_HPP
+#ifndef BEMAN_ANY_VIEW_DETAIL_ANY_ITERATOR_HPP
+#define BEMAN_ANY_VIEW_DETAIL_ANY_ITERATOR_HPP
 
 #include <beman/any_view/concepts.hpp>
 #include <beman/any_view/detail/intrusive_small_ptr.hpp>
@@ -16,7 +16,7 @@
 namespace beman::any_view::detail {
 
 template <class IterConceptT, class ElementT, class RefT, class RValueRefT, class DiffT>
-class iterator {
+class any_iterator {
     using reference        = RefT;
     using rvalue_reference = RValueRefT;
     using pointer          = std::add_pointer_t<RefT>;
@@ -38,16 +38,9 @@ class iterator {
     intrusive_small_ptr<interface_type, 3 * sizeof(void*)> iterator_ptr;
 
     template <class IteratorT, class SentinelT>
-    using adaptor_type = detail::iterator_adaptor<ElementT, reference, rvalue_reference, DiffT, IteratorT, SentinelT>;
-
-    template <class IteratorT, class SentinelT>
-    static constexpr auto get_noexcept() {
-        return std::is_nothrow_constructible_v<adaptor_type<IteratorT, SentinelT>, IteratorT, SentinelT>;
-    }
-
-    template <class IteratorT, class SentinelT>
-    static constexpr auto get_in_place_adaptor_type() {
-        return std::in_place_type<adaptor_type<IteratorT, SentinelT>>;
+    static consteval auto get_in_place_adaptor_type() {
+        return std::in_place_type<
+            detail::iterator_adaptor<ElementT, reference, rvalue_reference, DiffT, IteratorT, SentinelT>>;
     }
 
   public:
@@ -56,28 +49,28 @@ class iterator {
     using difference_type  = DiffT;
 
     template <detail::iterator_compatible_with<range_traits> IteratorT, std::sentinel_for<IteratorT> SentinelT>
-    constexpr iterator(IteratorT iterator, SentinelT sentinel) noexcept(get_noexcept<IteratorT, SentinelT>())
+    constexpr any_iterator(IteratorT iterator, SentinelT sentinel)
         : iterator_ptr(get_in_place_adaptor_type<IteratorT, SentinelT>(), std::move(iterator), std::move(sentinel)) {}
 
-    constexpr iterator() noexcept
+    constexpr any_iterator() noexcept
         requires forward
-        : iterator(pointer(nullptr), pointer(nullptr)) {}
+        : any_iterator(pointer(nullptr), pointer(nullptr)) {}
 
-    constexpr iterator(const iterator&)
-        requires forward
-    = default;
-
-    constexpr iterator(iterator&&) noexcept = default;
-
-    constexpr auto operator=(const iterator&) -> iterator&
+    constexpr any_iterator(const any_iterator&)
         requires forward
     = default;
 
-    constexpr auto operator=(iterator&&) noexcept -> iterator& = default;
+    constexpr any_iterator(any_iterator&&) noexcept = default;
+
+    constexpr auto operator=(const any_iterator&) -> any_iterator&
+        requires forward
+    = default;
+
+    constexpr auto operator=(any_iterator&&) noexcept -> any_iterator& = default;
 
     [[nodiscard]] constexpr auto operator*() const -> reference { return **iterator_ptr; }
 
-    friend constexpr auto iter_move(const iterator& other) -> rvalue_reference {
+    [[nodiscard]] friend constexpr auto iter_move(const any_iterator& other) -> rvalue_reference {
         return other.iterator_ptr->iter_move();
     }
 
@@ -87,14 +80,14 @@ class iterator {
         return std::to_address(*iterator_ptr);
     }
 
-    constexpr auto operator++() -> iterator& {
+    constexpr auto operator++() -> any_iterator& {
         ++*iterator_ptr;
         return *this;
     }
 
     constexpr auto operator++(int) -> void { ++*this; }
 
-    [[nodiscard]] constexpr auto operator++(int) -> iterator
+    [[nodiscard]] constexpr auto operator++(int) -> any_iterator
         requires forward
     {
         const auto other = *this;
@@ -102,20 +95,20 @@ class iterator {
         return other;
     }
 
-    [[nodiscard]] constexpr auto operator==(const iterator& other) const -> bool
+    [[nodiscard]] constexpr auto operator==(const any_iterator& other) const -> bool
         requires forward
     {
         return *iterator_ptr == *other.iterator_ptr;
     }
 
-    constexpr auto operator--() -> iterator&
+    constexpr auto operator--() -> any_iterator&
         requires bidirectional
     {
         --*iterator_ptr;
         return *this;
     }
 
-    [[nodiscard]] constexpr auto operator--(int) -> iterator
+    [[nodiscard]] constexpr auto operator--(int) -> any_iterator
         requires bidirectional
     {
         const auto other = *this;
@@ -123,26 +116,26 @@ class iterator {
         return other;
     }
 
-    [[nodiscard]] constexpr auto operator<=>(const iterator& other) const -> std::partial_ordering
+    [[nodiscard]] constexpr auto operator<=>(const any_iterator& other) const -> std::partial_ordering
         requires random_access
     {
         return *iterator_ptr <=> *other.iterator_ptr;
     }
 
-    [[nodiscard]] constexpr auto operator-(const iterator& other) const -> difference_type
+    [[nodiscard]] constexpr auto operator-(const any_iterator& other) const -> difference_type
         requires random_access
     {
         return *iterator_ptr - *other.iterator_ptr;
     }
 
-    constexpr auto operator+=(difference_type offset) -> iterator&
+    constexpr auto operator+=(difference_type offset) -> any_iterator&
         requires random_access
     {
         *iterator_ptr += offset;
         return *this;
     }
 
-    [[nodiscard]] constexpr auto operator+(difference_type offset) const -> iterator
+    [[nodiscard]] constexpr auto operator+(difference_type offset) const -> any_iterator
         requires random_access
     {
         auto other = *this;
@@ -150,20 +143,20 @@ class iterator {
         return other;
     }
 
-    [[nodiscard]] friend constexpr auto operator+(difference_type offset, const iterator& other) -> iterator
+    [[nodiscard]] friend constexpr auto operator+(difference_type offset, const any_iterator& other) -> any_iterator
         requires random_access
     {
         return other + offset;
     }
 
-    constexpr auto operator-=(difference_type offset) -> iterator&
+    constexpr auto operator-=(difference_type offset) -> any_iterator&
         requires random_access
     {
         *iterator_ptr -= offset;
         return *this;
     }
 
-    [[nodiscard]] constexpr auto operator-(difference_type offset) const -> iterator
+    [[nodiscard]] constexpr auto operator-(difference_type offset) const -> any_iterator
         requires random_access
     {
         auto other = *this;
@@ -184,4 +177,4 @@ class iterator {
 
 } // namespace beman::any_view::detail
 
-#endif // BEMAN_ANY_VIEW_DETAIL_ITERATOR_HPP
+#endif // BEMAN_ANY_VIEW_DETAIL_ANY_ITERATOR_HPP
