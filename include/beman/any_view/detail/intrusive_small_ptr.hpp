@@ -77,7 +77,7 @@ class intrusive_small_ptr {
         if (index == index_type::is_inplace) {
             other.get_inplace()->copy_to(&inplace);
         } else {
-            pointer = other.pointer->copy();
+            pointer = other ? other.pointer->copy() : nullptr;
         }
     }
 

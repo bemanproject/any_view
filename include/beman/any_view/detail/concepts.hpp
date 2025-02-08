@@ -34,7 +34,7 @@ concept contiguous_iterator_compatible_with =
     random_access_iterator_compatible_with<IterT, IterConceptT> and
     (not std::derived_from<IterConceptT, std::contiguous_iterator_tag> or std::contiguous_iterator<IterT>);
 
-template <class RangeRefT, class TraitsRefT, class IterConceptT>
+template <class RangeRefT, class TraitsRefT, class IterConceptT = std::contiguous_iterator_tag>
 concept contiguous_reference_convertible_to =
     std::convertible_to<RangeRefT, TraitsRefT> and
     (not std::derived_from<IterConceptT, std::contiguous_iterator_tag> or

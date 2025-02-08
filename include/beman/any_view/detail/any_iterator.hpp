@@ -152,7 +152,8 @@ class any_iterator {
     constexpr auto operator-=(difference_type offset) -> any_iterator&
         requires random_access
     {
-        *iterator_ptr -= offset;
+        // TODO: should virtual function for operator-= be provided to avoid signed overflow for max difference type?
+        *this += -offset;
         return *this;
     }
 

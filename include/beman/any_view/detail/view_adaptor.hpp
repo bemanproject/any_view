@@ -23,6 +23,10 @@ class view_adaptor : public view_interface<IterConceptT, ElementT, RefT, RValueR
   public:
     constexpr view_adaptor(ViewT&& view) noexcept(get_noexcept()) : view(std::move(view)) {}
 
+    constexpr view_adaptor(const view_adaptor&) = default;
+
+    constexpr view_adaptor(view_adaptor&&) noexcept = default;
+
     auto copy_to(void* destination) const -> void override {
         if constexpr (std::copy_constructible<ViewT>) {
             ::new (destination) view_adaptor(*this);
@@ -62,6 +66,9 @@ class view_adaptor : public view_interface<IterConceptT, ElementT, RefT, RValueR
             unreachable();
         }
     }
+
+    // ICE workaround for GCC
+    constexpr ~view_adaptor() noexcept override {}
 };
 
 } // namespace beman::any_view::detail

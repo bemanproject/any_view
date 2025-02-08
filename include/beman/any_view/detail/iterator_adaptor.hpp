@@ -3,6 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_ITERATOR_ADAPTOR_HPP
 #define BEMAN_ANY_VIEW_DETAIL_ITERATOR_ADAPTOR_HPP
 
+#include <beman/any_view/detail/concepts.hpp>
 #include <beman/any_view/detail/iterator_interface.hpp>
 #include <beman/any_view/detail/utility.hpp>
 
@@ -71,7 +72,7 @@ class iterator_adaptor : public iterator_interface<ElementT, RefT, RValueRefT, D
     [[nodiscard]] constexpr auto iter_move() const -> RValueRefT override { return std::ranges::iter_move(iterator); }
 
     [[nodiscard]] constexpr auto operator->() const -> pointer override {
-        if constexpr (contiguous) {
+        if constexpr (contiguous and contiguous_reference_convertible_to<std::iter_reference_t<IteratorT>, RefT>) {
             return std::to_address(iterator);
         } else {
             unreachable();
@@ -129,6 +130,9 @@ class iterator_adaptor : public iterator_interface<ElementT, RefT, RValueRefT, D
     [[nodiscard]] constexpr auto operator==(std::default_sentinel_t) const -> bool override {
         return iterator == sentinel;
     }
+
+    // ICE workaround for GCC
+    constexpr ~iterator_adaptor() noexcept override {}
 };
 
 } // namespace beman::any_view::detail
