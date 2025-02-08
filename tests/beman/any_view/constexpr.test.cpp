@@ -2,8 +2,11 @@
 
 #include <beman/any_view/any_view.hpp>
 
+#include "options.hpp"
+
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <vector>
 
 using beman::any_view::any_view;
@@ -72,4 +75,17 @@ TEST(ConstexprTest, sum_transform_view_of_iota) {
     static_assert(35 == sum(view));
 #endif
     EXPECT_EQ(35, sum(view));
+}
+
+constexpr auto sort(any_view<int, random_access_options> view) {
+    std::ranges::sort(view);
+    return std::ranges::is_sorted(view);
+}
+
+TEST(ConstexprTest, sort_vector) {
+#ifdef __clang__
+    // ICE on GCC and MSVC
+    static_assert(sort(std::vector{6, 8, 7, 5, 3, 0, 9}));
+#endif
+    EXPECT_TRUE(sort(std::vector{6, 8, 7, 5, 3, 0, 9}));
 }
