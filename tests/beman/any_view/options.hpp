@@ -26,7 +26,6 @@ inline constexpr auto random_access_options = move_only_options | options::rando
 inline constexpr auto contiguous_options    = move_only_options | options::contiguous;
 inline constexpr auto sized_options         = move_only_options | options::sized;
 inline constexpr auto borrowed_options      = move_only_options | options::borrowed;
-inline constexpr auto simple_options        = move_only_options | options::simple;
 
 #elif BEMAN_ANY_VIEW_USE_TRAITS()
 
@@ -61,10 +60,6 @@ struct sized_options : move_only_options {
 
 struct borrowed_options : move_only_options {
     static constexpr bool borrowed = true;
-};
-
-struct simple_options : move_only_options {
-    static constexpr bool simple = true;
 };
 
 template <class... OptionsT>
@@ -116,12 +111,6 @@ inline constexpr any_view_options borrowed_options{
     .reference_type          = default_reference_type,
     .BEMAN_ANY_VIEW_OPTION() = move_only_options.BEMAN_ANY_VIEW_OPTION(),
     .borrowed                = true,
-};
-
-inline constexpr any_view_options simple_options{
-    .reference_type          = default_reference_type,
-    .BEMAN_ANY_VIEW_OPTION() = move_only_options.BEMAN_ANY_VIEW_OPTION(),
-    .simple                  = true,
 };
 
 #endif

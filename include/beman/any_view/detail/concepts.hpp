@@ -5,14 +5,9 @@
 
 #include <beman/any_view/config.hpp>
 
-#include <ranges>
+#include <iterator>
 
 namespace beman::any_view::detail {
-
-template <class RangeT>
-concept simple_range = std::ranges::range<RangeT> and std::ranges::range<const RangeT> and
-                       std::same_as<std::ranges::iterator_t<RangeT>, std::ranges::iterator_t<const RangeT>> and
-                       std::same_as<std::ranges::sentinel_t<RangeT>, std::ranges::sentinel_t<const RangeT>>;
 
 template <class IterT, class IterConceptT>
 concept input_iterator_compatible_with =

@@ -55,18 +55,6 @@ class view_adaptor : public view_interface<IterConceptT, ElementT, RefT, RValueR
         }
     }
 
-    [[nodiscard]] constexpr auto begin() const -> iterator override {
-        if constexpr (std::ranges::range<const ViewT>) {
-            if constexpr (contiguous_reference_convertible_to<std::ranges::range_reference_t<const ViewT>,
-                                                              RefT,
-                                                              IterConceptT>) {
-                return iterator{std::ranges::begin(view), std::ranges::end(view)};
-            }
-        }
-
-        unreachable();
-    }
-
     [[nodiscard]] constexpr auto size() const -> size_type override {
         if constexpr (std::ranges::sized_range<ViewT>) {
             return std::ranges::size(view);

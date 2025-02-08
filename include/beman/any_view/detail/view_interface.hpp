@@ -21,8 +21,8 @@ class view_interface {
     [[nodiscard]] virtual constexpr auto copy() const -> view_interface* = 0;
 
     // view methods
-    [[nodiscard]] virtual constexpr auto begin() -> iterator       = 0;
-    [[nodiscard]] virtual constexpr auto begin() const -> iterator = 0;
+    [[nodiscard]] virtual constexpr auto begin() -> iterator = 0;
+
     [[nodiscard]] virtual constexpr auto size() const -> size_type = 0;
 
     virtual constexpr ~view_interface() noexcept = default;

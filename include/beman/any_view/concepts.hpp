@@ -24,11 +24,6 @@ concept sized_range_compatible_with = not RangeTraitsT::sized or std::ranges::si
 template <class RangeT, class RangeTraitsT>
 concept borrowed_range_compatible_with = not RangeTraitsT::borrowed or std::ranges::borrowed_range<RangeT>;
 
-template <class RangeT, class RangeTraitsT>
-concept range_compatible_with =
-    std::ranges::range<RangeT> and iterator_compatible_with<std::ranges::iterator_t<RangeT>, RangeTraitsT> and
-    sized_range_compatible_with<RangeT, RangeTraitsT> and borrowed_range_compatible_with<RangeT, RangeTraitsT>;
-
 template <class ViewT, class RangeTraitsT>
 concept copyable_view_compatible_with =
 #if BEMAN_ANY_VIEW_USE_COPYABLE()
@@ -37,12 +32,11 @@ concept copyable_view_compatible_with =
     RangeTraitsT::BEMAN_ANY_VIEW_OPTION() or
     std::copyable<ViewT>;
 
-template <bool SimpleV, class ViewT>
-using const_if_t = std::conditional_t<SimpleV, const ViewT, ViewT>;
-
 template <class ViewT, class RangeTraitsT>
-concept view_compatible_with = copyable_view_compatible_with<ViewT, RangeTraitsT> and
-                               range_compatible_with<const_if_t<RangeTraitsT::simple, ViewT>, RangeTraitsT>;
+concept view_compatible_with =
+    std::ranges::view<ViewT> and iterator_compatible_with<std::ranges::iterator_t<ViewT>, RangeTraitsT> and
+    sized_range_compatible_with<ViewT, RangeTraitsT> and borrowed_range_compatible_with<ViewT, RangeTraitsT> and
+    copyable_view_compatible_with<ViewT, RangeTraitsT>;
 
 } // namespace detail
 

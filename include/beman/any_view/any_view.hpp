@@ -47,6 +47,7 @@ template <class ElementT,
 class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV, RefT, RValueRefT, DiffT>> {
     using iterator_concept = decltype(detail::get_iterator_concept<OptionsV>());
     using iterator         = detail::any_iterator<iterator_concept, ElementT, RefT, RValueRefT, DiffT>;
+    using sentinel         = std::default_sentinel_t;
     using size_type        = std::make_unsigned_t<DiffT>;
 
     static constexpr bool sized = (OptionsV & any_view_options::sized) == any_view_options::sized;
@@ -55,7 +56,6 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV,
         not
 #endif
         ((OptionsV & any_view_options::BEMAN_ANY_VIEW_OPTION()) == any_view_options::BEMAN_ANY_VIEW_OPTION());
-    static constexpr bool simple = (OptionsV & any_view_options::simple) == any_view_options::simple;
 
     using interface_type = detail::view_interface<iterator_concept, ElementT, RefT, RValueRefT, DiffT>;
     // inplace storage sufficient for a vtable pointer and a std::vector<T>
@@ -84,19 +84,9 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV,
 
     constexpr auto operator=(any_view&&) noexcept -> any_view& = default;
 
-    [[nodiscard]] constexpr auto begin() -> iterator
-        requires(not simple)
-    {
-        return view_ptr->begin();
-    }
+    [[nodiscard]] constexpr auto begin() -> iterator { return view_ptr->begin(); }
 
-    [[nodiscard]] constexpr auto begin() const -> iterator
-        requires simple
-    {
-        return view_ptr->begin();
-    }
-
-    [[nodiscard]] constexpr auto end() const { return std::default_sentinel; }
+    [[nodiscard]] constexpr auto end() -> sentinel { return std::default_sentinel; }
 
     [[nodiscard]] constexpr auto size() const -> size_type
         requires sized
@@ -116,6 +106,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
     using difference_type = detail::difference_type_or_t<std::ptrdiff_t, RangeTraitsT>;
     using iterator =
         detail::any_iterator<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
+    using sentinel  = std::default_sentinel_t;
     using size_type = std::make_unsigned_t<difference_type>;
 
     static constexpr bool sized = detail::sized_or_v<false, RangeTraitsT>;
@@ -124,7 +115,6 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
         not
 #endif
         detail::BEMAN_ANY_VIEW_OPTION_(or_v)<false, RangeTraitsT>;
-    static constexpr bool simple = detail::simple_or_v<false, RangeTraitsT>;
 
     using interface_type =
         detail::view_interface<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
@@ -158,19 +148,9 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
 
     constexpr auto operator=(any_view&&) noexcept -> any_view& = default;
 
-    [[nodiscard]] constexpr auto begin() -> iterator
-        requires(not simple)
-    {
-        return view_ptr->begin();
-    }
+    [[nodiscard]] constexpr auto begin() -> iterator { return view_ptr->begin(); }
 
-    [[nodiscard]] constexpr auto begin() const -> iterator
-        requires simple
-    {
-        return view_ptr->begin();
-    }
-
-    [[nodiscard]] constexpr auto end() const { return std::default_sentinel; }
+    [[nodiscard]] constexpr auto end() -> sentinel { return std::default_sentinel; }
 
     [[nodiscard]] constexpr auto size() const -> size_type
         requires sized
@@ -189,6 +169,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
     using difference_type       = decltype(OptionsV.difference_type)::type;
     using iterator =
         detail::any_iterator<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
+    using sentinel  = std::default_sentinel_t;
     using size_type = std::make_unsigned_t<difference_type>;
 
     static constexpr bool sized = OptionsV.sized;
@@ -197,7 +178,6 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
         not
 #endif
         OptionsV.BEMAN_ANY_VIEW_OPTION();
-    static constexpr bool simple = OptionsV.simple;
 
     using interface_type =
         detail::view_interface<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
@@ -231,19 +211,9 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
 
     constexpr auto operator=(any_view&&) noexcept -> any_view& = default;
 
-    [[nodiscard]] constexpr auto begin() -> iterator
-        requires(not simple)
-    {
-        return view_ptr->begin();
-    }
+    [[nodiscard]] constexpr auto begin() -> iterator { return view_ptr->begin(); }
 
-    [[nodiscard]] constexpr auto begin() const -> iterator
-        requires simple
-    {
-        return view_ptr->begin();
-    }
-
-    [[nodiscard]] constexpr auto end() const { return std::default_sentinel; }
+    [[nodiscard]] constexpr auto end() -> sentinel { return std::default_sentinel; }
 
     [[nodiscard]] constexpr auto size() const -> size_type
         requires sized

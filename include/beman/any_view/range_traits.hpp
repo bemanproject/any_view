@@ -64,7 +64,6 @@ BEMAN_ANY_VIEW_TYPE_TRAIT(difference_type);
 BEMAN_ANY_VIEW_BOOL_TRAIT(sized);
 BEMAN_ANY_VIEW_BOOL_TRAIT(borrowed);
 BEMAN_ANY_VIEW_BOOL_TRAIT(BEMAN_ANY_VIEW_OPTION());
-BEMAN_ANY_VIEW_BOOL_TRAIT(simple);
 
 #undef BEMAN_ANY_VIEW_BOOL_TRAIT
 
@@ -86,7 +85,6 @@ struct range_traits {
         not
 #endif
         std::copyable<RangeT>;
-    static constexpr bool simple = detail::simple_range<RangeT>;
 };
 
 } // namespace beman::any_view
