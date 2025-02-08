@@ -4,10 +4,10 @@
 #define BEMAN_ANY_VIEW_DETAIL_VIEW_ADAPTOR_HPP
 
 #include <beman/any_view/detail/concepts.hpp>
+#include <beman/any_view/detail/utility.hpp>
 #include <beman/any_view/detail/view_interface.hpp>
 
 #include <ranges>
-#include <utility>
 
 namespace beman::any_view::detail {
 
@@ -27,7 +27,7 @@ class view_adaptor : public view_interface<IterConceptT, ElementT, RefT, RValueR
         if constexpr (std::copy_constructible<ViewT>) {
             ::new (destination) view_adaptor(*this);
         } else {
-            std::unreachable();
+            unreachable();
         }
     }
 
@@ -35,7 +35,7 @@ class view_adaptor : public view_interface<IterConceptT, ElementT, RefT, RValueR
         if constexpr (std::is_nothrow_move_constructible_v<ViewT>) {
             ::new (destination) view_adaptor(std::move(*this));
         } else {
-            std::unreachable();
+            unreachable();
         }
     }
 
@@ -43,7 +43,7 @@ class view_adaptor : public view_interface<IterConceptT, ElementT, RefT, RValueR
         if constexpr (std::copy_constructible<ViewT>) {
             return new view_adaptor(*this);
         } else {
-            std::unreachable();
+            unreachable();
         }
     }
 
@@ -51,7 +51,7 @@ class view_adaptor : public view_interface<IterConceptT, ElementT, RefT, RValueR
         if constexpr (contiguous_reference_convertible_to<std::ranges::range_reference_t<ViewT>, RefT, IterConceptT>) {
             return iterator{std::ranges::begin(view), std::ranges::end(view)};
         } else {
-            std::unreachable();
+            unreachable();
         }
     }
 
@@ -64,14 +64,14 @@ class view_adaptor : public view_interface<IterConceptT, ElementT, RefT, RValueR
             }
         }
 
-        std::unreachable();
+        unreachable();
     }
 
     [[nodiscard]] constexpr auto size() const -> size_type override {
         if constexpr (std::ranges::sized_range<ViewT>) {
             return std::ranges::size(view);
         } else {
-            std::unreachable();
+            unreachable();
         }
     }
 };

@@ -6,7 +6,6 @@
 #include <compare>
 #include <iterator>
 #include <type_traits>
-#include <typeinfo>
 
 namespace beman::any_view::detail {
 
@@ -43,9 +42,6 @@ class iterator_interface {
     virtual constexpr auto operator+=(DiffT offset) -> void = 0;
 
     [[nodiscard]] virtual constexpr auto operator==(std::default_sentinel_t sentinel) const -> bool = 0;
-
-    // type query
-    [[nodiscard]] virtual constexpr auto type() const noexcept -> const std::type_info& = 0;
 
     virtual constexpr ~iterator_interface() noexcept = default;
 };

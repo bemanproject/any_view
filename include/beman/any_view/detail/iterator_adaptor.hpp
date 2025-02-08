@@ -4,10 +4,10 @@
 #define BEMAN_ANY_VIEW_DETAIL_ITERATOR_ADAPTOR_HPP
 
 #include <beman/any_view/detail/iterator_interface.hpp>
+#include <beman/any_view/detail/utility.hpp>
 
 #include <compare>
 #include <iterator>
-#include <utility>
 
 namespace beman::any_view::detail {
 
@@ -34,6 +34,10 @@ class iterator_adaptor : public iterator_interface<IterConceptT, ElementT, RefT,
     static constexpr bool random_access = std::derived_from<IterConceptT, std::random_access_iterator_tag>;
     static constexpr bool contiguous    = std::derived_from<IterConceptT, std::contiguous_iterator_tag>;
 
+    static constexpr auto down_cast(const iterator_interface& other) {
+        return dynamic_cast<const iterator_adaptor*>(std::addressof(other));
+    }
+
   public:
     constexpr iterator_adaptor(IteratorT&& iterator, SentinelT&& sentinel) noexcept(get_noexcept())
         : iterator(std::move(iterator)), sentinel(std::move(sentinel)) {}
@@ -42,7 +46,7 @@ class iterator_adaptor : public iterator_interface<IterConceptT, ElementT, RefT,
         if constexpr (std::copy_constructible<IteratorT> and std::copy_constructible<SentinelT>) {
             ::new (destination) iterator_adaptor(*this);
         } else {
-            std::unreachable();
+            unreachable();
         }
     }
 
@@ -51,7 +55,7 @@ class iterator_adaptor : public iterator_interface<IterConceptT, ElementT, RefT,
                       std::is_nothrow_move_constructible_v<SentinelT>) {
             ::new (destination) iterator_adaptor(std::move(*this));
         } else {
-            std::unreachable();
+            unreachable();
         }
     }
 
@@ -59,7 +63,7 @@ class iterator_adaptor : public iterator_interface<IterConceptT, ElementT, RefT,
         if constexpr (std::copy_constructible<IteratorT> and std::copy_constructible<SentinelT>) {
             return new iterator_adaptor(*this);
         } else {
-            std::unreachable();
+            unreachable();
         }
     }
 
@@ -71,7 +75,7 @@ class iterator_adaptor : public iterator_interface<IterConceptT, ElementT, RefT,
         if constexpr (contiguous) {
             return std::to_address(iterator);
         } else {
-            std::unreachable();
+            unreachable();
         }
     }
 
@@ -79,8 +83,8 @@ class iterator_adaptor : public iterator_interface<IterConceptT, ElementT, RefT,
 
     [[nodiscard]] constexpr auto operator==(const iterator_interface& other) const -> bool override {
         if constexpr (forward) {
-            if (type() == other.type()) {
-                return iterator == static_cast<const iterator_adaptor&>(other).iterator;
+            if (const auto adaptor = down_cast(other)) {
+                return iterator == adaptor->iterator;
             }
         }
 
@@ -91,14 +95,14 @@ class iterator_adaptor : public iterator_interface<IterConceptT, ElementT, RefT,
         if constexpr (bidirectional) {
             --iterator;
         } else {
-            std::unreachable();
+            unreachable();
         }
     }
 
     [[nodiscard]] constexpr auto operator<=>(const iterator_interface& other) const -> std::partial_ordering override {
         if constexpr (random_access) {
-            if (type() == other.type()) {
-                return iterator <=> static_cast<const iterator_adaptor&>(other).iterator;
+            if (const auto adaptor = down_cast(other)) {
+                return iterator <=> adaptor->iterator;
             }
         }
 
@@ -107,28 +111,24 @@ class iterator_adaptor : public iterator_interface<IterConceptT, ElementT, RefT,
 
     [[nodiscard]] constexpr auto operator-(const iterator_interface& other) const -> DiffT override {
         if constexpr (random_access) {
-            if (type() == other.type()) {
-                return iterator - static_cast<const iterator_adaptor&>(other).iterator;
+            if (const auto adaptor = down_cast(other)) {
+                return iterator - adaptor->iterator;
             }
         }
 
-        std::unreachable();
+        unreachable();
     }
 
     constexpr auto operator+=(DiffT offset) -> void override {
         if constexpr (random_access) {
             iterator += offset;
         } else {
-            std::unreachable();
+            unreachable();
         }
     }
 
     [[nodiscard]] constexpr auto operator==(std::default_sentinel_t) const -> bool override {
         return iterator == sentinel;
-    }
-
-    [[nodiscard]] constexpr auto type() const noexcept -> const std::type_info& override {
-        return typeid(iterator_adaptor);
     }
 };
 
