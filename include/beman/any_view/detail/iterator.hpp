@@ -33,13 +33,12 @@ class iterator {
     static constexpr bool random_access = std::derived_from<IterConceptT, std::random_access_iterator_tag>;
     static constexpr bool contiguous    = std::derived_from<IterConceptT, std::contiguous_iterator_tag>;
 
-    using interface_type = iterator_interface<IterConceptT, ElementT, RefT, RValueRefT, DiffT>;
+    using interface_type = iterator_interface<ElementT, RefT, RValueRefT, DiffT>;
     // inplace storage sufficient for a vtable pointer and two pointers
     intrusive_small_ptr<interface_type, 3 * sizeof(void*)> iterator_ptr;
 
     template <class IteratorT, class SentinelT>
-    using adaptor_type =
-        detail::iterator_adaptor<IterConceptT, ElementT, reference, rvalue_reference, DiffT, IteratorT, SentinelT>;
+    using adaptor_type = detail::iterator_adaptor<ElementT, reference, rvalue_reference, DiffT, IteratorT, SentinelT>;
 
     template <class IteratorT, class SentinelT>
     static constexpr auto get_noexcept() {

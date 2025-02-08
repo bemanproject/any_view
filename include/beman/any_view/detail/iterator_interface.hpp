@@ -9,7 +9,7 @@
 
 namespace beman::any_view::detail {
 
-template <class IterConceptT, class ElementT, class RefT, class RValueRefT, class DiffT>
+template <class ElementT, class RefT, class RValueRefT, class DiffT>
 class iterator_interface {
     using pointer = std::add_pointer_t<RefT>;
 

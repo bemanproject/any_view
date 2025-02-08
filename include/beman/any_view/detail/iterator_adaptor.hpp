@@ -11,28 +11,27 @@
 
 namespace beman::any_view::detail {
 
-template <class IterConceptT,
-          class ElementT,
+template <class ElementT,
           class RefT,
           class RValueRefT,
           class DiffT,
           std::input_or_output_iterator IteratorT,
           std::sentinel_for<IteratorT>  SentinelT>
-class iterator_adaptor : public iterator_interface<IterConceptT, ElementT, RefT, RValueRefT, DiffT> {
+class iterator_adaptor : public iterator_interface<ElementT, RefT, RValueRefT, DiffT> {
     [[no_unique_address]] IteratorT iterator;
     [[no_unique_address]] SentinelT sentinel;
 
-    using iterator_interface = detail::iterator_interface<IterConceptT, ElementT, RefT, RValueRefT, DiffT>;
+    using iterator_interface = detail::iterator_interface<ElementT, RefT, RValueRefT, DiffT>;
     using pointer            = std::add_pointer_t<RefT>;
 
     static constexpr auto get_noexcept() {
         return std::is_nothrow_move_constructible_v<IteratorT> and std::is_nothrow_move_constructible_v<SentinelT>;
     }
 
-    static constexpr bool forward       = std::derived_from<IterConceptT, std::forward_iterator_tag>;
-    static constexpr bool bidirectional = std::derived_from<IterConceptT, std::bidirectional_iterator_tag>;
-    static constexpr bool random_access = std::derived_from<IterConceptT, std::random_access_iterator_tag>;
-    static constexpr bool contiguous    = std::derived_from<IterConceptT, std::contiguous_iterator_tag>;
+    static constexpr bool forward       = std::forward_iterator<IteratorT>;
+    static constexpr bool bidirectional = std::bidirectional_iterator<IteratorT>;
+    static constexpr bool random_access = std::random_access_iterator<IteratorT>;
+    static constexpr bool contiguous    = std::contiguous_iterator<IteratorT>;
 
     static constexpr auto down_cast(const iterator_interface& other) {
         return dynamic_cast<const iterator_adaptor*>(std::addressof(other));
