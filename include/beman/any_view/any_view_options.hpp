@@ -44,8 +44,8 @@ enum class any_view_options {
     return any_view_options(static_cast<int>(l) ^ static_cast<int>(r));
 }
 
-[[nodiscard]] constexpr auto operator~(any_view_options k) noexcept -> any_view_options {
-    return any_view_options(~static_cast<int>(k));
+[[nodiscard]] constexpr auto operator~(any_view_options o) noexcept -> any_view_options {
+    return any_view_options(~static_cast<int>(o));
 }
 
 constexpr auto operator|=(any_view_options& l, any_view_options r) noexcept -> any_view_options& { return l = l | r; }

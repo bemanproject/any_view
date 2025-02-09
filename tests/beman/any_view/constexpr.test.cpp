@@ -61,13 +61,14 @@ constexpr auto sum(proxy_any_view<proxy_any_view<int>> views) {
 TEST(ConstexprTest, sum_vector_of_vector) {
 #ifndef _MSC_VER
     // ICE on MSVC
-    static_assert(15 == sum(std::vector{std::vector{1, 2}, std::vector{3, 4}, std::vector{5}}));
+    static_assert(10 == sum(std::vector{std::vector{1, 2}, std::vector{3, 4}}));
 #endif
-    EXPECT_EQ(15, sum(std::vector{std::vector{1, 2}, std::vector{3, 4}, std::vector{5}}));
+    EXPECT_EQ(10, sum(std::vector{std::vector{1, 2}, std::vector{3, 4}}));
 }
 
-TEST(ConstexprTest, sum_transform_view_of_iota) {
-    constexpr auto iota = [](int n) { return std::views::iota(1) | std::views::take(n); };
+constexpr auto iota(int n) { return std::views::iota(1) | std::views::take(n); };
+
+TEST(ConstexprTest, sum_transform_view_of_iota_view) {
     constexpr auto view = iota(5) | std::views::transform(iota);
 
 #ifndef _MSC_VER
@@ -75,6 +76,14 @@ TEST(ConstexprTest, sum_transform_view_of_iota) {
     static_assert(35 == sum(view));
 #endif
     EXPECT_EQ(35, sum(view));
+}
+
+TEST(ConstexprTest, sum_vector_of_iota_view) {
+#ifndef _MSC_VER
+    // ICE on MSVC
+    static_assert(22 == sum(std::vector{iota(1), iota(3), iota(5)}));
+#endif
+    EXPECT_EQ(22, sum(std::vector{iota(1), iota(3), iota(5)}));
 }
 
 constexpr auto sort(any_view<int, random_access_options> view) {
