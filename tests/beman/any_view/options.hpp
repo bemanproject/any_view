@@ -90,9 +90,11 @@ inline constexpr any_view_options move_only_options{
 
 template <class IterConceptT>
 inline constexpr any_view_options iterator_options{
-    .reference_type          = default_reference_type,
-    .iterator_concept        = type<IterConceptT>,
-    .BEMAN_ANY_VIEW_OPTION() = move_only_options.BEMAN_ANY_VIEW_OPTION(),
+    .reference_type   = default_reference_type,
+    .iterator_concept = type<IterConceptT>,
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+    .move_only = true,
+#endif
 };
 
 inline constexpr auto input_options         = iterator_options<std::input_iterator_tag>;
@@ -102,15 +104,19 @@ inline constexpr auto random_access_options = iterator_options<std::random_acces
 inline constexpr auto contiguous_options    = iterator_options<std::contiguous_iterator_tag>;
 
 inline constexpr any_view_options sized_options{
-    .reference_type          = default_reference_type,
-    .sized                   = true,
-    .BEMAN_ANY_VIEW_OPTION() = move_only_options.BEMAN_ANY_VIEW_OPTION(),
+    .reference_type = default_reference_type,
+    .sized          = true,
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+    .move_only = true,
+#endif
 };
 
 inline constexpr any_view_options borrowed_options{
-    .reference_type          = default_reference_type,
-    .BEMAN_ANY_VIEW_OPTION() = move_only_options.BEMAN_ANY_VIEW_OPTION(),
-    .borrowed                = true,
+    .reference_type = default_reference_type,
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+    .move_only = true,
+#endif
+    .borrowed = true,
 };
 
 #endif

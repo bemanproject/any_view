@@ -10,14 +10,4 @@
 #cmakedefine01 BEMAN_ANY_VIEW_USE_COPYABLE()
 #cmakedefine01 BEMAN_ANY_VIEW_USE_MOVE_ONLY()
 
-#if BEMAN_ANY_VIEW_USE_COPYABLE()
-#define BEMAN_ANY_VIEW_OPTION() copyable
-#define BEMAN_ANY_VIEW_OPTION_(suffix) copyable_##suffix
-#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-#define BEMAN_ANY_VIEW_OPTION() move_only
-#define BEMAN_ANY_VIEW_OPTION_(suffix) move_only_##suffix
-#endif
-
-#define BEMAN_ANY_VIEW_CAT(a, b) a##b
-
 #endif // BEMAN_ANY_VIEW_CONFIG_HPP

@@ -52,10 +52,11 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV,
 
     static constexpr bool sized = (OptionsV & any_view_options::sized) == any_view_options::sized;
     static constexpr bool copyable =
-#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-        not
+#if BEMAN_ANY_VIEW_USE_COPYABLE()
+        (OptionsV & any_view_options::copyable) == any_view_options::copyable;
+#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+        (OptionsV & any_view_options::move_only) != any_view_options::move_only;
 #endif
-        ((OptionsV & any_view_options::BEMAN_ANY_VIEW_OPTION()) == any_view_options::BEMAN_ANY_VIEW_OPTION());
 
     using interface_type = detail::view_interface<iterator_concept, ElementT, RefT, RValueRefT, DiffT>;
     // inplace storage sufficient for a vtable pointer and a std::vector<T>
@@ -111,10 +112,11 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTrai
 
     static constexpr bool sized = detail::sized_or_v<false, RangeTraitsT>;
     static constexpr bool copyable =
-#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-        not
+#if BEMAN_ANY_VIEW_USE_COPYABLE()
+        detail::copyable_or_v<false, RangeTraitsT>;
+#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+        not detail::move_only_or_v<false, RangeTraitsT>;
 #endif
-        detail::BEMAN_ANY_VIEW_OPTION_(or_v)<false, RangeTraitsT>;
 
     using interface_type =
         detail::view_interface<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;
@@ -174,10 +176,11 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>
 
     static constexpr bool sized = OptionsV.sized;
     static constexpr bool copyable =
-#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-        not
+#if BEMAN_ANY_VIEW_USE_COPYABLE()
+        OptionsV.copyable;
+#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+        not OptionsV.move_only;
 #endif
-        OptionsV.BEMAN_ANY_VIEW_OPTION();
 
     using interface_type =
         detail::view_interface<iterator_concept, ElementT, reference_type, rvalue_reference_type, difference_type>;

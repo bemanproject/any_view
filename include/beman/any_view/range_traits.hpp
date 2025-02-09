@@ -53,17 +53,20 @@ BEMAN_ANY_VIEW_TYPE_TRAIT(difference_type);
 
 #undef BEMAN_ANY_VIEW_TYPE_TRAIT
 
-#define BEMAN_ANY_VIEW_BOOL_TRAIT(name)                     \
-    template <class RangeTraitsT>                           \
-    using name = std::bool_constant<RangeTraitsT::name>;    \
-                                                            \
-    template <bool DefaultV, class RangeTraitsT>            \
-    inline constexpr bool BEMAN_ANY_VIEW_CAT(name, _or_v) = \
-        detected_or_t<std::bool_constant<DefaultV>, name, RangeTraitsT>::value
+#define BEMAN_ANY_VIEW_BOOL_TRAIT(name)                  \
+    template <class RangeTraitsT>                        \
+    using name = std::bool_constant<RangeTraitsT::name>; \
+                                                         \
+    template <bool DefaultV, class RangeTraitsT>         \
+    inline constexpr bool name##_or_v = detected_or_t<std::bool_constant<DefaultV>, name, RangeTraitsT>::value
 
 BEMAN_ANY_VIEW_BOOL_TRAIT(sized);
 BEMAN_ANY_VIEW_BOOL_TRAIT(borrowed);
-BEMAN_ANY_VIEW_BOOL_TRAIT(BEMAN_ANY_VIEW_OPTION());
+#if BEMAN_ANY_VIEW_USE_COPYABLE()
+BEMAN_ANY_VIEW_BOOL_TRAIT(copyable);
+#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+BEMAN_ANY_VIEW_BOOL_TRAIT(move_only);
+#endif
 
 #undef BEMAN_ANY_VIEW_BOOL_TRAIT
 
@@ -80,11 +83,11 @@ struct range_traits {
 
     static constexpr bool sized    = std::ranges::sized_range<RangeT>;
     static constexpr bool borrowed = std::ranges::borrowed_range<RangeT>;
-    static constexpr bool BEMAN_ANY_VIEW_OPTION() =
-#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-        not
+#if BEMAN_ANY_VIEW_USE_COPYABLE()
+    static constexpr bool copyable = std::copyable<RangeT>;
+#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+    static constexpr bool move_only = not std::copyable<RangeT>;
 #endif
-        std::copyable<RangeT>;
 };
 
 } // namespace beman::any_view

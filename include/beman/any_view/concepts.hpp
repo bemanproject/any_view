@@ -27,10 +27,11 @@ concept borrowed_range_compatible_with = not RangeTraitsT::borrowed or std::rang
 template <class ViewT, class RangeTraitsT>
 concept copyable_view_compatible_with =
 #if BEMAN_ANY_VIEW_USE_COPYABLE()
-    not
+    not RangeTraitsT::copyable
+#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+    RangeTraitsT::move_only
 #endif
-    RangeTraitsT::BEMAN_ANY_VIEW_OPTION() or
-    std::copyable<ViewT>;
+    or std::copyable<ViewT>;
 
 template <class ViewT, class RangeTraitsT>
 concept view_compatible_with =

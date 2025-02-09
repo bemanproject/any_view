@@ -92,48 +92,58 @@ TEST(SfinaeTest, vector_of_bool) {
     static_assert(std::constructible_from<any_view<bool, traits<borrowed_options>>, std::vector<bool>&>);
     static_assert(std::constructible_from<any_view<bool, traits<copyable_options>>, std::vector<bool>&>);
 #elif BEMAN_ANY_VIEW_USE_NAMED()
-    static_assert(
-        std::constructible_from<any_view<bool,
-                                         {.reference_type          = type<bool>,
-                                          .iterator_concept        = type<std::random_access_iterator_tag>,
-                                          .BEMAN_ANY_VIEW_OPTION() = move_only_options.BEMAN_ANY_VIEW_OPTION()}>,
-                                std::vector<bool>>);
-    static_assert(
-        std::constructible_from<any_view<bool,
-                                         {.reference_type          = type<bool>,
-                                          .sized                   = true,
-                                          .BEMAN_ANY_VIEW_OPTION() = move_only_options.BEMAN_ANY_VIEW_OPTION()}>,
-                                std::vector<bool>>);
-    static_assert(
-        std::constructible_from<any_view<bool,
-                                         {.reference_type          = type<bool>,
-                                          .BEMAN_ANY_VIEW_OPTION() = move_only_options.BEMAN_ANY_VIEW_OPTION()}>,
-                                std::vector<bool>>);
-    static_assert(
-        not std::constructible_from<any_view<bool,
-                                             {.reference_type          = type<bool>,
-                                              .BEMAN_ANY_VIEW_OPTION() = move_only_options.BEMAN_ANY_VIEW_OPTION(),
-                                              .borrowed                = true}>,
-                                    std::vector<bool>>);
-    static_assert(
-        not std::constructible_from<any_view<bool,
-                                             {.reference_type          = type<bool>,
-                                              .BEMAN_ANY_VIEW_OPTION() = copyable_options.BEMAN_ANY_VIEW_OPTION(),
-                                              .borrowed                = true}>,
-                                    std::vector<bool>>);
+    static_assert(std::constructible_from<any_view<bool,
+                                                   {.reference_type   = type<bool>,
+                                                    .iterator_concept = type<std::random_access_iterator_tag>,
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+                                                    .move_only = true
+#endif
+                                                   }>,
+                                          std::vector<bool>>);
+    static_assert(std::constructible_from<any_view<bool,
+                                                   {.reference_type = type<bool>,
+                                                    .sized          = true,
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+                                                    .move_only = true
+#endif
+                                                   }>,
+                                          std::vector<bool>>);
+    static_assert(std::constructible_from<any_view<bool,
+                                                   {.reference_type = type<bool>,
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+                                                    .move_only = true
+#endif
+                                                   }>,
+                                          std::vector<bool>>);
+    static_assert(not std::constructible_from<any_view<bool,
+                                                       {.reference_type = type<bool>,
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+                                                        .move_only = true,
+#endif
+                                                        .borrowed = true}>,
+                                              std::vector<bool>>);
+    static_assert(not std::constructible_from<any_view<bool,
+                                                       {.reference_type = type<bool>,
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+                                                        .move_only = true,
+#endif
+                                                        .borrowed = true}>,
+                                              std::vector<bool>>);
 
-    static_assert(
-        std::constructible_from<any_view<bool,
-                                         {.reference_type          = type<bool>,
-                                          .BEMAN_ANY_VIEW_OPTION() = move_only_options.BEMAN_ANY_VIEW_OPTION(),
-                                          .borrowed                = true}>,
-                                std::vector<bool>&>);
-    static_assert(
-        std::constructible_from<any_view<bool,
-                                         {.reference_type          = type<bool>,
-                                          .BEMAN_ANY_VIEW_OPTION() = copyable_options.BEMAN_ANY_VIEW_OPTION(),
-                                          .borrowed                = true}>,
-                                std::vector<bool>&>);
+    static_assert(std::constructible_from<any_view<bool,
+                                                   {.reference_type = type<bool>,
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+                                                    .move_only = true,
+#endif
+                                                    .borrowed = true}>,
+                                          std::vector<bool>&>);
+    static_assert(std::constructible_from<any_view<bool,
+                                                   {.reference_type = type<bool>,
+#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
+                                                    .move_only = true,
+#endif
+                                                    .borrowed = true}>,
+                                          std::vector<bool>&>);
 #endif
 }
 

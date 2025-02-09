@@ -18,7 +18,7 @@ template <class ElementT,
           class DiffT,
           std::input_or_output_iterator IteratorT,
           std::sentinel_for<IteratorT>  SentinelT>
-class iterator_adaptor : public iterator_interface<ElementT, RefT, RValueRefT, DiffT> {
+class iterator_adaptor final : public iterator_interface<ElementT, RefT, RValueRefT, DiffT> {
     [[no_unique_address]] IteratorT iterator;
     [[no_unique_address]] SentinelT sentinel;
 
@@ -139,7 +139,7 @@ class iterator_adaptor : public iterator_interface<ElementT, RefT, RValueRefT, D
         return iterator == sentinel;
     }
 
-    // ICE workaround for GCC
+    // workaround https://gcc.gnu.org/bugzilla/show_bug.cgi?id=104653
     constexpr ~iterator_adaptor() noexcept override {}
 };
 
