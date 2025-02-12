@@ -2,49 +2,15 @@
 
 #include <beman/any_view/any_view.hpp>
 
-#include "options.hpp"
-
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <vector>
 
 using beman::any_view::any_view;
-
-#if BEMAN_ANY_VIEW_USE_ENUM()
 using enum beman::any_view::any_view_options;
 
 template <class ValueT>
-using proxy_any_view = any_view<ValueT,
-                                input
-#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-                                    | move_only
-#endif
-                                ,
-                                ValueT>;
-#elif BEMAN_ANY_VIEW_USE_TRAITS()
-template <class ValueT>
-struct proxy_traits {
-    using reference_type = ValueT;
-#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-    static constexpr bool move_only = true;
-#endif
-};
-
-template <class ValueT>
-using proxy_any_view = any_view<ValueT, proxy_traits<ValueT>>;
-#elif BEMAN_ANY_VIEW_USE_NAMED()
-using beman::any_view::type;
-
-template <class ValueT>
-using proxy_any_view = any_view<ValueT,
-                                {
-                                    .reference_type = type<ValueT>,
-#if BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-                                    .move_only = true,
-#endif
-                                }>;
-#endif
+using proxy_any_view = any_view<ValueT, input, ValueT>;
 
 constexpr auto sum(proxy_any_view<proxy_any_view<int>> views) {
     auto result = 0;
@@ -86,7 +52,7 @@ TEST(ConstexprTest, sum_vector_of_iota_view) {
     EXPECT_EQ(22, sum(std::vector{iota(1), iota(3), iota(5)}));
 }
 
-constexpr auto sort(any_view<int, random_access_options> view) {
+constexpr auto sort(any_view<int, random_access> view) {
     std::ranges::sort(view);
     return std::ranges::is_sorted(view);
 }

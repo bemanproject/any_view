@@ -6,12 +6,6 @@
 #include <beman/any_view/concepts.hpp>
 #include <beman/any_view/detail/intrusive_small_ptr.hpp>
 #include <beman/any_view/detail/iterator_adaptor.hpp>
-#include <beman/any_view/detail/iterator_interface.hpp>
-#include <beman/any_view/detail/type_traits.hpp>
-
-#include <compare>
-#include <type_traits>
-#include <iterator>
 
 namespace beman::any_view::detail {
 
@@ -20,13 +14,6 @@ class any_iterator {
     using reference        = RefT;
     using rvalue_reference = RValueRefT;
     using pointer          = std::add_pointer_t<RefT>;
-
-    struct range_traits {
-        using iterator_concept      = IterConceptT;
-        using reference_type        = RefT;
-        using rvalue_reference_type = RValueRefT;
-        using difference_type       = DiffT;
-    };
 
     static constexpr bool forward       = std::derived_from<IterConceptT, std::forward_iterator_tag>;
     static constexpr bool bidirectional = std::derived_from<IterConceptT, std::bidirectional_iterator_tag>;
@@ -48,7 +35,7 @@ class any_iterator {
     using element_type     = ElementT;
     using difference_type  = DiffT;
 
-    template <detail::iterator_compatible_with<range_traits> IteratorT, std::sentinel_for<IteratorT> SentinelT>
+    template <detail::iterator_compatible_with<any_iterator> IteratorT, std::sentinel_for<IteratorT> SentinelT>
     constexpr any_iterator(IteratorT iterator, SentinelT sentinel)
         : iterator_ptr(get_in_place_adaptor_type<IteratorT, SentinelT>(), std::move(iterator), std::move(sentinel)) {}
 

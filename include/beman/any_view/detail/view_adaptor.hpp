@@ -3,11 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_VIEW_ADAPTOR_HPP
 #define BEMAN_ANY_VIEW_DETAIL_VIEW_ADAPTOR_HPP
 
-#include <beman/any_view/detail/concepts.hpp>
-#include <beman/any_view/detail/utility.hpp>
 #include <beman/any_view/detail/view_interface.hpp>
-
-#include <ranges>
 
 namespace beman::any_view::detail {
 

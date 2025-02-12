@@ -15,55 +15,6 @@ option(
     ${PROJECT_IS_TOP_LEVEL}
 )
 
-# [CPP.NO_FLAG_FORKING]
-set(BEMAN_ANY_VIEW_DESIGN
-    "ENUM"
-    CACHE STRING
-    "Enable alternative design for any_view_options. Default: ENUM. Values: { ENUM, TRAITS, NAMED }."
-)
-
-set(BEMAN_ANY_VIEW_OPTION
-    "COPYABLE"
-    CACHE STRING
-    "Enable opt-in option for any_view. Default: COPYABLE. Values: { COPYABLE, MOVE_ONLY }."
-)
-
-set(BEMAN_ANY_VIEW_USE_ENUM OFF)
-set(BEMAN_ANY_VIEW_USE_TRAITS OFF)
-set(BEMAN_ANY_VIEW_USE_NAMED OFF)
-set(BEMAN_ANY_VIEW_USE_COPYABLE OFF)
-set(BEMAN_ANY_VIEW_USE_MOVE_ONLY OFF)
-
-if(BEMAN_ANY_VIEW_DESIGN STREQUAL "ENUM")
-    set(BEMAN_ANY_VIEW_USE_ENUM ON)
-elseif(BEMAN_ANY_VIEW_DESIGN STREQUAL "TRAITS")
-    set(BEMAN_ANY_VIEW_USE_TRAITS ON)
-elseif(BEMAN_ANY_VIEW_DESIGN STREQUAL "NAMED")
-    set(BEMAN_ANY_VIEW_USE_NAMED ON)
-else()
-    message(
-        FATAL_ERROR
-        "BEMAN_ANY_VIEW_DESIGN must be one of { ENUM, TRAITS, NAMED }; got ${BEMAN_ANY_VIEW_DESIGN}"
-    )
-endif()
-
-if(BEMAN_ANY_VIEW_OPTION STREQUAL "COPYABLE")
-    set(BEMAN_ANY_VIEW_USE_COPYABLE ON)
-elseif(BEMAN_ANY_VIEW_OPTION STREQUAL "MOVE_ONLY")
-    set(BEMAN_ANY_VIEW_USE_MOVE_ONLY ON)
-else()
-    message(
-        FATAL_ERROR
-        "BEMAN_ANY_VIEW_OPTION must be one of { COPYABLE, MOVE_ONLY }; got ${BEMAN_ANY_VIEW_OPTION}"
-    )
-endif()
-
-configure_file(
-    "${PROJECT_SOURCE_DIR}/include/beman/any_view/config.hpp.in"
-    "${PROJECT_BINARY_DIR}/include/beman/any_view/config.hpp"
-    @ONLY
-)
-
 include(FetchContent)
 include(GNUInstallDirs)
 
@@ -75,7 +26,6 @@ target_include_directories(
     beman.any_view
     INTERFACE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
 

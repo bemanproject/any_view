@@ -4,46 +4,44 @@
 #define BEMAN_ANY_VIEW_CONCEPTS_HPP
 
 #include <beman/any_view/detail/concepts.hpp>
-#include <beman/any_view/range_traits.hpp>
+#include <beman/any_view/detail/type_traits.hpp>
+
+#include <ranges>
 
 namespace beman::any_view {
 namespace detail {
 
-template <class IteratorT, class RangeTraitsT>
+template <class IteratorT, class AnyIteratorT>
 concept iterator_compatible_with =
-    contiguous_iterator_compatible_with<IteratorT, iterator_concept_t<RangeTraitsT>> and
+    contiguous_iterator_compatible_with<IteratorT, iter_concept_t<AnyIteratorT>> and
     contiguous_reference_convertible_to<std::iter_reference_t<IteratorT>,
-                                        reference_type_t<RangeTraitsT>,
-                                        iterator_concept_t<RangeTraitsT>> and
-    std::convertible_to<std::iter_rvalue_reference_t<IteratorT>, rvalue_reference_type_t<RangeTraitsT>> and
-    std::convertible_to<std::iter_difference_t<IteratorT>, difference_type_t<RangeTraitsT>>;
+                                        std::iter_reference_t<AnyIteratorT>,
+                                        iter_concept_t<AnyIteratorT>> and
+    std::convertible_to<std::iter_rvalue_reference_t<IteratorT>, std::iter_rvalue_reference_t<AnyIteratorT>> and
+    std::convertible_to<std::iter_difference_t<IteratorT>, std::iter_difference_t<AnyIteratorT>>;
 
-template <class RangeT, class RangeTraitsT>
-concept sized_range_compatible_with = not RangeTraitsT::sized or std::ranges::sized_range<RangeT>;
+template <class RangeT, class AnyViewT>
+concept sized_range_compatible_with = not std::ranges::sized_range<AnyViewT> or std::ranges::sized_range<RangeT>;
 
-template <class RangeT, class RangeTraitsT>
-concept borrowed_range_compatible_with = not RangeTraitsT::borrowed or std::ranges::borrowed_range<RangeT>;
+template <class RangeT, class AnyViewT>
+concept borrowed_range_compatible_with =
+    not std::ranges::borrowed_range<AnyViewT> or std::ranges::borrowed_range<RangeT>;
 
-template <class ViewT, class RangeTraitsT>
-concept copyable_view_compatible_with =
-#if BEMAN_ANY_VIEW_USE_COPYABLE()
-    not RangeTraitsT::copyable
-#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-    RangeTraitsT::move_only
-#endif
-    or std::copyable<ViewT>;
+template <class ViewT, class AnyViewT>
+concept copyable_view_compatible_with = not std::copyable<AnyViewT> or std::copyable<ViewT>;
 
-template <class ViewT, class RangeTraitsT>
+template <class ViewT, class AnyViewT>
 concept view_compatible_with =
-    std::ranges::view<ViewT> and iterator_compatible_with<std::ranges::iterator_t<ViewT>, RangeTraitsT> and
-    sized_range_compatible_with<ViewT, RangeTraitsT> and borrowed_range_compatible_with<ViewT, RangeTraitsT> and
-    copyable_view_compatible_with<ViewT, RangeTraitsT>;
+    std::ranges::view<ViewT> and
+    iterator_compatible_with<std::ranges::iterator_t<ViewT>, std::ranges::iterator_t<AnyViewT>> and
+    sized_range_compatible_with<ViewT, AnyViewT> and borrowed_range_compatible_with<ViewT, AnyViewT> and
+    copyable_view_compatible_with<ViewT, AnyViewT>;
 
 } // namespace detail
 
-template <class RangeT, class RangeTraitsT>
+template <class RangeT, class AnyViewT>
 concept ext_viewable_range_compatible_with =
-    std::ranges::viewable_range<RangeT> and detail::view_compatible_with<std::views::all_t<RangeT>, RangeTraitsT>;
+    std::ranges::viewable_range<RangeT> and detail::view_compatible_with<std::views::all_t<RangeT>, AnyViewT>;
 
 } // namespace beman::any_view
 

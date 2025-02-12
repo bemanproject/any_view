@@ -3,8 +3,6 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_CONCEPTS_HPP
 #define BEMAN_ANY_VIEW_DETAIL_CONCEPTS_HPP
 
-#include <beman/any_view/config.hpp>
-
 #include <iterator>
 
 namespace beman::any_view::detail {

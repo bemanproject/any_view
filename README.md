@@ -82,18 +82,9 @@ target_link_libraries(yourlib PUBLIC beman::any_view)
 
 ## Reference
 
-### Designs
-
-<details>
-<summary><code>ENUM</code> (default)</summary>
-
 Synopsis:
 
 ```cpp
-#define BEMAN_ANY_VIEW_USE_ENUM()   1
-#define BEMAN_ANY_VIEW_USE_TRAITS() 0
-#define BEMAN_ANY_VIEW_USE_NAMED()  0
-
 namespace beman::any_view {
 
 enum class any_view_options {
@@ -104,11 +95,7 @@ enum class any_view_options {
     contiguous    = 0b0001111,
     sized         = 0b0010000,
     borrowed      = 0b0100000,
-#if BEMAN_ANY_VIEW_USE_COPYABLE()
     copyable      = 0b1000000,
-#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-    move_only     = 0b1000000,
-#endif
 };
 
 constexpr auto operator|(any_view_options l, any_view_options r) noexcept -> any_view_options;
@@ -133,11 +120,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV,
     using size_type = /*make-unsigned-like-t*/<DiffT>; // exposition-only
 
     static constexpr bool copyable = // exposition-only
-#if BEMAN_ANY_VIEW_USE_COPYABLE()
         (OptionsV & any_view_options::copyable) == any_view_options::copyable;
-#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-        (OptionsV & any_view_options::move_only) != any_view_options::move_only;
-#endif
 
     static constexpr bool sized = // exposition-only
         (OptionsV & any_view_options::sized) == any_view_options::sized;
@@ -169,204 +152,7 @@ inline constexpr bool std::ranges::enable_borrowed_range<
         (OptionsV & beman::any_view::any_view_options::borrowed) == beman::any_view::any_view_options::borrowed;
 ```
 
-</details>
-
-<details>
-<summary><code>TRAITS</code></summary>
-
-Synopsis:
-
-```cpp
-#define BEMAN_ANY_VIEW_USE_ENUM()   0
-#define BEMAN_ANY_VIEW_USE_TRAITS() 1
-#define BEMAN_ANY_VIEW_USE_NAMED()  0
-
-namespace beman::any_view {
-
-struct default_range_traits {};
-
-template <std::ranges::range RangeT>
-struct range_traits {
-    using iterator_concept      = /*range-concept-t*/<RangeT>;
-    using reference_type        = std::ranges::range_reference_t<RangeT>;
-    using rvalue_reference_type = std::ranges::range_rvalue_reference_t<RangeT>;
-    using difference_type       = std::ranges::range_difference_t<RangeT>;
-
-    static constexpr bool sized     = std::ranges::sized_range<RangeT>;
-    static constexpr bool borrowed  = std::ranges::borrowed_range<RangeT>;
-#if BEMAN_ANY_VIEW_USE_COPYABLE()
-    static constexpr bool copyable  = std::copyable<RangeT>;
-#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-    static constexpr bool move_only = not std::copyable<RangeT>;
-#endif
-};
-
-template <class ElementT, class RangeTraitsT = default_range_traits>
-class any_view : public std::ranges::view_interface<any_view<ElementT, RangeTraitsT>> {
-    class iterator; // exposition-only
-    class sentinel; // exposition-only
-
-    using difference_type = /*difference-type-or-t*/<std::ptrdiff_t, RangeTraitsT>; // exposition-only
-    using size_type       = /*make-unsigned-like-t*/<difference_type>; // exposition-only
-
-    static constexpr bool copyable = // exposition-only
-#if BEMAN_ANY_VIEW_USE_COPYABLE()
-        /*copyable-or-v*/<false, RangeTraitsT>;
-#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-        not /*move-only-or-v*/<false, RangeTraitsT>;
-#endif
-
-    static constexpr bool sized = /*sized-or-v*/<false, RangeTraitsT>; // exposition-only
-
-  public:
-    template </*viewable-range-compatible-with*/<any_view> RangeT>
-    constexpr any_view(RangeT&& range);
-
-    constexpr any_view(const any_view&) requires copyable;
-
-    constexpr any_view(any_view&&) noexcept;
-
-    constexpr auto operator=(const any_view&) -> any_view& requires copyable;
-
-    constexpr auto operator=(any_view&&) noexcept -> any_view&;
-
-    constexpr auto begin() -> iterator;
-
-    constexpr auto end() -> sentinel;
-
-    constexpr auto size() const -> size_type requires sized;
-};
-
-} // namespace beman::any_view
-
-template <class ElementT, class RangeTraitsT>
-inline constexpr bool std::ranges::enable_borrowed_range<beman::any_view::any_view<ElementT, RangeTraitsT>> =
-    /*borrowed-or-v*/<false, RangeTraitsT>;
-```
-
-</details>
-
-<details>
-<summary><code>NAMED</code></summary>
-
-Synopsis:
-
-```cpp
-#define BEMAN_ANY_VIEW_USE_ENUM()   0
-#define BEMAN_ANY_VIEW_USE_TRAITS() 0
-#define BEMAN_ANY_VIEW_USE_NAMED()  1
-
-namespace beman::any_view {
-
-template <class T>
-struct type_t {
-    using type = T;
-};
-
-template <class T>
-inline constexpr type_t<T> type{};
-
-template <class RefT,
-          class IterConceptT = std::input_iterator_tag,
-          class RValueRefT   = /*as-rvalue-t*/<RefT>,
-          class DiffT        = std::ptrdiff_t>
-struct any_view_options {
-    type_t<RefT>         reference_type;
-    type_t<IterConceptT> iterator_concept      = {};
-    bool                 sized                 = false;
-#if BEMAN_ANY_VIEW_USE_COPYABLE()
-    bool                 copyable              = false;
-#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-    bool                 move_only             = false;
-#endif
-    bool                 borrowed              = false;
-    type_t<RValueRefT>   rvalue_reference_type = {};
-    type_t<DiffT>        difference_type       = {};
-};
-
-template <class ElementT, any_view_options OptionsV = {.reference_type = type<ElementT&>}>
-class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV>> {
-    class iterator; // exposition-only
-    class sentinel; // exposition-only
-
-    using difference_type = decltype(OptionsV.difference_type)::type; // exposition-only
-    using size_type       = /*make-unsigned-like-t*/<difference_type>; // exposition-only
-
-    static constexpr bool copyable = // exposition-only
-#if BEMAN_ANY_VIEW_USE_COPYABLE()
-        OptionsV.copyable;
-#elif BEMAN_ANY_VIEW_USE_MOVE_ONLY()
-        not OptionsV.move_only;
-#endif
-
-    static constexpr bool sized = OptionsV.sized; // exposition-only
-
-  public:
-    template </*viewable-range-compatible-with*/<any_view> RangeT>
-    constexpr any_view(RangeT&& range);
-
-    constexpr any_view(const any_view&) requires copyable;
-
-    constexpr any_view(any_view&&) noexcept;
-
-    constexpr auto operator=(const any_view&) -> any_view& requires copyable;
-
-    constexpr auto operator=(any_view&&) noexcept -> any_view&;
-
-    constexpr auto begin() -> iterator;
-
-    constexpr auto end() -> sentinel;
-
-    constexpr auto size() const -> size_type requires sized;
-};
-
-} // namespace beman::any_view
-
-template <class ElementT, auto OptionsV>
-inline constexpr bool std::ranges::enable_borrowed_range<beman::any_view::any_view<ElementT, OptionsV>> =
-    OptionsV.borrowed;
-```
-
-</details>
-
-### Options
-
-<details>
-<summary><code>COPYABLE</code> (default)</summary>
-
-Synopsis:
-
-```cpp
-#define BEMAN_ANY_VIEW_USE_COPYABLE()  1
-#define BEMAN_ANY_VIEW_USE_MOVE_ONLY() 0
-```
-
-</details>
-
-<details>
-<summary><code>MOVE_ONLY</code></summary>
-
-Synopsis:
-
-```cpp
-#define BEMAN_ANY_VIEW_USE_COPYABLE()  0
-#define BEMAN_ANY_VIEW_USE_MOVE_ONLY() 1
-```
-
-</details>
-
 ## Building
-
-### CMake configuration variables
-
-```text
--DBEMAN_ANY_VIEW_DESIGN=ENUM
--DBEMAN_ANY_VIEW_DESIGN=TRAITS
--DBEMAN_ANY_VIEW_DESIGN=NAMED
-
--DBEMAN_ANY_VIEW_OPTION=COPYABLE
--DBEMAN_ANY_VIEW_OPTION=MOVE_ONLY
-```
 
 There are workflows available in CMake presets such as `gcc-debug`:
 
