@@ -82,7 +82,8 @@ target_link_libraries(yourlib PUBLIC beman::any_view)
 
 ## Reference
 
-Synopsis:
+<details>
+<summary>Synopsis</summary>
 
 ```cpp
 namespace beman::any_view {
@@ -98,15 +99,15 @@ enum class any_view_options {
     copyable      = 0b10000000,
 };
 
-constexpr auto operator|(any_view_options l, any_view_options r) noexcept -> any_view_options;
-constexpr auto operator&(any_view_options l, any_view_options r) noexcept -> any_view_options;
-constexpr auto operator^(any_view_options l, any_view_options r) noexcept -> any_view_options;
+constexpr any_view_options operator|(any_view_options l, any_view_options r) noexcept;
+constexpr any_view_options operator&(any_view_options l, any_view_options r) noexcept;
+constexpr any_view_options operator^(any_view_options l, any_view_options r) noexcept;
 
-constexpr auto operator~(any_view_options o) noexcept -> any_view_options;
+constexpr any_view_options operator~(any_view_options o) noexcept;
 
-constexpr auto operator|=(any_view_options& l, any_view_options r) noexcept -> any_view_options&;
-constexpr auto operator&=(any_view_options& l, any_view_options r) noexcept -> any_view_options&;
-constexpr auto operator^=(any_view_options& l, any_view_options r) noexcept -> any_view_options&;
+constexpr any_view_options& operator|=(any_view_options& l, any_view_options r) noexcept;
+constexpr any_view_options& operator&=(any_view_options& l, any_view_options r) noexcept;
+constexpr any_view_options& operator^=(any_view_options& l, any_view_options r) noexcept;
 
 template <class T> struct /*as-rvalue*/ { using type = T; };
 template <class T> struct /*as-rvalue*/<T&> { using type = T&&; };
@@ -158,6 +159,8 @@ inline constexpr bool std::ranges::enable_borrowed_range<
         bool(OptsV & beman::any_view::any_view_options::borrowed);
 ```
 
+</details>
+
 ## Building
 
 There are workflows available in CMake presets such as `gcc-debug`:
@@ -174,7 +177,8 @@ cmake --build build
 ctest --test-dir build
 ```
 
-Possible output:
+<details>
+<summary>Possible output</summary>
 
 ```text
 Executing workflow step 1 of 3: configure preset "gcc-debug"
@@ -260,6 +264,8 @@ Test project /home/patrick/projects/any_view/build/gcc-debug
 
 Total Test time (real) =   0.15 sec
 ```
+
+</details>
 
 ## Contributing
 
