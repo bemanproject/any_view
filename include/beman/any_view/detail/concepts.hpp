@@ -8,35 +8,40 @@
 namespace beman::any_view::detail {
 
 template <class IterT, class IterConceptT>
-concept input_iterator_compatible_with =
+concept any_compatible_input_iterator =
     std::input_or_output_iterator<IterT> and
     (not std::derived_from<IterConceptT, std::input_iterator_tag> or std::input_iterator<IterT>);
 
 template <class IterT, class IterConceptT>
-concept forward_iterator_compatible_with =
-    input_iterator_compatible_with<IterT, IterConceptT> and
+concept any_compatible_forward_iterator =
+    any_compatible_input_iterator<IterT, IterConceptT> and
     (not std::derived_from<IterConceptT, std::forward_iterator_tag> or std::forward_iterator<IterT>);
 
 template <class IterT, class IterConceptT>
-concept bidirectional_iterator_compatible_with =
-    forward_iterator_compatible_with<IterT, IterConceptT> and
+concept any_compatible_bidirectional_iterator =
+    any_compatible_forward_iterator<IterT, IterConceptT> and
     (not std::derived_from<IterConceptT, std::bidirectional_iterator_tag> or std::bidirectional_iterator<IterT>);
 
 template <class IterT, class IterConceptT>
-concept random_access_iterator_compatible_with =
-    bidirectional_iterator_compatible_with<IterT, IterConceptT> and
+concept any_compatible_random_access_iterator =
+    any_compatible_bidirectional_iterator<IterT, IterConceptT> and
     (not std::derived_from<IterConceptT, std::random_access_iterator_tag> or std::random_access_iterator<IterT>);
 
 template <class IterT, class IterConceptT>
-concept contiguous_iterator_compatible_with =
-    random_access_iterator_compatible_with<IterT, IterConceptT> and
+concept any_compatible_contiguous_iterator =
+    any_compatible_random_access_iterator<IterT, IterConceptT> and
     (not std::derived_from<IterConceptT, std::contiguous_iterator_tag> or std::contiguous_iterator<IterT>);
 
-template <class RangeRefT, class TraitsRefT, class IterConceptT = std::contiguous_iterator_tag>
-concept contiguous_reference_convertible_to =
-    std::convertible_to<RangeRefT, TraitsRefT> and
+template <class PointerT, class AnyPointerT>
+concept uses_nonqualification_pointer_conversion =
+    std::is_pointer_v<PointerT> and std::is_pointer_v<AnyPointerT> and
+    not std::convertible_to<std::remove_pointer_t<PointerT> (*)[], std::remove_pointer_t<AnyPointerT> (*)[]>;
+
+template <class RefT, class AnyRefT, class IterConceptT = std::contiguous_iterator_tag>
+concept any_compatible_contiguous_reference =
+    std::convertible_to<RefT, AnyRefT> and
     (not std::derived_from<IterConceptT, std::contiguous_iterator_tag> or
-     std::convertible_to<std::remove_reference_t<RangeRefT> (*)[], std::remove_reference_t<TraitsRefT> (*)[]>);
+     not uses_nonqualification_pointer_conversion<std::add_pointer_t<RefT>, std::add_pointer_t<AnyRefT>>);
 
 } // namespace beman::any_view::detail
 

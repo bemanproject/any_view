@@ -88,14 +88,14 @@ Synopsis:
 namespace beman::any_view {
 
 enum class any_view_options {
-    input         = 0b0000000,
-    forward       = 0b0000001,
-    bidirectional = 0b0000011,
-    random_access = 0b0000111,
-    contiguous    = 0b0001111,
-    sized         = 0b0010000,
-    borrowed      = 0b0100000,
-    copyable      = 0b1000000,
+    input         = 0b00000001,
+    forward       = 0b00000011,
+    bidirectional = 0b00000111,
+    random_access = 0b00001111,
+    contiguous    = 0b00011111,
+    sized         = 0b00100000,
+    borrowed      = 0b01000000,
+    copyable      = 0b10000000,
 };
 
 constexpr auto operator|(any_view_options l, any_view_options r) noexcept -> any_view_options;
@@ -108,48 +108,54 @@ constexpr auto operator|=(any_view_options& l, any_view_options r) noexcept -> a
 constexpr auto operator&=(any_view_options& l, any_view_options r) noexcept -> any_view_options&;
 constexpr auto operator^=(any_view_options& l, any_view_options r) noexcept -> any_view_options&;
 
+template <class T> struct /*as-rvalue*/ { using type = T; };
+template <class T> struct /*as-rvalue*/<T&> { using type = T&&; };
+template <class T> using /*as-rvalue-t*/ = /*as-rvalue*/<T>::type;
+
+template <class RangeT, class AnyViewT>
+concept ext_any_compatible_viewable_range = /* see description */;
+
 template <class ElementT,
-          any_view_options OptionsV = any_view_options::input,
-          class RefT                = ElementT&,
-          class RValueRefT          = /*as-rvalue-t*/<RefT>,
-          class DiffT               = std::ptrdiff_t>
-class any_view : public std::ranges::view_interface<any_view<ElementT, OptionsV, RefT, RValueRefT, DiffT>> {
+          any_view_options OptsV = any_view_options::input,
+          class RefT             = ElementT&,
+          class RValueRefT       = /*as-rvalue-t*/<RefT>,
+          class DiffT            = std::ptrdiff_t>
+class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, RefT, RValueRefT, DiffT>> {
     class iterator; // exposition-only
     class sentinel; // exposition-only
 
-    using size_type = /*make-unsigned-like-t*/<DiffT>; // exposition-only
-
-    static constexpr bool copyable = // exposition-only
-        (OptionsV & any_view_options::copyable) == any_view_options::copyable;
-
-    static constexpr bool sized = // exposition-only
-        (OptionsV & any_view_options::sized) == any_view_options::sized;
+    using size_type = std::make_unsigned_t<DiffT>; // exposition-only
 
   public:
-    template </*viewable-range-compatible-with*/<any_view> RangeT>
+    template <class RangeT>
+        requires(not std::same_as<std::remove_cvref_t<RangeT>, any_view> and
+                 ext_any_compatible_viewable_range<RangeT, any_view>)
     constexpr any_view(RangeT&& range);
 
-    constexpr any_view(const any_view&) requires copyable;
+    constexpr any_view(const any_view&)
+        requires(bool(OptsV & any_view_options::copyable));
 
     constexpr any_view(any_view&&) noexcept;
 
-    constexpr auto operator=(const any_view&) -> any_view& requires copyable;
+    constexpr any_view& operator=(const any_view&)
+        requires(bool(OptsV & any_view_options::copyable));
 
-    constexpr auto operator=(any_view&&) noexcept -> any_view&;
+    constexpr any_view& operator=(any_view&&) noexcept;
 
-    constexpr auto begin() -> iterator;
+    constexpr iterator begin();
 
-    constexpr auto end() -> sentinel;
+    constexpr sentinel end();
 
-    constexpr auto size() const -> size_type requires sized;
+    constexpr size_type size() const
+        requires(bool(OptsV & any_view_options::sized));
 };
 
 } // namespace beman::any_view
 
-template <class ElementT, auto OptionsV, class RefT, class RValueRefT, class DiffT>
+template <class ElementT, beman::any_view::any_view_options OptsV, class RefT, class RValueRefT, class DiffT>
 inline constexpr bool std::ranges::enable_borrowed_range<
-    beman::any_view::any_view<ElementT, OptionsV, RefT, RValueRefT, DiffT>> =
-        (OptionsV & beman::any_view::any_view_options::borrowed) == beman::any_view::any_view_options::borrowed;
+    beman::any_view::any_view<ElementT, OptsV, RefT, RValueRefT, DiffT>> =
+        bool(OptsV & beman::any_view::any_view_options::borrowed);
 ```
 
 ## Building

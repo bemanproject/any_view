@@ -15,11 +15,6 @@ class any_iterator {
     using rvalue_reference = RValueRefT;
     using pointer          = std::add_pointer_t<RefT>;
 
-    static constexpr bool forward       = std::derived_from<IterConceptT, std::forward_iterator_tag>;
-    static constexpr bool bidirectional = std::derived_from<IterConceptT, std::bidirectional_iterator_tag>;
-    static constexpr bool random_access = std::derived_from<IterConceptT, std::random_access_iterator_tag>;
-    static constexpr bool contiguous    = std::derived_from<IterConceptT, std::contiguous_iterator_tag>;
-
     using interface_type = iterator_interface<ElementT, RefT, RValueRefT, DiffT>;
     // inplace storage sufficient for a vtable pointer and two pointers
     intrusive_small_ptr<interface_type, 3 * sizeof(void*)> iterator_ptr;
@@ -35,130 +30,130 @@ class any_iterator {
     using element_type     = ElementT;
     using difference_type  = DiffT;
 
-    template <detail::iterator_compatible_with<any_iterator> IteratorT, std::sentinel_for<IteratorT> SentinelT>
+    template <detail::any_compatible_iterator<any_iterator> IteratorT, std::sentinel_for<IteratorT> SentinelT>
     constexpr any_iterator(IteratorT iterator, SentinelT sentinel)
         : iterator_ptr(get_in_place_adaptor_type<IteratorT, SentinelT>(), std::move(iterator), std::move(sentinel)) {}
 
     constexpr any_iterator() noexcept
-        requires forward
+        requires std::derived_from<IterConceptT, std::forward_iterator_tag>
         : any_iterator(pointer(nullptr), pointer(nullptr)) {}
 
     constexpr any_iterator(const any_iterator&)
-        requires forward
+        requires std::derived_from<IterConceptT, std::forward_iterator_tag>
     = default;
 
     constexpr any_iterator(any_iterator&&) noexcept = default;
 
-    constexpr auto operator=(const any_iterator&) -> any_iterator&
-        requires forward
+    constexpr any_iterator& operator=(const any_iterator&)
+        requires std::derived_from<IterConceptT, std::forward_iterator_tag>
     = default;
 
-    constexpr auto operator=(any_iterator&&) noexcept -> any_iterator& = default;
+    constexpr any_iterator& operator=(any_iterator&&) noexcept = default;
 
-    [[nodiscard]] constexpr auto operator*() const -> reference { return **iterator_ptr; }
+    [[nodiscard]] constexpr reference operator*() const { return **iterator_ptr; }
 
-    [[nodiscard]] friend constexpr auto iter_move(const any_iterator& other) -> rvalue_reference {
+    [[nodiscard]] friend constexpr rvalue_reference iter_move(const any_iterator& other) {
         return other.iterator_ptr->iter_move();
     }
 
-    [[nodiscard]] constexpr auto operator->() const -> pointer
-        requires contiguous
+    [[nodiscard]] constexpr pointer operator->() const
+        requires std::derived_from<IterConceptT, std::contiguous_iterator_tag>
     {
         return std::to_address(*iterator_ptr);
     }
 
-    constexpr auto operator++() -> any_iterator& {
+    constexpr any_iterator& operator++() {
         ++*iterator_ptr;
         return *this;
     }
 
-    constexpr auto operator++(int) -> void { ++*this; }
+    constexpr void operator++(int) { ++*this; }
 
-    [[nodiscard]] constexpr auto operator++(int) -> any_iterator
-        requires forward
+    [[nodiscard]] constexpr any_iterator operator++(int)
+        requires std::derived_from<IterConceptT, std::forward_iterator_tag>
     {
         const auto other = *this;
         ++*this;
         return other;
     }
 
-    [[nodiscard]] constexpr auto operator==(const any_iterator& other) const -> bool
-        requires forward
+    [[nodiscard]] constexpr bool operator==(const any_iterator& other) const
+        requires std::derived_from<IterConceptT, std::forward_iterator_tag>
     {
         return *iterator_ptr == *other.iterator_ptr;
     }
 
-    constexpr auto operator--() -> any_iterator&
-        requires bidirectional
+    constexpr any_iterator& operator--()
+        requires std::derived_from<IterConceptT, std::bidirectional_iterator_tag>
     {
         --*iterator_ptr;
         return *this;
     }
 
-    [[nodiscard]] constexpr auto operator--(int) -> any_iterator
-        requires bidirectional
+    [[nodiscard]] constexpr any_iterator operator--(int)
+        requires std::derived_from<IterConceptT, std::bidirectional_iterator_tag>
     {
         const auto other = *this;
         --*this;
         return other;
     }
 
-    [[nodiscard]] constexpr auto operator<=>(const any_iterator& other) const -> std::partial_ordering
-        requires random_access
+    [[nodiscard]] constexpr std::partial_ordering operator<=>(const any_iterator& other) const
+        requires std::derived_from<IterConceptT, std::random_access_iterator_tag>
     {
         return *iterator_ptr <=> *other.iterator_ptr;
     }
 
-    [[nodiscard]] constexpr auto operator-(const any_iterator& other) const -> difference_type
-        requires random_access
+    [[nodiscard]] constexpr difference_type operator-(const any_iterator& other) const
+        requires std::derived_from<IterConceptT, std::random_access_iterator_tag>
     {
         return *iterator_ptr - *other.iterator_ptr;
     }
 
-    constexpr auto operator+=(difference_type offset) -> any_iterator&
-        requires random_access
+    constexpr any_iterator& operator+=(difference_type offset)
+        requires std::derived_from<IterConceptT, std::random_access_iterator_tag>
     {
         *iterator_ptr += offset;
         return *this;
     }
 
-    [[nodiscard]] constexpr auto operator+(difference_type offset) const -> any_iterator
-        requires random_access
+    [[nodiscard]] constexpr any_iterator operator+(difference_type offset) const
+        requires std::derived_from<IterConceptT, std::random_access_iterator_tag>
     {
         auto other = *this;
         other += offset;
         return other;
     }
 
-    [[nodiscard]] friend constexpr auto operator+(difference_type offset, const any_iterator& other) -> any_iterator
-        requires random_access
+    [[nodiscard]] friend constexpr any_iterator operator+(difference_type offset, const any_iterator& other)
+        requires std::derived_from<IterConceptT, std::random_access_iterator_tag>
     {
         return other + offset;
     }
 
-    constexpr auto operator-=(difference_type offset) -> any_iterator&
-        requires random_access
+    constexpr any_iterator& operator-=(difference_type offset)
+        requires std::derived_from<IterConceptT, std::random_access_iterator_tag>
     {
         // TODO: should virtual function for operator-= be provided to avoid signed overflow for max difference type?
         *this += -offset;
         return *this;
     }
 
-    [[nodiscard]] constexpr auto operator-(difference_type offset) const -> any_iterator
-        requires random_access
+    [[nodiscard]] constexpr any_iterator operator-(difference_type offset) const
+        requires std::derived_from<IterConceptT, std::random_access_iterator_tag>
     {
         auto other = *this;
         other -= offset;
         return other;
     }
 
-    [[nodiscard]] constexpr auto operator[](difference_type offset) const -> reference
-        requires random_access
+    [[nodiscard]] constexpr reference operator[](difference_type offset) const
+        requires std::derived_from<IterConceptT, std::random_access_iterator_tag>
     {
         return *(*this + offset);
     }
 
-    [[nodiscard]] constexpr auto operator==(std::default_sentinel_t sentinel) const -> bool {
+    [[nodiscard]] constexpr bool operator==(std::default_sentinel_t sentinel) const {
         return *iterator_ptr == sentinel;
     }
 };

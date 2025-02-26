@@ -29,11 +29,6 @@ class iterator_adaptor final : public iterator_interface<ElementT, RefT, RValueR
         return std::is_nothrow_move_constructible_v<IteratorT> and std::is_nothrow_move_constructible_v<SentinelT>;
     }
 
-    static constexpr bool forward       = std::forward_iterator<IteratorT>;
-    static constexpr bool bidirectional = std::bidirectional_iterator<IteratorT>;
-    static constexpr bool random_access = std::random_access_iterator<IteratorT>;
-    static constexpr bool contiguous    = std::contiguous_iterator<IteratorT>;
-
     static constexpr auto down_cast(const iterator_interface& other) {
         return dynamic_cast<const iterator_adaptor*>(std::addressof(other));
     }
@@ -72,7 +67,8 @@ class iterator_adaptor final : public iterator_interface<ElementT, RefT, RValueR
     [[nodiscard]] constexpr auto iter_move() const -> RValueRefT override { return std::ranges::iter_move(iterator); }
 
     [[nodiscard]] constexpr auto operator->() const -> pointer override {
-        if constexpr (contiguous and contiguous_reference_convertible_to<std::iter_reference_t<IteratorT>, RefT>) {
+        if constexpr (std::contiguous_iterator<IteratorT> and
+                      any_compatible_contiguous_reference<std::iter_reference_t<IteratorT>, RefT>) {
             return std::to_address(iterator);
         } else {
             unreachable();
@@ -82,7 +78,7 @@ class iterator_adaptor final : public iterator_interface<ElementT, RefT, RValueR
     constexpr auto operator++() -> void override { ++iterator; }
 
     [[nodiscard]] constexpr auto operator==(const iterator_interface& other) const -> bool override {
-        if constexpr (forward) {
+        if constexpr (std::forward_iterator<IteratorT>) {
             if (const auto adaptor = down_cast(other)) {
                 return iterator == adaptor->iterator;
             }
@@ -92,7 +88,7 @@ class iterator_adaptor final : public iterator_interface<ElementT, RefT, RValueR
     }
 
     constexpr auto operator--() -> void override {
-        if constexpr (bidirectional) {
+        if constexpr (std::bidirectional_iterator<IteratorT>) {
             --iterator;
         } else {
             unreachable();
@@ -100,7 +96,7 @@ class iterator_adaptor final : public iterator_interface<ElementT, RefT, RValueR
     }
 
     [[nodiscard]] constexpr auto operator<=>(const iterator_interface& other) const -> std::partial_ordering override {
-        if constexpr (random_access) {
+        if constexpr (std::random_access_iterator<IteratorT>) {
             if (const auto adaptor = down_cast(other)) {
                 // std::__wrap_iter is not three-way comparable in Apple Clang
                 if constexpr (std::three_way_comparable<IteratorT>) {
@@ -118,7 +114,7 @@ class iterator_adaptor final : public iterator_interface<ElementT, RefT, RValueR
     }
 
     [[nodiscard]] constexpr auto operator-(const iterator_interface& other) const -> DiffT override {
-        if constexpr (random_access) {
+        if constexpr (std::random_access_iterator<IteratorT>) {
             if (const auto adaptor = down_cast(other)) {
                 return iterator - adaptor->iterator;
             }
@@ -128,7 +124,7 @@ class iterator_adaptor final : public iterator_interface<ElementT, RefT, RValueR
     }
 
     constexpr auto operator+=(DiffT offset) -> void override {
-        if constexpr (random_access) {
+        if constexpr (std::random_access_iterator<IteratorT>) {
             iterator += offset;
         } else {
             unreachable();
