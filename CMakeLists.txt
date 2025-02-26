@@ -15,12 +15,13 @@ option(
     ${PROJECT_IS_TOP_LEVEL}
 )
 
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 include(FetchContent)
 include(GNUInstallDirs)
 
 add_library(beman.any_view INTERFACE)
 add_library(beman::any_view ALIAS beman.any_view)
-set_target_properties(beman.any_view PROPERTIES CXX_EXTENSIONS OFF)
 target_compile_features(beman.any_view INTERFACE cxx_std_20)
 target_include_directories(
     beman.any_view
