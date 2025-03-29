@@ -3,9 +3,9 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_ANY_ITERATOR_HPP
 #define BEMAN_ANY_VIEW_DETAIL_ANY_ITERATOR_HPP
 
-#include <beman/any_view/concepts.hpp>
-#include <beman/any_view/detail/intrusive_small_ptr.hpp>
-#include <beman/any_view/detail/iterator_adaptor.hpp>
+#include "../concepts.hpp"
+#include "intrusive_small_ptr.hpp"
+#include "iterator_adaptor.hpp"
 
 namespace beman::any_view::detail {
 

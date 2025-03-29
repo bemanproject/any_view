@@ -3,9 +3,9 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_ITERATOR_ADAPTOR_HPP
 #define BEMAN_ANY_VIEW_DETAIL_ITERATOR_ADAPTOR_HPP
 
-#include <beman/any_view/detail/concepts.hpp>
-#include <beman/any_view/detail/iterator_interface.hpp>
-#include <beman/any_view/detail/utility.hpp>
+#include "concepts.hpp"
+#include "iterator_interface.hpp"
+#include "utility.hpp"
 
 #include <compare>
 #include <iterator>

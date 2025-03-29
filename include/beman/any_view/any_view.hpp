@@ -3,7 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_ANY_VIEW_HPP
 #define BEMAN_ANY_VIEW_ANY_VIEW_HPP
 
-#include <beman/any_view/detail/view_adaptor.hpp>
+#include "detail/view_adaptor.hpp"
 
 namespace beman::any_view {
 

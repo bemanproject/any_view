@@ -3,7 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_VIEW_INTERFACE_HPP
 #define BEMAN_ANY_VIEW_DETAIL_VIEW_INTERFACE_HPP
 
-#include <beman/any_view/detail/any_iterator.hpp>
+#include "any_iterator.hpp"
 
 namespace beman::any_view::detail {
 

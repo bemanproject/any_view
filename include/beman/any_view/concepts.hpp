@@ -3,8 +3,8 @@
 #ifndef BEMAN_ANY_VIEW_CONCEPTS_HPP
 #define BEMAN_ANY_VIEW_CONCEPTS_HPP
 
-#include <beman/any_view/detail/concepts.hpp>
-#include <beman/any_view/detail/type_traits.hpp>
+#include "detail/concepts.hpp"
+#include "detail/type_traits.hpp"
 
 #include <ranges>
 
