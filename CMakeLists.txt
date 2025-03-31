@@ -79,7 +79,7 @@ install(
 macro(beman_add_executable)
     set(options)
     set(oneValueArgs CATEGORY TARGET)
-    set(multiValueArgs SOURCES LIBRARIES)
+    set(multiValueArgs FEATURES SOURCES LIBRARIES)
 
     cmake_parse_arguments(
         beman_executable
@@ -98,10 +98,14 @@ macro(beman_add_executable)
         set(beman_executable_SOURCES "${beman_executable_TARGET}.cpp")
     endif()
 
+    if(NOT beman_executable_FEATURES)
+        set(${beman_executable_FEATURES} cxx_std_20)
+    endif()
+
     add_executable(${target})
     # [CMAKE.PASSIVE_PROJECTS]
     # set features on executables, not on interface library
-    target_compile_features(${target} PRIVATE cxx_std_20)
+    target_compile_features(${target} PRIVATE ${beman_executable_FEATURES})
     target_sources(${target} PRIVATE ${beman_executable_SOURCES})
     target_link_libraries(
         ${target}
