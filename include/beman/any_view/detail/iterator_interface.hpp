@@ -5,9 +5,35 @@
 
 #include <compare>
 #include <iterator>
+#include <optional>
 #include <type_traits>
 
 namespace beman::any_view::detail {
+
+struct no_cache {};
+
+template <class RefT>
+struct iter_cache {
+    using type = no_cache;
+};
+
+template <class RefT>
+    requires std::is_trivially_copyable_v<RefT>
+struct iter_cache<RefT> {
+    using type = std::optional<RefT>;
+
+    static constexpr auto make(RefT ref) noexcept -> type { return {ref}; }
+};
+
+template <class RefT>
+struct iter_cache<RefT&> {
+    using type = RefT*;
+
+    static constexpr auto make(RefT& ref) noexcept -> type { return std::addressof(ref); }
+};
+
+template <class RefT>
+using iter_cache_t = iter_cache<RefT>::type;
 
 template <class ElementT, class RefT, class RValueRefT, class DiffT>
 class iterator_interface {
@@ -20,6 +46,13 @@ class iterator_interface {
 
     // out-of-place construction
     [[nodiscard]] virtual constexpr auto copy() const -> iterator_interface* = 0;
+
+    // fused increment-compare-dereference
+    [[nodiscard]] virtual constexpr auto next() -> iter_cache_t<RefT> = 0;
+
+    [[nodiscard]] virtual constexpr auto prev() -> iter_cache_t<RefT> = 0;
+
+    [[nodiscard]] virtual constexpr auto next(DiffT n) -> iter_cache_t<RefT> = 0;
 
     // iterator methods
     [[nodiscard]] virtual constexpr auto operator*() const -> RefT = 0;
