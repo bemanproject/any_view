@@ -15,7 +15,8 @@ option(
     ${PROJECT_IS_TOP_LEVEL}
 )
 
-option(BEMAN_ANY_VIEW_BUILD_EXAMPLES
+option(
+    BEMAN_ANY_VIEW_BUILD_EXAMPLES
     "Enable building examples. Default: ON. Values: {ON, OFF}."
     ${PROJECT_IS_TOP_LEVEL})
 
