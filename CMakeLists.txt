@@ -95,6 +95,6 @@ if(BEMAN_ANY_VIEW_BUILD_TESTS)
     add_subdirectory(tests/beman/any_view)
 endif()
 
-if(BEMAN_ITERATOR_INTERFACE_BUILD_EXAMPLES)
+if(BEMAN_ANY_VIEW_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
