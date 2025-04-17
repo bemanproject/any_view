@@ -15,6 +15,10 @@ option(
     ${PROJECT_IS_TOP_LEVEL}
 )
 
+option(BEMAN_ANY_VIEW_BUILD_EXAMPLES
+    "Enable building examples. Default: ON. Values: {ON, OFF}."
+    ${PROJECT_IS_TOP_LEVEL})
+
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(FetchContent)
@@ -87,4 +91,8 @@ if(BEMAN_ANY_VIEW_BUILD_TESTS)
     FetchContent_MakeAvailable(googletest)
 
     add_subdirectory(tests/beman/any_view)
+endif()
+
+if(BEMAN_ITERATOR_INTERFACE_BUILD_EXAMPLES)
+  add_subdirectory(examples)
 endif()
