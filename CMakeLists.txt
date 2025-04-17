@@ -18,7 +18,8 @@ option(
 option(
     BEMAN_ANY_VIEW_BUILD_EXAMPLES
     "Enable building examples. Default: ON. Values: {ON, OFF}."
-    ${PROJECT_IS_TOP_LEVEL})
+    ${PROJECT_IS_TOP_LEVEL}
+)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 
