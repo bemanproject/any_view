@@ -7,7 +7,7 @@ auto eager::database::get_products(query_t query) const -> names_t {
 
     for (const auto& product : products) {
         if (product.quantity >= query.min_quantity) {
-            results.push_back(product.name);
+            results.emplace_back(product.name);
         }
     }
 

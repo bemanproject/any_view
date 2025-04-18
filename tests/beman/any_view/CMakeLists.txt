@@ -29,8 +29,8 @@ function(beman_add_test)
     gtest_discover_tests(${target})
 endfunction()
 
-beman_add_benchmark(TARGET all SOURCES all.benchmark.cpp detail/eager.cpp detail/fused.cpp detail/lazy.cpp detail/products.cpp)
-beman_add_benchmark(TARGET take SOURCES take.benchmark.cpp detail/eager.cpp detail/fused.cpp detail/lazy.cpp detail/products.cpp)
+beman_add_benchmark(TARGET all SOURCES all.benchmark.cpp detail/eager.cpp detail/fused.cpp detail/lazy.cpp detail/products.cpp detail/reserved.cpp)
+beman_add_benchmark(TARGET take SOURCES take.benchmark.cpp detail/eager.cpp detail/fused.cpp detail/lazy.cpp detail/products.cpp detail/reserved.cpp)
 
 beman_add_test(TARGET concepts SOURCES concepts.test.cpp)
 beman_add_test(TARGET constexpr SOURCES constexpr.test.cpp)
