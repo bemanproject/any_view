@@ -32,10 +32,10 @@ auto generate_random_products(std::size_t count) -> std::vector<product_t> {
     std::mt19937                       w_rng;
     std::uniform_int_distribution<int> w_dist(0, 100);
 
-    const auto gen_size = [&] { return w_dist(w_rng); };
+    const auto gen_size = [&]() -> std::size_t { return w_dist(w_rng); };
 
     for (std::size_t i = 0; i < results.capacity(); ++i) {
-        results.emplace_back(gen_next_str(), gen_size());
+        results.push_back(product_t{.name = gen_next_str(), .quantity = gen_size()});
     }
 
     return results;

@@ -19,7 +19,10 @@ inline void use(std::string_view name) {
 }
 
 static void BM_take_eager(benchmark::State& state) {
-    eager::database db{global_products | std::views::take(state.range(0)) | std::ranges::to<std::vector>()};
+    const auto size  = state.range(0);
+    const auto begin = global_products.begin();
+
+    eager::database db{.products = {begin, begin + size}};
 
     for (auto _ : state) {
         for (std::string_view name : db.get_products({.min_quantity = 10}) | std::views::take(100)) {
@@ -29,7 +32,10 @@ static void BM_take_eager(benchmark::State& state) {
 }
 
 static void BM_take_fused(benchmark::State& state) {
-    fused::database db{global_products | std::views::take(state.range(0)) | std::ranges::to<std::vector>()};
+    const auto size  = state.range(0);
+    const auto begin = global_products.begin();
+
+    fused::database db{.products = {begin, begin + size}};
 
     for (auto _ : state) {
         for (std::string_view name : db.get_products({.min_quantity = 10}) | std::views::take(100)) {
@@ -39,7 +45,10 @@ static void BM_take_fused(benchmark::State& state) {
 }
 
 static void BM_take_lazy(benchmark::State& state) {
-    lazy::database db{global_products | std::views::take(state.range(0)) | std::ranges::to<std::vector>()};
+    const auto size  = state.range(0);
+    const auto begin = global_products.begin();
+
+    lazy::database db{.products = {begin, begin + size}};
 
     for (auto _ : state) {
         for (std::string_view name : db.get_products({.min_quantity = 10}) | std::views::take(100)) {
