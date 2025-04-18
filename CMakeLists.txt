@@ -2,6 +2,7 @@
 
 cmake_minimum_required(VERSION 3.25)
 
+# [CMAKE.PROJECT_NAME]
 project(
     beman.any_view
     DESCRIPTION "A generalized type-erased view with customizable properties"
@@ -15,6 +16,7 @@ option(
     ${PROJECT_IS_TOP_LEVEL}
 )
 
+# [CMAKE.SKIP_EXAMPLES]
 option(
     BEMAN_ANY_VIEW_BUILD_EXAMPLES
     "Enable building examples. Default: ON. Values: {ON, OFF}."
@@ -26,9 +28,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 include(FetchContent)
 include(GNUInstallDirs)
 
+# [CMAKE.LIBRARY_NAME]
 add_library(beman.any_view INTERFACE)
+# [CMAKE.LIBRARY_ALIAS]
 add_library(beman::any_view ALIAS beman.any_view)
-target_compile_features(beman.any_view INTERFACE cxx_std_20)
 target_include_directories(
     beman.any_view
     INTERFACE
@@ -63,6 +66,7 @@ macro(beman_add_executable)
         ${ARGN}
     )
 
+    # [CMAKE.TARGET_NAMES]
     set(target
         "beman.any_view.${beman_executable_CATEGORY}.${beman_executable_TARGET}"
     )
@@ -72,6 +76,9 @@ macro(beman_add_executable)
     endif()
 
     add_executable(${target})
+    # [CMAKE.PASSIVE_PROJECTS]
+    # set features on executables, not on interface library
+    target_compile_features(${target} PRIVATE cxx_std_20)
     target_sources(${target} PRIVATE ${beman_executable_SOURCES})
     target_link_libraries(
         ${target}
@@ -81,17 +88,6 @@ endmacro()
 
 if(BEMAN_ANY_VIEW_BUILD_TESTS)
     enable_testing()
-
-    # Fetch GoogleTest
-    FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG v1.14.0
-        EXCLUDE_FROM_ALL
-    )
-    set(INSTALL_GTEST OFF) # Disable GoogleTest installation
-    FetchContent_MakeAvailable(googletest)
-
     add_subdirectory(tests/beman/any_view)
 endif()
 
