@@ -4,11 +4,10 @@
 
 #include <array>
 #include <iostream>
-#include <ranges>
 #include <vector>
 
 namespace bav = beman::any_view;
-using opt = bav::any_view_options;
+using opt     = bav::any_view_options;
 
 auto sum(bav::any_view<const int> v1, bav::any_view<const int> v2) {
     auto result = 0;
