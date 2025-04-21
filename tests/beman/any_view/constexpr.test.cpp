@@ -64,3 +64,23 @@ TEST(ConstexprTest, sort_vector) {
 #endif
     EXPECT_TRUE(sort(std::vector{6, 8, 7, 5, 3, 0, 9}));
 }
+
+constexpr auto set_front(any_view<int, forward> view, int value) {
+    // forward iterator of lvalue reference uses cache object to fuse virtual dispatches
+    static_assert(sizeof(std::ranges::iterator_t<any_view<int, forward>>) ==
+                  sizeof(std::ranges::iterator_t<any_view<int, input>>) + sizeof(int*));
+
+    auto& ref = view.front();
+    // even with cache object, lifetime of reference is not tied to lifetime of iterator
+    ref = value;
+
+    return view.front() == value;
+}
+
+TEST(ConstexprTest, reference_lifetime) {
+#ifndef _MSC_VER
+    // error C2131: expression did not evaluate to a constant
+    static_assert(set_front(std::vector{7}, 42));
+#endif
+    EXPECT_TRUE(set_front(std::vector{7}, 42));
+}
