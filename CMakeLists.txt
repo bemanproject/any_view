@@ -23,6 +23,27 @@ option(
     ${PROJECT_IS_TOP_LEVEL}
 )
 
+# [CPP.NO_FLAG_FORKING]
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS
+        "[[msvc::no_unique_address]]"
+        CACHE STRING
+        "Name of C++ attribute for empty base optimization of data members"
+    )
+else()
+    set(BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS
+        "[[no_unique_address]]"
+        CACHE STRING
+        "Name of C++ attribute for empty base optimization of data members"
+    )
+endif()
+
+configure_file(
+    include/beman/any_view/config.hpp.in
+    include/beman/any_view/config.hpp
+    @ONLY
+)
+
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(FetchContent)
@@ -36,6 +57,7 @@ target_include_directories(
     beman.any_view
     INTERFACE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
 
@@ -51,6 +73,7 @@ install(
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PROJECT_NAME}
     FILES_MATCHING
     PATTERN "${CMAKE_CURRENT_SOURCE_DIR}/include/beman/any_view/*.hpp"
+    PATTERN "${CMAKE_CURRENT_BINARY_DIR}/include/beman/any_view/*.hpp"
 )
 
 macro(beman_add_executable)
