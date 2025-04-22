@@ -3,6 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_ITERATOR_ADAPTOR_HPP
 #define BEMAN_ANY_VIEW_DETAIL_ITERATOR_ADAPTOR_HPP
 
+#include <beman/any_view/config.hpp>
 #include <beman/any_view/detail/concepts.hpp>
 #include <beman/any_view/detail/iterator_interface.hpp>
 #include <beman/any_view/detail/utility.hpp>
@@ -19,8 +20,8 @@ template <class ElementT,
           std::input_or_output_iterator IteratorT,
           std::sentinel_for<IteratorT>  SentinelT>
 class iterator_adaptor final : public iterator_interface<ElementT, RefT, RValueRefT, DiffT> {
-    [[no_unique_address]] IteratorT iterator;
-    [[no_unique_address]] SentinelT sentinel;
+    BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS() IteratorT iterator;
+    BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS() SentinelT sentinel;
 
     using iterator_interface = detail::iterator_interface<ElementT, RefT, RValueRefT, DiffT>;
     using pointer            = std::add_pointer_t<RefT>;

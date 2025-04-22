@@ -3,6 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_VIEW_ADAPTOR_HPP
 #define BEMAN_ANY_VIEW_DETAIL_VIEW_ADAPTOR_HPP
 
+#include <beman/any_view/config.hpp>
 #include <beman/any_view/detail/view_interface.hpp>
 
 namespace beman::any_view::detail {
@@ -12,7 +13,7 @@ class view_adaptor final : public view_interface<IterConceptT, ElementT, RefT, R
     using iterator  = detail::any_iterator<IterConceptT, ElementT, RefT, RValueRefT, DiffT>;
     using size_type = std::make_unsigned_t<DiffT>;
 
-    [[no_unique_address]] ViewT view;
+    BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS() ViewT view;
 
     static constexpr auto get_noexcept() { return std::is_nothrow_move_constructible_v<ViewT>; }
 
