@@ -76,7 +76,7 @@ install(
     PATTERN "${CMAKE_CURRENT_BINARY_DIR}/include/beman/any_view/*.hpp"
 )
 
-macro(beman_add_executable)
+function(beman_add_executable)
     set(options)
     set(oneValueArgs CATEGORY TARGET)
     set(multiValueArgs SOURCES LIBRARIES)
@@ -90,13 +90,8 @@ macro(beman_add_executable)
     )
 
     # [CMAKE.TARGET_NAMES]
-    set(target
-        "beman.any_view.${beman_executable_CATEGORY}.${beman_executable_TARGET}"
-    )
-
-    if(NOT beman_executable_SOURCES)
-        set(beman_executable_SOURCES "${beman_executable_TARGET}.cpp")
-    endif()
+    set(category beman.any_view.${beman_executable_CATEGORY})
+    set(target ${category}.${beman_executable_TARGET})
 
     add_executable(${target})
     # [CMAKE.PASSIVE_PROJECTS]
@@ -107,7 +102,13 @@ macro(beman_add_executable)
         ${target}
         PRIVATE beman::any_view ${beman_executable_LIBRARIES}
     )
-endmacro()
+
+    if(NOT TARGET ${category})
+        add_custom_target(${category})
+    endif()
+
+    add_dependencies(${category} ${target})
+endfunction()
 
 if(BEMAN_ANY_VIEW_BUILD_TESTS)
     enable_testing()
