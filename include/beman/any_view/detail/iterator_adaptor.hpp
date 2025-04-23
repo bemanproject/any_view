@@ -26,6 +26,8 @@ class iterator_adaptor final : public iterator_interface<ElementT, RefT, RValueR
     using iterator_interface = detail::iterator_interface<ElementT, RefT, RValueRefT, DiffT>;
     using pointer            = std::add_pointer_t<RefT>;
 
+    static constexpr bool cached = not std::same_as<iter_cache_t<RefT>, no_cache>;
+
     static constexpr auto get_noexcept() {
         return std::is_nothrow_move_constructible_v<IteratorT> and std::is_nothrow_move_constructible_v<SentinelT>;
     }
@@ -61,6 +63,30 @@ class iterator_adaptor final : public iterator_interface<ElementT, RefT, RValueR
         } else {
             unreachable();
         }
+    }
+
+    [[nodiscard]] constexpr auto next() -> iter_cache_t<RefT> override {
+        if constexpr (std::forward_iterator<IteratorT> and cached) {
+            return ++iterator != sentinel ? iter_cache<RefT>::make(*iterator) : iter_cache_t<RefT>{};
+        }
+
+        unreachable();
+    }
+
+    [[nodiscard]] constexpr auto prev() -> iter_cache_t<RefT> override {
+        if constexpr (std::bidirectional_iterator<IteratorT> and cached) {
+            return --iterator != sentinel ? iter_cache<RefT>::make(*iterator) : iter_cache_t<RefT>{};
+        }
+
+        unreachable();
+    }
+
+    [[nodiscard]] constexpr auto next(DiffT n) -> iter_cache_t<RefT> override {
+        if constexpr (std::random_access_iterator<IteratorT> and cached) {
+            return (iterator += n) != sentinel ? iter_cache<RefT>::make(*iterator) : iter_cache_t<RefT>{};
+        }
+
+        unreachable();
     }
 
     [[nodiscard]] constexpr auto operator*() const -> RefT override { return *iterator; }

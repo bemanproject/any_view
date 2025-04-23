@@ -4,6 +4,7 @@
 #define BEMAN_ANY_VIEW_DETAIL_ANY_ITERATOR_HPP
 
 #include <beman/any_view/concepts.hpp>
+#include <beman/any_view/config.hpp>
 #include <beman/any_view/detail/intrusive_small_ptr.hpp>
 #include <beman/any_view/detail/iterator_adaptor.hpp>
 
@@ -16,14 +17,25 @@ class any_iterator {
     using pointer          = std::add_pointer_t<RefT>;
 
     using interface_type = iterator_interface<ElementT, RefT, RValueRefT, DiffT>;
+    using cache_type =
+        std::conditional_t<std::derived_from<IterConceptT, std::forward_iterator_tag>, iter_cache_t<RefT>, no_cache>;
+
+    static constexpr bool cached = not std::same_as<cache_type, no_cache>;
+
     // inplace storage sufficient for a vtable pointer and two pointers
     intrusive_small_ptr<interface_type, 3 * sizeof(void*)> iterator_ptr;
+    BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS() cache_type cache;
 
     template <class IteratorT, class SentinelT>
     static consteval auto get_in_place_adaptor_type() {
         return std::in_place_type<
             detail::iterator_adaptor<ElementT, reference, rvalue_reference, DiffT, IteratorT, SentinelT>>;
     }
+
+    template <detail::any_compatible_iterator<any_iterator> IteratorT, std::sentinel_for<IteratorT> SentinelT>
+    constexpr any_iterator(IteratorT&& iterator, SentinelT&& sentinel, cache_type&& cache)
+        : iterator_ptr(get_in_place_adaptor_type<IteratorT, SentinelT>(), std::move(iterator), std::move(sentinel)),
+          cache(std::move(cache)) {}
 
   public:
     using iterator_concept = IterConceptT;
@@ -32,7 +44,14 @@ class any_iterator {
 
     template <detail::any_compatible_iterator<any_iterator> IteratorT, std::sentinel_for<IteratorT> SentinelT>
     constexpr any_iterator(IteratorT iterator, SentinelT sentinel)
-        : iterator_ptr(get_in_place_adaptor_type<IteratorT, SentinelT>(), std::move(iterator), std::move(sentinel)) {}
+        : any_iterator(std::move(iterator), std::move(sentinel), cache_type()) {}
+
+    template <detail::any_compatible_iterator<any_iterator> IteratorT, std::sentinel_for<IteratorT> SentinelT>
+    constexpr any_iterator(IteratorT iterator, SentinelT sentinel)
+        requires(cached)
+        : any_iterator(std::move(iterator),
+                       std::move(sentinel),
+                       iterator != sentinel ? iter_cache<RefT>::make(*iterator) : iter_cache_t<RefT>{}) {}
 
     constexpr any_iterator() noexcept
         requires std::derived_from<IterConceptT, std::forward_iterator_tag>
@@ -50,7 +69,13 @@ class any_iterator {
 
     constexpr any_iterator& operator=(any_iterator&&) noexcept = default;
 
-    [[nodiscard]] constexpr reference operator*() const { return **iterator_ptr; }
+    [[nodiscard]] constexpr reference operator*() const {
+        if constexpr (cached) {
+            return *cache;
+        } else {
+            return **iterator_ptr;
+        }
+    }
 
     [[nodiscard]] friend constexpr rvalue_reference iter_move(const any_iterator& other) {
         return other.iterator_ptr->iter_move();
@@ -59,11 +84,19 @@ class any_iterator {
     [[nodiscard]] constexpr pointer operator->() const
         requires std::derived_from<IterConceptT, std::contiguous_iterator_tag>
     {
-        return std::to_address(*iterator_ptr);
+        if constexpr (cached) {
+            return cache;
+        } else {
+            return std::to_address(*iterator_ptr);
+        }
     }
 
     constexpr any_iterator& operator++() {
-        ++*iterator_ptr;
+        if constexpr (cached) {
+            cache = iterator_ptr->next();
+        } else {
+            ++*iterator_ptr;
+        }
         return *this;
     }
 
@@ -86,7 +119,11 @@ class any_iterator {
     constexpr any_iterator& operator--()
         requires std::derived_from<IterConceptT, std::bidirectional_iterator_tag>
     {
-        --*iterator_ptr;
+        if constexpr (cached) {
+            cache = iterator_ptr->prev();
+        } else {
+            --*iterator_ptr;
+        }
         return *this;
     }
 
@@ -113,7 +150,11 @@ class any_iterator {
     constexpr any_iterator& operator+=(difference_type offset)
         requires std::derived_from<IterConceptT, std::random_access_iterator_tag>
     {
-        *iterator_ptr += offset;
+        if constexpr (cached) {
+            cache = iterator_ptr->next(offset);
+        } else {
+            *iterator_ptr += offset;
+        }
         return *this;
     }
 
@@ -154,7 +195,11 @@ class any_iterator {
     }
 
     [[nodiscard]] constexpr bool operator==(std::default_sentinel_t sentinel) const {
-        return *iterator_ptr == sentinel;
+        if constexpr (cached) {
+            return cache == iter_cache_t<RefT>{};
+        } else {
+            return *iterator_ptr == sentinel;
+        }
     }
 };
 
