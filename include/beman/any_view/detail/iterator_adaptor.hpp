@@ -37,6 +37,14 @@ class iterator_adaptor final : public iterator_interface<ElementT, RefT, RValueR
     }
 
   public:
+    constexpr iterator_adaptor() noexcept(std::is_nothrow_default_constructible_v<IteratorT> and
+                                          std::is_nothrow_default_constructible_v<SentinelT>) = default;
+
+    constexpr iterator_adaptor(const iterator_adaptor&) = default;
+
+    constexpr iterator_adaptor(iterator_adaptor&&) noexcept(std::is_nothrow_move_constructible_v<IteratorT> and
+                                                            std::is_nothrow_move_constructible_v<SentinelT>) = default;
+
     constexpr iterator_adaptor(IteratorT&& iterator, SentinelT&& sentinel) noexcept(get_noexcept())
         : iterator(std::move(iterator)), sentinel(std::move(sentinel)) {}
 
