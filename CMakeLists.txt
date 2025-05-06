@@ -12,14 +12,20 @@ project(
 # [CMAKE.SKIP_TESTS]
 option(
     BEMAN_ANY_VIEW_BUILD_TESTS
-    "Enable building tests and test infrastructure. Default: ON. Values: { ON, OFF }."
+    "Enable building tests and test infrastructure. Default: ${PROJECT_IS_TOP_LEVEL}. Values: { ON, OFF }."
     ${PROJECT_IS_TOP_LEVEL}
 )
 
 # [CMAKE.SKIP_EXAMPLES]
 option(
     BEMAN_ANY_VIEW_BUILD_EXAMPLES
-    "Enable building examples. Default: ON. Values: {ON, OFF}."
+    "Enable building examples. Default: ${PROJECT_IS_TOP_LEVEL}. Values: {ON, OFF}."
+    ${PROJECT_IS_TOP_LEVEL}
+)
+
+option(
+    BEMAN_ANY_VIEW_INSTALL_CONFIG_FILE_PACKAGE
+    "Enable creating and installing a CMake config-file package. Default: ${PROJECT_IS_TOP_LEVEL}. Values: { ON, OFF }."
     ${PROJECT_IS_TOP_LEVEL}
 )
 
@@ -44,37 +50,49 @@ configure_file(
     @ONLY
 )
 
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-include(FetchContent)
-include(GNUInstallDirs)
-
 # [CMAKE.LIBRARY_NAME]
 add_library(beman.any_view INTERFACE)
 # [CMAKE.LIBRARY_ALIAS]
 add_library(beman::any_view ALIAS beman.any_view)
-target_include_directories(
+
+set_target_properties(
     beman.any_view
-    INTERFACE
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
-        $<INSTALL_INTERFACE:include>
+    PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON EXPORT_NAME any_view
 )
 
-install(
-    TARGETS beman.any_view
-    EXPORT ${TARGETS_EXPORT_NAME}
-    DESTINATION
-    $<$<CONFIG:Debug>:debug/>${CMAKE_INSTALL_LIBDIR}
+target_sources(
+    beman.any_view
+    PUBLIC
+        FILE_SET HEADERS
+        BASE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/include include
+        FILES
+            ${CMAKE_CURRENT_BINARY_DIR}/include/beman/any_view/config.hpp
+            include/beman/any_view/detail/any_iterator.hpp
+            include/beman/any_view/detail/concepts.hpp
+            include/beman/any_view/detail/intrusive_small_ptr.hpp
+            include/beman/any_view/detail/iterator_adaptor.hpp
+            include/beman/any_view/detail/iterator_interface.hpp
+            include/beman/any_view/detail/type_traits.hpp
+            include/beman/any_view/detail/utility.hpp
+            include/beman/any_view/detail/view_adaptor.hpp
+            include/beman/any_view/detail/view_interface.hpp
+            include/beman/any_view/any_view_options.hpp
+            include/beman/any_view/any_view.hpp
+            include/beman/any_view/concepts.hpp
 )
 
-install(
-    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PROJECT_NAME}
-    FILES_MATCHING
-    PATTERN "${CMAKE_CURRENT_SOURCE_DIR}/include/beman/any_view/*.hpp"
-    PATTERN "${CMAKE_CURRENT_BINARY_DIR}/include/beman/any_view/*.hpp"
-)
+include(GNUInstallDirs)
+
+install(TARGETS beman.any_view EXPORT beman.any_view-targets FILE_SET HEADERS)
+
+if(BEMAN_ANY_VIEW_INSTALL_CONFIG_FILE_PACKAGE)
+    install(
+        EXPORT beman.any_view-targets
+        FILE beman.any_view-config.cmake
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/beman.any_view"
+        NAMESPACE beman::
+    )
+endif()
 
 function(beman_add_executable)
     set(options)
