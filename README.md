@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ![Continuous Integration Tests](https://github.com/bemanproject/any_view/actions/workflows/ci_tests.yml/badge.svg)
 ![Lint Check (pre-commit)](https://github.com/bemanproject/any_view/actions/workflows/pre-commit.yml/badge.svg)
 
-**Implements**: `std::ranges::any_view` proposed in [any_view (P3411R1)](https://wg21.link/P3411R1).
+**Implements**: `std::ranges::any_view` proposed in [any_view (P3411R2)](https://huixie90.github.io/cpp_papers/generated/any_view).
 
 **Status**: [Under development and not yet ready for production use.](https://github.com/bemanproject/beman/blob/main/docs/BEMAN_LIBRARY_MATURITY_MODEL.md#under-development-and-not-yet-ready-for-production-use)
 
