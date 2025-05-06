@@ -45,9 +45,7 @@ configure_file(
 )
 
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-include(FetchContent)
-include(GNUInstallDirs)
+set(CMAKE_VERIFY_INTERFACE_HEADER_SETS ON)
 
 # [CMAKE.LIBRARY_NAME]
 add_library(beman.any_view INTERFACE)
@@ -60,6 +58,27 @@ target_include_directories(
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
+target_sources(
+    beman.any_view
+    PUBLIC
+        FILE_SET HEADERS
+        BASE_DIRS include
+        FILES
+            include/beman/any_view/detail/any_iterator.hpp
+            include/beman/any_view/detail/concepts.hpp
+            include/beman/any_view/detail/intrusive_small_ptr.hpp
+            include/beman/any_view/detail/iterator_adaptor.hpp
+            include/beman/any_view/detail/iterator_interface.hpp
+            include/beman/any_view/detail/type_traits.hpp
+            include/beman/any_view/detail/utility.hpp
+            include/beman/any_view/detail/view_adaptor.hpp
+            include/beman/any_view/detail/view_interface.hpp
+            include/beman/any_view/any_view_options.hpp
+            include/beman/any_view/any_view.hpp
+            include/beman/any_view/concepts.hpp
+)
+
+include(GNUInstallDirs)
 
 install(
     TARGETS beman.any_view
