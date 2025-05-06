@@ -45,9 +45,7 @@ configure_file(
 )
 
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-include(FetchContent)
-include(GNUInstallDirs)
+set(CMAKE_VERIFY_INTERFACE_HEADER_SETS ON)
 
 # [CMAKE.LIBRARY_NAME]
 add_library(beman.any_view INTERFACE)
@@ -60,6 +58,27 @@ target_include_directories(
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
+target_sources(
+    beman.any_view
+    PUBLIC
+        FILE_SET HEADERS
+        BASE_DIRS include
+        FILES
+            include/beman/any_view/detail/any_iterator.hpp
+            include/beman/any_view/detail/concepts.hpp
+            include/beman/any_view/detail/intrusive_small_ptr.hpp
+            include/beman/any_view/detail/iterator_adaptor.hpp
+            include/beman/any_view/detail/iterator_interface.hpp
+            include/beman/any_view/detail/type_traits.hpp
+            include/beman/any_view/detail/utility.hpp
+            include/beman/any_view/detail/view_adaptor.hpp
+            include/beman/any_view/detail/view_interface.hpp
+            include/beman/any_view/any_view_options.hpp
+            include/beman/any_view/any_view.hpp
+            include/beman/any_view/concepts.hpp
+)
+
+include(GNUInstallDirs)
 
 install(
     TARGETS beman.any_view
@@ -76,7 +95,7 @@ install(
     PATTERN "${CMAKE_CURRENT_BINARY_DIR}/include/beman/any_view/*.hpp"
 )
 
-macro(beman_add_executable)
+function(beman_add_executable)
     set(options)
     set(oneValueArgs CATEGORY TARGET)
     set(multiValueArgs SOURCES LIBRARIES)
@@ -90,13 +109,8 @@ macro(beman_add_executable)
     )
 
     # [CMAKE.TARGET_NAMES]
-    set(target
-        "beman.any_view.${beman_executable_CATEGORY}.${beman_executable_TARGET}"
-    )
-
-    if(NOT beman_executable_SOURCES)
-        set(beman_executable_SOURCES "${beman_executable_TARGET}.cpp")
-    endif()
+    set(category beman.any_view.${beman_executable_CATEGORY})
+    set(target ${category}.${beman_executable_TARGET})
 
     add_executable(${target})
     # [CMAKE.PASSIVE_PROJECTS]
@@ -107,7 +121,13 @@ macro(beman_add_executable)
         ${target}
         PRIVATE beman::any_view ${beman_executable_LIBRARIES}
     )
-endmacro()
+
+    if(NOT TARGET ${category})
+        add_custom_target(${category})
+    endif()
+
+    add_dependencies(${category} ${target})
+endfunction()
 
 if(BEMAN_ANY_VIEW_BUILD_TESTS)
     enable_testing()
