@@ -19,7 +19,7 @@ option(
 # [CMAKE.SKIP_EXAMPLES]
 option(
     BEMAN_ANY_VIEW_BUILD_EXAMPLES
-    "Enable building examples. Default: ${PROJECT_IS_TOP_LEVEL}. Values: {ON, OFF}."
+    "Enable building examples. Default: ${PROJECT_IS_TOP_LEVEL}. Values: { ON, OFF }."
     ${PROJECT_IS_TOP_LEVEL}
 )
 
@@ -57,14 +57,19 @@ add_library(beman::any_view ALIAS beman.any_view)
 
 set_target_properties(
     beman.any_view
-    PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON EXPORT_NAME any_view
+    PROPERTIES
+        #
+        VERIFY_INTERFACE_HEADER_SETS ON
+        EXPORT_NAME any_view
 )
 
 target_sources(
     beman.any_view
     PUBLIC
         FILE_SET HEADERS
-        BASE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/include include
+        BASE_DIRS #
+            ${CMAKE_CURRENT_BINARY_DIR}/include
+            include
         FILES
             ${CMAKE_CURRENT_BINARY_DIR}/include/beman/any_view/config.hpp
             include/beman/any_view/detail/any_iterator.hpp
@@ -83,13 +88,18 @@ target_sources(
 
 include(GNUInstallDirs)
 
-install(TARGETS beman.any_view EXPORT beman.any_view-targets FILE_SET HEADERS)
+install(
+    #
+    TARGETS beman.any_view
+    EXPORT beman.any_view-targets
+    FILE_SET HEADERS
+)
 
 if(BEMAN_ANY_VIEW_INSTALL_CONFIG_FILE_PACKAGE)
     install(
         EXPORT beman.any_view-targets
         FILE beman.any_view-config.cmake
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/beman.any_view"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/beman.any_view
         NAMESPACE beman::
     )
 endif()
