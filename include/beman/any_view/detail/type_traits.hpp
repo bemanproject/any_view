@@ -10,13 +10,13 @@
 namespace beman::any_view::detail {
 
 template <class T>
-struct as_rvalue : std::type_identity<T> {};
+struct rvalue_ref : std::type_identity<T> {};
 
 template <class T>
-struct as_rvalue<T&> : std::type_identity<T&&> {};
+struct rvalue_ref<T&> : std::type_identity<T&&> {};
 
 template <class T>
-using as_rvalue_t = as_rvalue<T>::type;
+using rvalue_ref_t = rvalue_ref<T>::type;
 
 template <any_view_options OptionsV>
 [[nodiscard]] consteval auto get_iter_concept() {

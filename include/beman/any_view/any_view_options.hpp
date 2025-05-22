@@ -24,20 +24,6 @@ enum class any_view_options {
     return any_view_options(static_cast<int>(l) & static_cast<int>(r));
 }
 
-[[nodiscard]] constexpr any_view_options operator^(any_view_options l, any_view_options r) noexcept {
-    return any_view_options(static_cast<int>(l) ^ static_cast<int>(r));
-}
-
-[[nodiscard]] constexpr any_view_options operator~(any_view_options o) noexcept {
-    return any_view_options(~static_cast<int>(o));
-}
-
-constexpr any_view_options& operator|=(any_view_options& l, any_view_options r) noexcept { return l = l | r; }
-
-constexpr any_view_options& operator&=(any_view_options& l, any_view_options r) noexcept { return l = l & r; }
-
-constexpr any_view_options& operator^=(any_view_options& l, any_view_options r) noexcept { return l = l ^ r; }
-
 } // namespace beman::any_view
 
 #endif // BEMAN_ANY_VIEW_ANY_VIEW_OPTIONS_HPP
