@@ -10,10 +10,10 @@ namespace beman::any_view {
 template <class ElementT,
           any_view_options OptsV = any_view_options::input,
           class RefT             = ElementT&,
-          class RValueRefT       = detail::as_rvalue_t<RefT>,
+          class RValueRefT       = detail::rvalue_ref_t<RefT>,
           class DiffT            = std::ptrdiff_t>
 class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, RefT, RValueRefT, DiffT>> {
-    static_assert((OptsV & any_view_options::input) == any_view_options::input, "any_view must model input_range");
+    static_assert(bool(OptsV & any_view_options::input), "any_view must model input_range");
 
     using iterator_concept = decltype(detail::get_iter_concept<OptsV>());
     using iterator         = detail::any_iterator<iterator_concept, ElementT, RefT, RValueRefT, DiffT>;
@@ -31,6 +31,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     }
 
   public:
+    // [range.any.ctor]
     template <class RangeT>
         requires(not std::same_as<std::remove_cvref_t<RangeT>, any_view> and
                  ext_any_compatible_viewable_range<RangeT, any_view>)
@@ -49,6 +50,9 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
 
     constexpr any_view& operator=(any_view&&) noexcept = default;
 
+    constexpr ~any_view() = default;
+
+    // [range.any.access]
     [[nodiscard]] constexpr iterator begin() { return view_ptr->begin(); }
 
     [[nodiscard]] constexpr sentinel end() { return std::default_sentinel; }
@@ -58,6 +62,11 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     {
         return view_ptr->size();
     }
+
+    // [range.any.swap]
+    constexpr void swap(any_view& other) noexcept { std::swap(view_ptr, other.view_ptr); }
+
+    constexpr friend void swap(any_view& lhs, any_view& rhs) noexcept { return lhs.swap(rhs); }
 };
 
 } // namespace beman::any_view
