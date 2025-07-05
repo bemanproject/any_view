@@ -11,7 +11,7 @@
   // answer.
   #if (_MSC_VER)
     #define BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS() [[msvc::no_unique_address]]
-  #else 
+  #else
     #define BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS() [[no_unique_address]]
   #endif
 #endif
