@@ -3,6 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_ANY_VIEW_HPP
 #define BEMAN_ANY_VIEW_ANY_VIEW_HPP
 
+#include <beman/any_view/detail/default_view.hpp>
 #include <beman/any_view/detail/view_adaptor.hpp>
 
 namespace beman::any_view {
@@ -38,17 +39,24 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     constexpr any_view(RangeT&& range)
         : view_ptr(get_in_place_adaptor_type<RangeT>(), std::views::all(std::forward<RangeT>(range))) {}
 
+    constexpr any_view() noexcept : any_view(detail::default_view<ElementT, RefT, RValueRefT, DiffT>{}) {}
+
     constexpr any_view(const any_view&)
         requires(bool(OptsV& any_view_options::copyable))
     = default;
 
-    constexpr any_view(any_view&&) noexcept = default;
+    constexpr any_view(any_view&& other) noexcept : any_view() { swap(other); }
 
     constexpr any_view& operator=(const any_view&)
         requires(bool(OptsV& any_view_options::copyable))
     = default;
 
-    constexpr any_view& operator=(any_view&&) noexcept = default;
+    constexpr any_view& operator=(any_view&& other) noexcept {
+        view_ptr = {get_in_place_adaptor_type<detail::default_view<ElementT, RefT, RValueRefT, DiffT>>(),
+                    detail::default_view<ElementT, RefT, RValueRefT, DiffT>{}};
+        swap(other);
+        return *this;
+    }
 
     constexpr ~any_view() = default;
 

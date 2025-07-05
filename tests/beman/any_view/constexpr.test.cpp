@@ -84,3 +84,23 @@ TEST(ConstexprTest, reference_lifetime) {
 #endif
     EXPECT_TRUE(set_front(std::vector{7}, 42));
 }
+
+constexpr auto is_empty(any_view<int, forward> view) { return view.empty(); }
+
+TEST(ConstexprTest, default_construct) {
+    static_assert(is_empty({}));
+
+    EXPECT_TRUE(is_empty({}));
+}
+
+TEST(ConstexprTest, moved_from) {
+    const auto make_moved_from = [] {
+        any_view<int, forward> view  = std::vector<int>{42};
+        auto                   other = std::move(view);
+        return view;
+    };
+
+    static_assert(is_empty(make_moved_from()));
+
+    EXPECT_TRUE(is_empty(make_moved_from()));
+}
