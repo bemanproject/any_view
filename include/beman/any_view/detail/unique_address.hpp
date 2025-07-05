@@ -3,6 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_UNIQUE_ADDRESS_HPP
 #define BEMAN_ANY_VIEW_DETAIL_UNIQUE_ADDRESS_HPP
 
+//clang-format off
 #if !defined(__has_include) || __has_include(<beman/any_view/config.hpp>)
 #include <beman/any_view/config.hpp>
 #else
@@ -15,5 +16,6 @@
     #define BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS() [[no_unique_address]]
   #endif
 #endif
+//clang-format on
 
 #endif
