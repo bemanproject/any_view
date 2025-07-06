@@ -3,7 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_VIEW_ADAPTOR_HPP
 #define BEMAN_ANY_VIEW_DETAIL_VIEW_ADAPTOR_HPP
 
-#include <beman/any_view/detail/unique_address.hpp>
+#include <beman/any_view/detail/no_unique_address.hpp>
 #include <beman/any_view/detail/view_interface.hpp>
 
 namespace beman::any_view::detail {
