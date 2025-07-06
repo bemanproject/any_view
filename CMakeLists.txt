@@ -29,27 +29,6 @@ option(
     ${PROJECT_IS_TOP_LEVEL}
 )
 
-# [CPP.NO_FLAG_FORKING]
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set(BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS
-        "[[msvc::no_unique_address]]"
-        CACHE STRING
-        "Name of C++ attribute for empty base optimization of data members"
-    )
-else()
-    set(BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS
-        "[[no_unique_address]]"
-        CACHE STRING
-        "Name of C++ attribute for empty base optimization of data members"
-    )
-endif()
-
-configure_file(
-    include/beman/any_view/config.hpp.in
-    include/beman/any_view/config.hpp
-    @ONLY
-)
-
 # [CMAKE.LIBRARY_NAME]
 add_library(beman.any_view INTERFACE)
 # [CMAKE.LIBRARY_ALIAS]
@@ -68,10 +47,8 @@ target_sources(
     PUBLIC
         FILE_SET HEADERS
         BASE_DIRS #
-            ${CMAKE_CURRENT_BINARY_DIR}/include
             include
         FILES
-            ${CMAKE_CURRENT_BINARY_DIR}/include/beman/any_view/config.hpp
             include/beman/any_view/detail/any_iterator.hpp
             include/beman/any_view/detail/concepts.hpp
             include/beman/any_view/detail/intrusive_small_ptr.hpp
