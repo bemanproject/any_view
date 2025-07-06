@@ -5,7 +5,7 @@
 
 #include <beman/any_view/detail/concepts.hpp>
 #include <beman/any_view/detail/iterator_interface.hpp>
-#include <beman/any_view/detail/unique_address.hpp>
+#include <beman/any_view/detail/no_unique_address.hpp>
 #include <beman/any_view/detail/utility.hpp>
 
 #include <compare>

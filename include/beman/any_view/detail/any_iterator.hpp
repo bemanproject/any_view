@@ -6,7 +6,7 @@
 #include <beman/any_view/concepts.hpp>
 #include <beman/any_view/detail/intrusive_small_ptr.hpp>
 #include <beman/any_view/detail/iterator_adaptor.hpp>
-#include <beman/any_view/detail/unique_address.hpp>
+#include <beman/any_view/detail/no_unique_address.hpp>
 
 namespace beman::any_view::detail {
 
