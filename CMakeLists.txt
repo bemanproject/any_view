@@ -51,10 +51,13 @@ target_sources(
         FILES
             include/beman/any_view/detail/any_iterator.hpp
             include/beman/any_view/detail/concepts.hpp
+            include/beman/any_view/detail/default_view.hpp
             include/beman/any_view/detail/intrusive_small_ptr.hpp
             include/beman/any_view/detail/iterator_adaptor.hpp
             include/beman/any_view/detail/iterator_interface.hpp
+            include/beman/any_view/detail/no_unique_address.hpp
             include/beman/any_view/detail/type_traits.hpp
+            include/beman/any_view/detail/unreachable_iterator.hpp
             include/beman/any_view/detail/utility.hpp
             include/beman/any_view/detail/view_adaptor.hpp
             include/beman/any_view/detail/view_interface.hpp
