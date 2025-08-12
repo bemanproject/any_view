@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 **Implements**: `std::ranges::any_view` proposed in [any_view (P3411)](https://wg21.link/p3411).
 
-**Status**: [Under development and not yet ready for production use.](https://github.com/bemanproject/beman/blob/main/docs/BEMAN_LIBRARY_MATURITY_MODEL.md#under-development-and-not-yet-ready-for-production-use)
+**Status**: [Under development and not yet ready for production use.](https://github.com/bemanproject/beman/blob/main/docs/beman_library_maturity_model.md#under-development-and-not-yet-ready-for-production-use)
 
 **Featured**: [C++Now 2025](https://schedule.cppnow.org/wp-content/uploads/2025/03/A-View-for-Any-Occasion.pdf)
 
