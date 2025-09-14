@@ -1,19 +1,20 @@
+# beman.any_view: A generalized type-erased view with customizable properties
+
 <!--
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-# beman.any_view: A generalized type-erased view with customizable properties
-
-![Library Status](https://raw.githubusercontent.com/bemanproject/beman/refs/heads/main/images/badges/beman_badge-beman_library_under_development.svg)
-![Continuous Integration Tests](https://github.com/bemanproject/any_view/actions/workflows/ci_tests.yml/badge.svg)
-![Lint Check (pre-commit)](https://github.com/bemanproject/any_view/actions/workflows/pre-commit.yml/badge.svg)
-![Standard Target](https://github.com/bemanproject/beman/blob/main/images/badges/cpp29.svg)
+![Library Status](https://raw.githubusercontent.com/bemanproject/beman/refs/heads/main/images/badges/beman_badge-beman_library_under_development.svg) ![Continuous Integration Tests](https://github.com/bemanproject/any_view/actions/workflows/ci_tests.yml/badge.svg) ![Lint Check (pre-commit)](https://github.com/bemanproject/any_view/actions/workflows/pre-commit.yml/badge.svg) [![Coverage](https://coveralls.io/repos/github/bemanproject/any_view/badge.svg?branch=main)](https://coveralls.io/github/bemanproject/any_view?branch=main) ![Standard Target](https://github.com/bemanproject/beman/blob/main/images/badges/cpp29.svg) [![Compiler Explorer Example](https://img.shields.io/badge/Try%20it%20on%20Compiler%20Explorer-grey?logo=compilerexplorer&logoColor=67c52a)](https://godbolt.org/z/f6To9fKs4)
 
 **Implements**: `std::ranges::any_view` proposed in [any_view (P3411)](https://wg21.link/p3411).
 
 **Status**: [Under development and not yet ready for production use.](https://github.com/bemanproject/beman/blob/main/docs/beman_library_maturity_model.md#under-development-and-not-yet-ready-for-production-use)
 
 **Featured**: [C++Now 2025](https://schedule.cppnow.org/wp-content/uploads/2025/03/A-View-for-Any-Occasion.pdf)
+
+## License
+
+`beman.any_view` is licensed under the Apache License v2.0 with LLVM Exceptions.
 
 ## Motivation
 
@@ -65,34 +66,6 @@ Full code can be found in [tests/beman/any_view/constexpr.test.cpp](tests/beman/
 `std::ranges::any_view` is a class template that provides a type-erased interface for `std::ranges::view`.
 It may additionally model other concepts like `std::ranges::contiguous_range`, `std::ranges::sized_range`,
 `std::ranges::borrowed_range`, and `std::copyable` depending on the instantiation.
-
-## Integrate beman.any_view into your project
-
-<details>
-<summary>Use <code>beman.any_view</code> directly from CMake</summary>
-
-For CMake based projects, you can include it as a dependency using the `FetchContent` module:
-
-```cmake
-include(FetchContent)
-
-FetchContent_Declare(
-    beman.any_view
-    GIT_REPOSITORY https://github.com/bemanproject/any_view.git
-    GIT_TAG main
-    EXCLUDE_FROM_ALL
-)
-FetchContent_MakeAvailable(beman.any_view)
-```
-
-You will also need to add `beman::any_view` to the link libraries of any targets that include `beman/any_view/*.hpp` in
-their source or header files:
-
-```cmake
-target_link_libraries(yourlib PUBLIC beman::any_view)
-```
-
-</details>
 
 ## Reference
 
@@ -351,6 +324,161 @@ OVERALL_GEOMEAN                                   -0.1255         -0.1255
 
 </details>
 
-## Contributing
+### Configure and Build the Project Using CMake Presets
 
-Please do! Issues and pull requests are appreciated.
+This project recommends using [CMake Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html)
+to configure, build and test the project.
+Appropriate presets for major compilers have been included by default.
+You can use `cmake --list-presets` to see all available presets.
+
+Here is an example to invoke the `gcc-debug` preset.
+
+```shell
+cmake --workflow --preset gcc-debug
+```
+
+Generally, there are two kinds of presets, `debug` and `release`.
+
+The `debug` presets are designed to aid development, so it has debugging
+instrumentation enabled and many sanitizers enabled.
+
+> [!NOTE]
+>
+> The sanitizers that are enabled vary from compiler to compiler.
+> See the toolchain files under ([`cmake`](cmake/)) to determine the exact configuration used for each preset.
+
+The `release` presets are designed for production use, and
+consequently have the highest optimization turned on (e.g. `O3`).
+
+### Configure and Build Manually
+
+If the presets are not suitable for your use-case, a traditional CMake
+invocation will provide more configurability.
+
+To configure, build and test the project with extra arguments,
+you can run this set of commands.
+
+```bash
+cmake \
+  -B build \
+  -S . \
+  -DCMAKE_CXX_STANDARD=20 \
+  -DCMAKE_PREFIX_PATH=./infra/cmake \
+  # Your extra arguments here.
+cmake --build build
+ctest --test-dir build
+```
+
+> [!IMPORTANT]
+>
+> Beman projects are
+> [passive projects](https://github.com/bemanproject/beman/blob/main/docs/beman_standard.md#cmake),
+> therefore,
+> you will need to specify the C++ version via `CMAKE_CXX_STANDARD`
+> when manually configuring the project.
+
+
+> [!NOTE]
+>
+> You only need to set `CMAKE_PREFIX_PATH` if you want to use the
+> CMake modules provided in the `infra/` directory of this repository.
+> If you have those modules packaged in your environment, you can install
+> them with your package manager and omit this argument.
+
+### Finding and Fetching GTest and Google Benchmark from GitHub
+
+If you do not have these test dependencies installed on your development system, you may
+optionally configure this project to download known-compatible releases from source and
+build them as well.
+
+Example commands:
+
+```shell
+cmake -B build -S . \
+    -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=./infra/cmake/use-fetch-content.cmake \
+    -DCMAKE_CXX_STANDARD=20
+cmake --build build --target all
+cmake --build build --target test
+```
+
+The precise versions that will be used is maintained in
+`./lockfile.json`.
+
+### Project specific configure arguments
+
+Project-specific options are prefixed with `BEMAN_ANY_VIEW`.
+You can see the list of available options with:
+
+```bash
+cmake -LH -S . -B build | grep "BEMAN_ANY_VIEW" -C 2
+```
+
+<details>
+
+<summary> Details of CMake arguments. </summary>
+
+#### `BEMAN_ANY_VIEW_BUILD_TESTS`
+
+Enable building tests and test infrastructure. Default: ON.
+Values: `{ ON, OFF }`.
+
+You can configure the project to have this option turned off via:
+
+```bash
+cmake -B build -S . -DCMAKE_CXX_STANDARD=20 -DBEMAN_ANY_VIEW_BUILD_TESTS=OFF
+```
+
+> [!TIP]
+> Because this project requires GoogleTest for running tests,
+> disabling `BEMAN_ANY_VIEW_BUILD_TESTS` avoids the project from
+> cloning GoogleTest from GitHub.
+
+#### `BEMAN_ANY_VIEW_BUILD_EXAMPLES`
+
+Enable building examples. Default: ON. Values: { ON, OFF }.
+
+
+#### `BEMAN_ANY_VIEW_INSTALL_CONFIG_FILE_PACKAGE`
+
+Enable installing the CMake config file package. Default: ON.
+Values: { ON, OFF }.
+
+This is required so that users of `beman.any_view` can use
+`find_package(beman.any_view)` to locate the library.
+
+</details>
+
+## Integrate beman.any_view into your project
+
+To use `beman.any_view` in your C++ project,
+include an appropriate `beman.any_view` header from your source code.
+
+```c++
+#include <beman/any_view/any_view.hpp>
+```
+
+> [!NOTE]
+>
+> `beman.any_view` headers are to be included with the `beman/any_view/` prefix.
+> Altering include search paths to spell the include target another way (e.g.
+> `#include <any_view.hpp>`) is unsupported.
+
+The process for incorporating `beman.any_view` into your project depends on the
+build system being used. Instructions for CMake are provided in following sections.
+
+### Incorporating `beman.any_view` into your project with CMake
+
+For CMake based projects,
+you will need to use the `beman.any_view` CMake module
+to define the `beman::any_view` CMake target:
+
+```cmake
+find_package(beman.any_view REQUIRED)
+```
+
+You will also need to add `beman::any_view` to the link libraries of
+any libraries or executables that include `beman.any_view` headers.
+
+```cmake
+target_link_libraries(yourlib PUBLIC beman::any_view)
+```
