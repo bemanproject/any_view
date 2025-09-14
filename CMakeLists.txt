@@ -7,6 +7,7 @@ project(
     beman.any_view
     DESCRIPTION "A generalized type-erased view with customizable properties"
     LANGUAGES CXX
+    VERSION 1.0.0
 )
 
 # [CMAKE.SKIP_TESTS]
@@ -20,12 +21,6 @@ option(
 option(
     BEMAN_ANY_VIEW_BUILD_EXAMPLES
     "Enable building examples. Default: ${PROJECT_IS_TOP_LEVEL}. Values: { ON, OFF }."
-    ${PROJECT_IS_TOP_LEVEL}
-)
-
-option(
-    BEMAN_ANY_VIEW_INSTALL_CONFIG_FILE_PACKAGE
-    "Enable creating and installing a CMake config-file package. Default: ${PROJECT_IS_TOP_LEVEL}. Values: { ON, OFF }."
     ${PROJECT_IS_TOP_LEVEL}
 )
 
@@ -86,23 +81,8 @@ target_sources(
             include/beman/any_view/concepts.hpp
 )
 
-include(GNUInstallDirs)
-
-install(
-    #
-    TARGETS beman.any_view
-    EXPORT beman.any_view-targets
-    FILE_SET HEADERS
-)
-
-if(BEMAN_ANY_VIEW_INSTALL_CONFIG_FILE_PACKAGE)
-    install(
-        EXPORT beman.any_view-targets
-        FILE beman.any_view-config.cmake
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/beman.any_view
-        NAMESPACE beman::
-    )
-endif()
+find_package(beman-install-library REQUIRED)
+beman_install_library(beman.any_view)
 
 function(beman_add_executable)
     set(options)

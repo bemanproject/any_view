@@ -1,0 +1,16 @@
+{
+  "dependencies": [
+    {
+      "name": "googletest",
+      "package_name": "GTest",
+      "git_repository": "https://github.com/google/googletest.git",
+      "git_tag": "6910c9d9165801d8827d628cb72eb7ea9dd538c5"
+    },
+    {
+      "name": "benchmark",
+      "package_name": "benchmark",
+      "git_repository": "https://github.com/google/benchmark.git",
+      "git_tag": "v1.9.4"
+    }
+  ]
+}
