@@ -14,7 +14,7 @@ template <class ElementT,
           class RValueRefT       = detail::rvalue_ref_t<RefT>,
           class DiffT            = std::ptrdiff_t>
 class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, RefT, RValueRefT, DiffT>> {
-    static_assert(bool(OptsV & any_view_options::input), "any_view must model input_range");
+    static_assert((OptsV & any_view_options::input) == any_view_options::input, "any_view must model input_range");
 
     using iterator_concept = decltype(detail::get_iter_concept<OptsV>());
     using iterator         = detail::any_iterator<iterator_concept, ElementT, RefT, RValueRefT, DiffT>;
@@ -42,13 +42,13 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     constexpr any_view() noexcept : any_view(detail::default_view<ElementT, RefT, RValueRefT, DiffT>{}) {}
 
     constexpr any_view(const any_view&)
-        requires(bool(OptsV& any_view_options::copyable))
+        requires((OptsV & any_view_options::copyable) == any_view_options::copyable)
     = default;
 
     constexpr any_view(any_view&& other) noexcept : any_view() { swap(other); }
 
     constexpr any_view& operator=(const any_view&)
-        requires(bool(OptsV& any_view_options::copyable))
+        requires((OptsV & any_view_options::copyable) == any_view_options::copyable)
     = default;
 
     constexpr any_view& operator=(any_view&& other) noexcept {
@@ -66,9 +66,15 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     [[nodiscard]] constexpr sentinel end() { return std::default_sentinel; }
 
     [[nodiscard]] constexpr size_type size() const
-        requires(bool(OptsV& any_view_options::sized))
+        requires((OptsV & any_view_options::sized) == any_view_options::sized)
     {
         return view_ptr->size();
+    }
+
+    [[nodiscard]] constexpr size_type reserve_hint() const
+        requires((OptsV & any_view_options::approximately_sized) == any_view_options::approximately_sized)
+    {
+        return view_ptr->reserve_hint();
     }
 
     // [range.any.swap]
@@ -82,6 +88,6 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
 template <class ElementT, beman::any_view::any_view_options OptsV, class RefT, class RValueRefT, class DiffT>
 inline constexpr bool
     std::ranges::enable_borrowed_range<beman::any_view::any_view<ElementT, OptsV, RefT, RValueRefT, DiffT>> =
-        bool(OptsV & beman::any_view::any_view_options::borrowed);
+        (OptsV & beman::any_view::any_view_options::borrowed) == beman::any_view::any_view_options::borrowed;
 
 #endif // BEMAN_ANY_VIEW_ANY_VIEW_HPP

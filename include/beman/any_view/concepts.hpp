@@ -5,6 +5,7 @@
 
 #include <beman/any_view/detail/concepts.hpp>
 #include <beman/any_view/detail/type_traits.hpp>
+#include <beman/any_view/reserve_hint.hpp>
 
 #include <ranges>
 
@@ -21,7 +22,12 @@ concept any_compatible_iterator =
     std::convertible_to<std::iter_difference_t<IteratorT>, std::iter_difference_t<AnyIteratorT>>;
 
 template <class RangeT, class AnyViewT>
-concept any_compatible_sized_range = not std::ranges::sized_range<AnyViewT> or std::ranges::sized_range<RangeT>;
+concept any_compatible_approximately_sized_range =
+    not approximately_sized_range<AnyViewT> or approximately_sized_range<RangeT>;
+
+template <class RangeT, class AnyViewT>
+concept any_compatible_sized_range = any_compatible_approximately_sized_range<RangeT, AnyViewT> and
+                                     (not std::ranges::sized_range<AnyViewT> or std::ranges::sized_range<RangeT>);
 
 template <class RangeT, class AnyViewT>
 concept any_compatible_borrowed_range =

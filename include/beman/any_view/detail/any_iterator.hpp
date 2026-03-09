@@ -10,8 +10,26 @@
 
 namespace beman::any_view::detail {
 
+template <class IterConceptT, bool IsRefV>
+struct iterator_category_type {
+    using iterator_category = std::input_iterator_tag;
+};
+
+template <bool IsRefV>
+struct iterator_category_type<std::input_iterator_tag, IsRefV> {};
+
+template <std::derived_from<std::forward_iterator_tag> IterConceptT>
+struct iterator_category_type<IterConceptT, true> {
+    using iterator_category = IterConceptT;
+};
+
+template <>
+struct iterator_category_type<std::contiguous_iterator_tag, true> {
+    using iterator_category = std::random_access_iterator_tag;
+};
+
 template <class IterConceptT, class ElementT, class RefT, class RValueRefT, class DiffT>
-class any_iterator {
+class any_iterator : public iterator_category_type<IterConceptT, std::is_reference_v<RefT>> {
     using reference        = RefT;
     using rvalue_reference = RValueRefT;
     using pointer          = std::add_pointer_t<RefT>;
@@ -39,7 +57,7 @@ class any_iterator {
 
   public:
     using iterator_concept = IterConceptT;
-    using element_type     = ElementT;
+    using value_type       = std::remove_cv_t<ElementT>;
     using difference_type  = DiffT;
 
     template <detail::any_compatible_iterator<any_iterator> IteratorT, std::sentinel_for<IteratorT> SentinelT>
