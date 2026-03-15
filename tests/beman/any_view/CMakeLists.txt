@@ -1,23 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-include(FetchContent)
-# Fetch Benchmark
-FetchContent_Declare(
-    benchmark
-    GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG v1.9.2
-    EXCLUDE_FROM_ALL
-)
+find_package(GTest REQUIRED)
 set(BENCHMARK_ENABLE_TESTING OFF)
-# Fetch GoogleTest
-FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.14.0
-    EXCLUDE_FROM_ALL
-)
-set(INSTALL_GTEST OFF) # Disable GoogleTest installation
-FetchContent_MakeAvailable(benchmark googletest)
+find_package(benchmark REQUIRED)
 
 include(GoogleTest)
 
