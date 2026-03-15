@@ -84,6 +84,7 @@ target_sources(
             include/beman/any_view/any_view_options.hpp
             include/beman/any_view/any_view.hpp
             include/beman/any_view/concepts.hpp
+            include/beman/any_view/reserve_hint.hpp
 )
 
 include(GNUInstallDirs)

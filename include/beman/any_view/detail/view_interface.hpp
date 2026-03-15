@@ -25,6 +25,8 @@ class view_interface {
 
     [[nodiscard]] virtual constexpr auto size() const -> size_type = 0;
 
+    [[nodiscard]] virtual constexpr auto reserve_hint() const -> size_type = 0;
+
     virtual constexpr ~view_interface() noexcept = default;
 };
 

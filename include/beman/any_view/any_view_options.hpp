@@ -6,14 +6,15 @@
 namespace beman::any_view {
 
 enum class any_view_options {
-    input         = 0b00000001,
-    forward       = 0b00000011,
-    bidirectional = 0b00000111,
-    random_access = 0b00001111,
-    contiguous    = 0b00011111,
-    sized         = 0b00100000,
-    borrowed      = 0b01000000,
-    copyable      = 0b10000000,
+    input               = 0b000000001,
+    forward             = 0b000000011,
+    bidirectional       = 0b000000111,
+    random_access       = 0b000001111,
+    contiguous          = 0b000011111,
+    approximately_sized = 0b000100000,
+    sized               = 0b001100000,
+    borrowed            = 0b010000000,
+    copyable            = 0b100000000,
 };
 
 [[nodiscard]] constexpr any_view_options operator|(any_view_options l, any_view_options r) noexcept {

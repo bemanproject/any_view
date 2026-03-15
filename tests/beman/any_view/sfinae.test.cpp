@@ -15,6 +15,8 @@ TEST(SfinaeTest, istream_view) {
     static_assert(std::constructible_from<any_view<int, input>, std::ranges::istream_view<int>>);
     static_assert(not std::constructible_from<any_view<int, forward>, std::ranges::istream_view<int>>);
     static_assert(std::constructible_from<any_view<int, input | copyable>, std::ranges::istream_view<int>>);
+    static_assert(
+        not std::constructible_from<any_view<int, input | approximately_sized>, std::ranges::istream_view<int>>);
     static_assert(not std::constructible_from<any_view<int, input | sized>, std::ranges::istream_view<int>>);
     static_assert(not std::constructible_from<any_view<int, input | borrowed>, std::ranges::istream_view<int>>);
 
@@ -26,6 +28,7 @@ TEST(SfinaeTest, istream_view) {
 TEST(SfinaeTest, forward_list) {
     static_assert(std::constructible_from<any_view<int, forward>, std::forward_list<int>>);
     static_assert(not std::constructible_from<any_view<int, bidirectional>, std::forward_list<int>>);
+    static_assert(not std::constructible_from<any_view<int, input | approximately_sized>, std::forward_list<int>>);
     static_assert(not std::constructible_from<any_view<int, input | sized>, std::forward_list<int>>);
     static_assert(not std::constructible_from<any_view<int, input | borrowed>, std::forward_list<int>>);
     static_assert(not std::constructible_from<any_view<int, input | copyable>, std::forward_list<int>>);
@@ -37,6 +40,7 @@ TEST(SfinaeTest, forward_list) {
 TEST(SfinaeTest, list) {
     static_assert(std::constructible_from<any_view<int, bidirectional>, std::list<int>>);
     static_assert(not std::constructible_from<any_view<int, random_access>, std::list<int>>);
+    static_assert(std::constructible_from<any_view<int, input | approximately_sized>, std::list<int>>);
     static_assert(std::constructible_from<any_view<int, input | sized>, std::list<int>>);
     static_assert(not std::constructible_from<any_view<int, input | borrowed>, std::list<int>>);
     static_assert(not std::constructible_from<any_view<int, input | copyable>, std::list<int>>);
@@ -48,6 +52,7 @@ TEST(SfinaeTest, list) {
 TEST(SfinaeTest, deque) {
     static_assert(std::constructible_from<any_view<int, random_access>, std::deque<int>>);
     static_assert(not std::constructible_from<any_view<int, contiguous>, std::deque<int>>);
+    static_assert(std::constructible_from<any_view<int, input | approximately_sized>, std::deque<int>>);
     static_assert(std::constructible_from<any_view<int, input | sized>, std::deque<int>>);
     static_assert(not std::constructible_from<any_view<int, input | borrowed>, std::deque<int>>);
     static_assert(not std::constructible_from<any_view<int, input | copyable>, std::deque<int>>);
@@ -58,6 +63,7 @@ TEST(SfinaeTest, deque) {
 
 TEST(SfinaeTest, vector) {
     static_assert(std::constructible_from<any_view<int, contiguous>, std::vector<int>>);
+    static_assert(std::constructible_from<any_view<int, input | approximately_sized>, std::vector<int>>);
     static_assert(std::constructible_from<any_view<int, input | sized>, std::vector<int>>);
     static_assert(not std::constructible_from<any_view<int, input | borrowed>, std::vector<int>>);
     static_assert(not std::constructible_from<any_view<int, input | copyable>, std::vector<int>>);
@@ -68,6 +74,7 @@ TEST(SfinaeTest, vector) {
 
 TEST(SfinaeTest, vector_of_bool) {
     static_assert(std::constructible_from<any_view<bool, random_access, bool>, std::vector<bool>>);
+    static_assert(std::constructible_from<any_view<bool, input | approximately_sized, bool>, std::vector<bool>>);
     static_assert(std::constructible_from<any_view<bool, input | sized, bool>, std::vector<bool>>);
     static_assert(not std::constructible_from<any_view<bool, input | borrowed, bool>, std::vector<bool>>);
     static_assert(not std::constructible_from<any_view<bool, input | copyable, bool>, std::vector<bool>>);
@@ -78,6 +85,7 @@ TEST(SfinaeTest, vector_of_bool) {
 
 TEST(SfinaeTest, span) {
     static_assert(std::constructible_from<any_view<int, contiguous>, std::span<int>>);
+    static_assert(std::constructible_from<any_view<int, input | approximately_sized>, std::span<int>>);
     static_assert(std::constructible_from<any_view<int, input | sized>, std::span<int>>);
     static_assert(std::constructible_from<any_view<int, input | borrowed>, std::span<int>>);
     static_assert(std::constructible_from<any_view<int, input | copyable>, std::span<int>>);

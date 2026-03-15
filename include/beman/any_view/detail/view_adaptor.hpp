@@ -5,6 +5,7 @@
 
 #include <beman/any_view/detail/unique_address.hpp>
 #include <beman/any_view/detail/view_interface.hpp>
+#include <beman/any_view/reserve_hint.hpp>
 
 namespace beman::any_view::detail {
 
@@ -59,6 +60,14 @@ class view_adaptor final : public view_interface<IterConceptT, ElementT, RefT, R
     [[nodiscard]] constexpr auto size() const -> size_type override {
         if constexpr (std::ranges::sized_range<ViewT>) {
             return std::ranges::size(view);
+        } else {
+            unreachable();
+        }
+    }
+
+    [[nodiscard]] constexpr auto reserve_hint() const -> size_type override {
+        if constexpr (beman::any_view::approximately_sized_range<ViewT>) {
+            return beman::any_view::reserve_hint(view);
         } else {
             unreachable();
         }
