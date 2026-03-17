@@ -42,7 +42,7 @@ class any_iterator : public iterator_category_type<IterConceptT, std::is_referen
 
     // inplace storage sufficient for a vtable pointer and two pointers
     intrusive_small_ptr<interface_type, 3 * sizeof(void*)> iterator_ptr;
-    BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS() cache_type cache;
+    BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS cache_type            cache;
 
     template <class IteratorT, class SentinelT>
     static consteval auto get_in_place_adaptor_type() {

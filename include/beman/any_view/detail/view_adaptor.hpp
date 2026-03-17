@@ -14,7 +14,7 @@ class view_adaptor final : public view_interface<IterConceptT, ElementT, RefT, R
     using iterator  = detail::any_iterator<IterConceptT, ElementT, RefT, RValueRefT, DiffT>;
     using size_type = std::make_unsigned_t<DiffT>;
 
-    BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS() ViewT view;
+    BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS ViewT view;
 
     static constexpr auto get_noexcept() { return std::is_nothrow_move_constructible_v<ViewT>; }
 

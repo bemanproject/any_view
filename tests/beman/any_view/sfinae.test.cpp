@@ -90,3 +90,19 @@ TEST(SfinaeTest, span) {
     static_assert(std::constructible_from<any_view<int, input | borrowed>, std::span<int>>);
     static_assert(std::constructible_from<any_view<int, input | copyable>, std::span<int>>);
 }
+
+TEST(SfinaeTest, iota) {
+#ifdef __has_builtin
+#if __has_builtin(__reference_converts_from_temporary)
+    // Prevention of dangling references requires C++23 compiler support
+    static_assert(not std::constructible_from<any_view<const int>, std::ranges::iota_view<int>>);
+#endif // __has_builtin(__reference_converts_from_temporary)
+#endif // __has_builtin
+    static_assert(std::constructible_from<any_view<int, random_access, int>, std::ranges::iota_view<int>>);
+    static_assert(
+        not std::constructible_from<any_view<int, input | approximately_sized, int>, std::ranges::iota_view<int>>);
+    static_assert(not std::constructible_from<any_view<int, input | sized, int>, std::ranges::iota_view<int>>);
+    static_assert(std::constructible_from<any_view<int, input | sized, int>, std::ranges::iota_view<int, int>>);
+    static_assert(std::constructible_from<any_view<int, input | borrowed, int>, std::ranges::iota_view<int>>);
+    static_assert(std::constructible_from<any_view<int, input | copyable, int>, std::ranges::iota_view<int>>);
+}

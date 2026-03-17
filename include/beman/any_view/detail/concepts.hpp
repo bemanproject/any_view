@@ -3,6 +3,8 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_CONCEPTS_HPP
 #define BEMAN_ANY_VIEW_DETAIL_CONCEPTS_HPP
 
+#include <beman/any_view/detail/reference_converts_from_temporary.hpp>
+
 #include <iterator>
 
 namespace beman::any_view::detail {
@@ -32,6 +34,10 @@ concept any_compatible_contiguous_iterator =
     any_compatible_random_access_iterator<IterT, IterConceptT> and
     (not std::derived_from<IterConceptT, std::contiguous_iterator_tag> or std::contiguous_iterator<IterT>);
 
+template <class TempT, class RefT>
+concept convertible_to_borrowed =
+    std::convertible_to<TempT, RefT> and not reference_converts_from_temporary_v<RefT, TempT>;
+
 template <class PointerT, class AnyPointerT>
 concept uses_nonqualification_pointer_conversion =
     std::is_pointer_v<PointerT> and std::is_pointer_v<AnyPointerT> and
@@ -39,7 +45,7 @@ concept uses_nonqualification_pointer_conversion =
 
 template <class RefT, class AnyRefT, class IterConceptT = std::contiguous_iterator_tag>
 concept any_compatible_contiguous_reference =
-    std::convertible_to<RefT, AnyRefT> and
+    convertible_to_borrowed<RefT, AnyRefT> and
     (not std::derived_from<IterConceptT, std::contiguous_iterator_tag> or
      not uses_nonqualification_pointer_conversion<std::add_pointer_t<RefT>, std::add_pointer_t<AnyRefT>>);
 
