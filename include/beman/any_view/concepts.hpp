@@ -18,7 +18,7 @@ concept any_compatible_iterator =
     any_compatible_contiguous_reference<std::iter_reference_t<IteratorT>,
                                         std::iter_reference_t<AnyIteratorT>,
                                         iter_concept_t<AnyIteratorT>> and
-    std::convertible_to<std::iter_rvalue_reference_t<IteratorT>, std::iter_rvalue_reference_t<AnyIteratorT>> and
+    convertible_to_borrowed<std::iter_rvalue_reference_t<IteratorT>, std::iter_rvalue_reference_t<AnyIteratorT>> and
     std::convertible_to<std::iter_difference_t<IteratorT>, std::iter_difference_t<AnyIteratorT>>;
 
 template <class RangeT, class AnyViewT>

@@ -20,8 +20,8 @@ template <class ElementT,
           std::input_or_output_iterator IteratorT,
           std::sentinel_for<IteratorT>  SentinelT>
 class iterator_adaptor final : public iterator_interface<ElementT, RefT, RValueRefT, DiffT> {
-    BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS() IteratorT iterator;
-    BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS() SentinelT sentinel;
+    BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS IteratorT iterator;
+    BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS SentinelT sentinel;
 
     using iterator_interface = detail::iterator_interface<ElementT, RefT, RValueRefT, DiffT>;
     using pointer            = std::add_pointer_t<RefT>;
