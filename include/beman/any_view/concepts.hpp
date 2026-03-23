@@ -3,8 +3,8 @@
 #ifndef BEMAN_ANY_VIEW_CONCEPTS_HPP
 #define BEMAN_ANY_VIEW_CONCEPTS_HPP
 
+#include <beman/any_view/any_view_options.hpp>
 #include <beman/any_view/detail/concepts.hpp>
-#include <beman/any_view/detail/type_traits.hpp>
 #include <beman/any_view/reserve_hint.hpp>
 
 #include <ranges>
@@ -12,42 +12,42 @@
 namespace beman::any_view {
 namespace detail {
 
-template <class IteratorT, class AnyIteratorT>
+template <class IteratorT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
 concept any_compatible_iterator =
-    any_compatible_contiguous_iterator<IteratorT, iter_concept_t<AnyIteratorT>> and
-    any_compatible_contiguous_reference<std::iter_reference_t<IteratorT>,
-                                        std::iter_reference_t<AnyIteratorT>,
-                                        iter_concept_t<AnyIteratorT>> and
-    convertible_to_borrowed<std::iter_rvalue_reference_t<IteratorT>, std::iter_rvalue_reference_t<AnyIteratorT>> and
-    std::convertible_to<std::iter_difference_t<IteratorT>, std::iter_difference_t<AnyIteratorT>>;
+    any_compatible_contiguous_iterator<IteratorT, OptsV> and
+    any_compatible_contiguous_reference<std::iter_reference_t<IteratorT>, RefT, OptsV> and
+    convertible_to_borrowed<std::iter_rvalue_reference_t<IteratorT>, RValueRefT> and
+    std::convertible_to<std::iter_difference_t<IteratorT>, DiffT>;
 
-template <class RangeT, class AnyViewT>
+template <class RangeT, any_view_options OptsV>
 concept any_compatible_approximately_sized_range =
-    not approximately_sized_range<AnyViewT> or approximately_sized_range<RangeT>;
+    not flag_is_set<OptsV, any_view_options::approximately_sized> or approximately_sized_range<RangeT>;
 
-template <class RangeT, class AnyViewT>
-concept any_compatible_sized_range = any_compatible_approximately_sized_range<RangeT, AnyViewT> and
-                                     (not std::ranges::sized_range<AnyViewT> or std::ranges::sized_range<RangeT>);
+template <class RangeT, any_view_options OptsV>
+concept any_compatible_sized_range =
+    any_compatible_approximately_sized_range<RangeT, OptsV> and
+    (not flag_is_set<OptsV, any_view_options::sized> or std::ranges::sized_range<RangeT>);
 
-template <class RangeT, class AnyViewT>
+template <class RangeT, any_view_options OptsV>
 concept any_compatible_borrowed_range =
-    not std::ranges::borrowed_range<AnyViewT> or std::ranges::borrowed_range<RangeT>;
+    not flag_is_set<OptsV, any_view_options::borrowed> or std::ranges::borrowed_range<RangeT>;
 
-template <class ViewT, class AnyViewT>
-concept any_compatible_copyable_view = not std::copyable<AnyViewT> or std::copyable<ViewT>;
+template <class ViewT, any_view_options OptsV>
+concept any_compatible_copyable_view = not flag_is_set<OptsV, any_view_options::copyable> or std::copyable<ViewT>;
 
-template <class ViewT, class AnyViewT>
+template <class ViewT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
 concept any_compatible_view =
     std::ranges::view<ViewT> and
-    any_compatible_iterator<std::ranges::iterator_t<ViewT>, std::ranges::iterator_t<AnyViewT>> and
-    any_compatible_sized_range<ViewT, AnyViewT> and any_compatible_borrowed_range<ViewT, AnyViewT> and
-    any_compatible_copyable_view<ViewT, AnyViewT>;
+    any_compatible_iterator<std::ranges::iterator_t<ViewT>, RefT, RValueRefT, DiffT, OptsV> and
+    any_compatible_sized_range<ViewT, OptsV> and any_compatible_borrowed_range<ViewT, OptsV> and
+    any_compatible_copyable_view<ViewT, OptsV>;
 
 } // namespace detail
 
-template <class RangeT, class AnyViewT>
+template <class RangeT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
 concept ext_any_compatible_viewable_range =
-    std::ranges::viewable_range<RangeT> and detail::any_compatible_view<std::views::all_t<RangeT>, AnyViewT>;
+    std::ranges::viewable_range<RangeT> and
+    detail::any_compatible_view<std::views::all_t<RangeT>, RefT, RValueRefT, DiffT, OptsV>;
 
 } // namespace beman::any_view
 
