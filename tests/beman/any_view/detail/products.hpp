@@ -6,4 +6,4 @@
 
 #include <vector>
 
-auto generate_random_products(std::size_t count) -> std::vector<product_t>;
+std::vector<product_t> generate_random_products(std::size_t count);

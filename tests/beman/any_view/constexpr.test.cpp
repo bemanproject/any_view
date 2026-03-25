@@ -58,8 +58,8 @@ constexpr auto sort(any_view<int, random_access> view) {
 }
 
 TEST(ConstexprTest, sort_vector) {
-#ifdef __clang__
-    // ICE on GCC and MSVC
+#ifndef _MSC_VER
+    // ICE on MSVC
     static_assert(sort(std::vector{6, 8, 7, 5, 3, 0, 9}));
 #endif
     EXPECT_TRUE(sort(std::vector{6, 8, 7, 5, 3, 0, 9}));
@@ -103,4 +103,32 @@ TEST(ConstexprTest, moved_from) {
     static_assert(is_empty(make_moved_from()));
 
     EXPECT_TRUE(is_empty(make_moved_from()));
+}
+
+TEST(ConstexprTest, upcast) {
+    static_assert(std::is_nothrow_constructible_v<any_view<int, forward>, any_view<int, contiguous | sized>>);
+    static_assert(set_front(any_view<int, contiguous | sized>{std::vector<int>{7}}, 42));
+
+    EXPECT_TRUE(set_front(any_view<int, contiguous | sized>{std::vector<int>{7}}, 42));
+}
+
+TEST(ConstexprTest, add_const) {
+    constexpr auto make_add_const = [] {
+        any_view<const int, forward> view = any_view<int, forward>{std::vector<int>{7}};
+        return view;
+    };
+
+    static_assert(not std::is_nothrow_constructible_v<any_view<const int>, any_view<int>>);
+    static_assert(make_add_const().front() == 7);
+}
+
+TEST(ConstexprTest, copy_convert) {
+    constexpr auto make_copy_convert = [] {
+        any_view<int, forward | copyable, int> copyable_view  = std::views::iota(1, 5);
+        any_view<int, forward, int>            move_only_view = copyable_view;
+        return move_only_view;
+    };
+
+    static_assert(not std::is_nothrow_constructible_v<any_view<int, forward>, any_view<int, forward | copyable>&>);
+    static_assert(make_copy_convert().front() == 1);
 }

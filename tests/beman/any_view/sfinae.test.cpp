@@ -106,3 +106,9 @@ TEST(SfinaeTest, iota) {
     static_assert(std::constructible_from<any_view<int, input | borrowed, int>, std::ranges::iota_view<int>>);
     static_assert(std::constructible_from<any_view<int, input | copyable, int>, std::ranges::iota_view<int>>);
 }
+
+TEST(SfinaeTest, any_view) {
+    static_assert(std::constructible_from<any_view<int>, any_view<int, input | copyable>>);
+    // does not copy construct copyable any_view because std::views::all decays it
+    static_assert(not std::constructible_from<any_view<int>, const any_view<int, input | copyable>&>);
+}

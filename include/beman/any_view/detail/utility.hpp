@@ -5,7 +5,7 @@
 
 namespace beman::any_view::detail {
 
-[[noreturn]] inline auto unreachable() -> void {
+[[noreturn]] inline void unreachable() {
 #if defined(_MSC_VER)
     __assume(false);
 #elif defined(__GNUG__)

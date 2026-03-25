@@ -15,7 +15,7 @@ using names_t = beman::any_view::any_view<const std::string, beman::any_view::an
 struct database {
     std::vector<product_t> products;
 
-    auto get_products(query_t) const -> names_t;
+    names_t get_products(query_t) const;
 };
 
 } // namespace fused

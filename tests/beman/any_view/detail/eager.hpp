@@ -13,7 +13,7 @@ using names_t = std::vector<std::string_view>;
 struct database {
     std::vector<product_t> products;
 
-    auto get_products(query_t) const -> names_t;
+    names_t get_products(query_t) const;
 };
 
 } // namespace eager
