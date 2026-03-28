@@ -85,3 +85,11 @@ TEST(ConceptsTest, copyable_concept) {
     static_assert(not std::copyable<any_view<int, input | sized>>);
     static_assert(not std::copyable<any_view<int, input | borrowed>>);
 }
+
+TEST(ConceptsTest, common_view_concept) {
+    // These error through R6 because constraining constructor with viewable_range or copyable caused it to depend on
+    // itself. Important because view_interface member functions cannot be used if view constraint errors.
+    static_assert(std::ranges::view<std::ranges::common_view<any_view<int, forward>>>);
+    static_assert(not std::copyable<std::ranges::common_view<any_view<int, forward>>>);
+    static_assert(std::copyable<std::ranges::common_view<any_view<int, forward | copyable>>>);
+}

@@ -37,17 +37,29 @@ concept any_compatible_copyable_view = not flag_is_set<OptsV, any_view_options::
 
 template <class ViewT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
 concept any_compatible_view =
-    std::ranges::view<ViewT> and
     any_compatible_iterator<std::ranges::iterator_t<ViewT>, RefT, RValueRefT, DiffT, OptsV> and
-    any_compatible_sized_range<ViewT, OptsV> and any_compatible_borrowed_range<ViewT, OptsV> and
-    any_compatible_copyable_view<ViewT, OptsV>;
+    any_compatible_sized_range<ViewT, OptsV> and any_compatible_borrowed_range<ViewT, OptsV>;
+
+template <class RangeT>
+struct make_view {
+    using type = std::views::all_t<RangeT>;
+};
+
+template <class RangeT>
+    requires std::ranges::enable_view<std::remove_cvref_t<RangeT>>
+struct make_view<RangeT> {
+    using type = std::remove_cvref_t<RangeT>;
+};
+
+template <class RangeT>
+using make_view_t = typename make_view<RangeT>::type;
 
 } // namespace detail
 
 template <class RangeT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-concept ext_any_compatible_viewable_range =
-    std::ranges::viewable_range<RangeT> and
-    detail::any_compatible_view<std::views::all_t<RangeT>, RefT, RValueRefT, DiffT, OptsV>;
+concept ext_any_compatible_range =
+    std::ranges::range<RangeT> and
+    detail::any_compatible_view<detail::make_view_t<RangeT>, RefT, RValueRefT, DiffT, OptsV>;
 
 } // namespace beman::any_view
 
