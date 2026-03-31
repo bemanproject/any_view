@@ -150,10 +150,19 @@ struct polymorphic_traits<small_polymorphic<StorageT, PolicyTs...>> {
 };
 
 // dispatches to storage bindings for nullary policies
-template <std::derived_from<nullary_policy> PolicyT, class PolyT, class RetT, class... ArgsT, bool NoexceptV>
+template <std::derived_from<nullary_policy> PolicyT, class PolyT, class RetT, class... ArgsT>
     requires is_polymorphic_v<PolyT>
-struct impl<PolicyT, PolyT, RetT(ArgsT...) noexcept(NoexceptV)> {
-    [[nodiscard]] static constexpr RetT fn(const PolyT& self, ArgsT... args) noexcept(NoexceptV) {
+struct impl<PolicyT, PolyT, RetT(ArgsT...)> {
+    [[nodiscard]] static constexpr RetT fn(const PolyT& self, ArgsT... args) {
+        return polymorphic_traits<PolyT>::fn(self, std::in_place_type<PolicyT>)(std::forward<ArgsT>(args)...);
+    }
+};
+
+// dispatches to storage bindings for noexcept nullary policies
+template <std::derived_from<nullary_policy> PolicyT, class PolyT, class RetT, class... ArgsT>
+    requires is_polymorphic_v<PolyT>
+struct impl<PolicyT, PolyT, RetT(ArgsT...) noexcept> {
+    [[nodiscard]] static constexpr RetT fn(const PolyT& self, ArgsT... args) noexcept {
         return polymorphic_traits<PolyT>::fn(self, std::in_place_type<PolicyT>)(std::forward<ArgsT>(args)...);
     }
 };

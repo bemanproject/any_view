@@ -18,14 +18,17 @@ struct unary_policy {};
 struct symmetric_binary_policy {};
 
 // bindings for nullary policies
-template <std::derived_from<nullary_policy> PolicyT,
-          class AdaptorT,
-          class T,
-          class RetT,
-          class... ArgsT,
-          bool NoexceptV>
-struct impl<binding<PolicyT, AdaptorT>, T, RetT(ArgsT...) noexcept(NoexceptV)> {
-    [[nodiscard]] static constexpr RetT fn(ArgsT... args) noexcept(NoexceptV) {
+template <std::derived_from<nullary_policy> PolicyT, class AdaptorT, class T, class RetT, class... ArgsT>
+struct impl<binding<PolicyT, AdaptorT>, T, RetT(ArgsT...)> {
+    [[nodiscard]] static constexpr RetT fn(ArgsT... args) {
+        return detail::fn<PolicyT, AdaptorT>(std::forward<ArgsT>(args)...);
+    }
+};
+
+// bindings for noexcept nullary policies
+template <std::derived_from<nullary_policy> PolicyT, class AdaptorT, class T, class RetT, class... ArgsT>
+struct impl<binding<PolicyT, AdaptorT>, T, RetT(ArgsT...) noexcept> {
+    [[nodiscard]] static constexpr RetT fn(ArgsT... args) noexcept {
         return detail::fn<PolicyT, AdaptorT>(std::forward<ArgsT>(args)...);
     }
 };
