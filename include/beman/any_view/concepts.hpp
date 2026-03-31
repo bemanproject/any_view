@@ -59,7 +59,9 @@ using make_view_t = typename make_view<RangeT>::type;
 template <class RangeT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
 concept ext_any_compatible_range =
     std::ranges::range<RangeT> and
-    detail::any_compatible_view<detail::make_view_t<RangeT>, RefT, RValueRefT, DiffT, OptsV>;
+    detail::any_compatible_view<detail::make_view_t<RangeT>, RefT, RValueRefT, DiffT, OptsV> and
+    (std::ranges::enable_view<std::remove_cvref_t<RangeT>> or
+     detail::any_compatible_copyable_view<detail::make_view_t<RangeT>, OptsV>);
 
 } // namespace beman::any_view
 
