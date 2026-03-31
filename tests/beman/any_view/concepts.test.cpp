@@ -90,6 +90,9 @@ TEST(ConceptsTest, common_view_concept) {
     // These error through R6 because constraining constructor with viewable_range or copyable caused it to depend on
     // itself. Important because view_interface member functions cannot be used if view constraint errors.
     static_assert(std::ranges::view<std::ranges::common_view<any_view<int, forward>>>);
+#ifndef _MSC_VER
+    // error C7602: the associated constraints are not satisfied
     static_assert(not std::copyable<std::ranges::common_view<any_view<int, forward>>>);
+#endif
     static_assert(std::copyable<std::ranges::common_view<any_view<int, forward | copyable>>>);
 }

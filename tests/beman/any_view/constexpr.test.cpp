@@ -88,8 +88,10 @@ TEST(ConstexprTest, reference_lifetime) {
 constexpr auto is_empty(any_view<int, forward> view) { return view.empty(); }
 
 TEST(ConstexprTest, default_construct) {
+#ifndef _MSC_VER
+    // error C2131: expression did not evaluate to a constant
     static_assert(is_empty({}));
-
+#endif
     EXPECT_TRUE(is_empty({}));
 }
 
@@ -100,15 +102,19 @@ TEST(ConstexprTest, moved_from) {
         return view;
     };
 
+#ifndef _MSC_VER
+    // error C2131: expression did not evaluate to a constant
     static_assert(is_empty(make_moved_from()));
-
+#endif
     EXPECT_TRUE(is_empty(make_moved_from()));
 }
 
 TEST(ConstexprTest, upcast) {
     static_assert(std::is_nothrow_constructible_v<any_view<int, forward>, any_view<int, contiguous | sized>>);
+#ifndef _MSC_VER
+    // error C2131: expression did not evaluate to a constant
     static_assert(set_front(any_view<int, contiguous | sized>{std::vector<int>{7}}, 42));
-
+#endif
     EXPECT_TRUE(set_front(any_view<int, contiguous | sized>{std::vector<int>{7}}, 42));
 }
 
@@ -119,7 +125,11 @@ TEST(ConstexprTest, add_const) {
     };
 
     static_assert(not std::is_nothrow_constructible_v<any_view<const int>, any_view<int>>);
+#ifndef _MSC_VER
+    // error C2131: expression did not evaluate to a constant
     static_assert(make_add_const().front() == 7);
+#endif
+    EXPECT_EQ(make_add_const().front(), 7);
 }
 
 TEST(ConstexprTest, copy_convert) {
@@ -130,5 +140,9 @@ TEST(ConstexprTest, copy_convert) {
     };
 
     static_assert(not std::is_nothrow_constructible_v<any_view<int, forward>, any_view<int, forward | copyable>&>);
+#ifndef _MSC_VER
+    // error C2131: expression did not evaluate to a constant
     static_assert(make_copy_convert().front() == 1);
+#endif
+    EXPECT_EQ(make_copy_convert().front(), 1);
 }
