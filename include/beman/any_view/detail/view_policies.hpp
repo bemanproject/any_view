@@ -18,7 +18,10 @@ namespace beman::any_view::detail {
 
 template <class RefT, class RValueRefT, class DiffT>
 struct vtable_policy : nullary_policy {
-    template <class ViewAdaptorT>
+    template <not_adaptor>
+    static const vtable<input_policy<RefT, RValueRefT>, iterator_storage>* fn() noexcept;
+
+    template <adaptor ViewAdaptorT>
     [[nodiscard]] static constexpr const vtable<input_policy<RefT, RValueRefT>, iterator_storage>* fn() noexcept {
         constexpr auto options = ViewAdaptorT::options;
         using view_type        = typename ViewAdaptorT::view_type;
@@ -30,7 +33,10 @@ struct vtable_policy : nullary_policy {
 
 template <class RefT, class RValueRefT, class DiffT>
 struct begin_policy : unary_policy {
-    template <class ViewAdaptorT>
+    template <not_adaptor T>
+    static iterator_storage fn(T& self);
+
+    template <adaptor ViewAdaptorT>
     [[nodiscard]] static constexpr iterator_storage fn(ViewAdaptorT& adaptor) {
         using view_type = typename ViewAdaptorT::view_type;
         return iterator_storage{iterator_adaptor_for<view_type>{
@@ -42,7 +48,10 @@ struct begin_policy : unary_policy {
 
 template <class DiffT>
 struct reserve_hint_policy : unary_policy {
-    template <class ViewAdaptorT>
+    template <not_adaptor T>
+    static std::make_unsigned_t<DiffT> fn(const T& self);
+
+    template <adaptor ViewAdaptorT>
     [[nodiscard]] static constexpr std::make_unsigned_t<DiffT> fn(const ViewAdaptorT& adaptor) {
         return beman::any_view::reserve_hint(adaptor.view);
     }
@@ -50,7 +59,10 @@ struct reserve_hint_policy : unary_policy {
 
 template <class DiffT>
 struct size_policy : unary_policy {
-    template <class ViewAdaptorT>
+    template <not_adaptor T>
+    static std::make_unsigned_t<DiffT> fn(const T& self);
+
+    template <adaptor ViewAdaptorT>
     [[nodiscard]] static constexpr std::make_unsigned_t<DiffT> fn(const ViewAdaptorT& adaptor) {
         return std::ranges::size(adaptor.view);
     }

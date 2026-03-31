@@ -49,7 +49,10 @@ using iter_cache_t = typename iter_cache<RefT>::type;
 
 template <class RefT>
 struct cache_policy : unary_policy {
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static iter_cache_t<RefT> fn(const T& self);
+
+    template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr iter_cache_t<RefT> fn(const IteratorAdaptorT& adaptor) {
         return adaptor.iterator != adaptor.sentinel ? iter_cache<RefT>::make(*adaptor.iterator) : iter_cache_t<RefT>{};
     }
@@ -57,7 +60,10 @@ struct cache_policy : unary_policy {
 
 template <class RefT>
 struct next_policy : unary_policy {
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static iter_cache_t<RefT> fn(T& self);
+
+    template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr iter_cache_t<RefT> fn(IteratorAdaptorT& adaptor) {
         ++adaptor.iterator;
         return detail::fn<cache_policy<RefT>, IteratorAdaptorT>(adaptor);
@@ -66,7 +72,10 @@ struct next_policy : unary_policy {
 
 template <class RefT>
 struct prev_policy : unary_policy {
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static iter_cache_t<RefT> fn(T& self);
+
+    template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr iter_cache_t<RefT> fn(IteratorAdaptorT& adaptor) {
         --adaptor.iterator;
         return detail::fn<cache_policy<RefT>, IteratorAdaptorT>(adaptor);
@@ -75,7 +84,10 @@ struct prev_policy : unary_policy {
 
 template <class RefT, class DiffT>
 struct advance_policy : unary_policy {
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static iter_cache_t<RefT> fn(T& self, DiffT n);
+
+    template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr iter_cache_t<RefT> fn(IteratorAdaptorT& adaptor, DiffT n) {
         adaptor.iterator += n;
         return detail::fn<cache_policy<RefT>, IteratorAdaptorT>(adaptor);
@@ -84,7 +96,10 @@ struct advance_policy : unary_policy {
 
 template <class RefT>
 struct dereference_policy : unary_policy {
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static RefT fn(const T& self);
+
+    template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr RefT fn(const IteratorAdaptorT& adaptor) {
         return *adaptor.iterator;
     }
@@ -92,21 +107,30 @@ struct dereference_policy : unary_policy {
 
 template <class RValueRefT>
 struct iter_move_policy : unary_policy {
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static RValueRefT fn(const T& self);
+
+    template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr RValueRefT fn(const IteratorAdaptorT& adaptor) {
         return std::ranges::iter_move(adaptor.iterator);
     }
 };
 
 struct increment_policy : unary_policy {
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static void fn(T& self);
+
+    template <adaptor IteratorAdaptorT>
     static constexpr void fn(IteratorAdaptorT& adaptor) {
         ++adaptor.iterator;
     }
 };
 
 struct sentinel_compare_policy : unary_policy {
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static bool fn(const T& self, std::default_sentinel_t);
+
+    template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr bool fn(const IteratorAdaptorT& adaptor, std::default_sentinel_t) {
         return adaptor.iterator == adaptor.sentinel;
     }
@@ -115,14 +139,20 @@ struct sentinel_compare_policy : unary_policy {
 struct equality_compare_policy : symmetric_binary_policy {
     [[nodiscard]] static constexpr bool default_value() noexcept { return false; }
 
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static bool fn(const T& self, const T& other);
+
+    template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr bool fn(const IteratorAdaptorT& adaptor, const IteratorAdaptorT& other) {
         return adaptor.iterator == other.iterator;
     }
 };
 
 struct decrement_policy : unary_policy {
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static void fn(T& self);
+
+    template <adaptor IteratorAdaptorT>
     static constexpr void fn(IteratorAdaptorT& adaptor) {
         --adaptor.iterator;
     }
@@ -133,7 +163,10 @@ struct three_way_compare_policy : symmetric_binary_policy {
         return std::partial_ordering::unordered;
     }
 
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static std::partial_ordering fn(const T& self, const T& other);
+
+    template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr std::partial_ordering fn(const IteratorAdaptorT& adaptor,
                                                             const IteratorAdaptorT& other) {
         // std::__wrap_iter is not three-way comparable in Apple Clang
@@ -152,7 +185,10 @@ template <class DiffT>
 struct subtract_policy : symmetric_binary_policy {
     [[noreturn]] static DiffT default_value() { unreachable(); }
 
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static DiffT fn(const T& self, const T& other);
+
+    template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr DiffT fn(const IteratorAdaptorT& adaptor, const IteratorAdaptorT& other) {
         return adaptor.iterator - other.iterator;
     }
@@ -160,7 +196,10 @@ struct subtract_policy : symmetric_binary_policy {
 
 template <class DiffT>
 struct compound_add_policy : unary_policy {
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static void fn(T& self, DiffT n);
+
+    template <adaptor IteratorAdaptorT>
     static constexpr void fn(IteratorAdaptorT& adaptor, DiffT n) {
         adaptor.iterator += n;
     }
@@ -168,7 +207,10 @@ struct compound_add_policy : unary_policy {
 
 template <class RefT>
 struct to_address_policy : unary_policy {
-    template <class IteratorAdaptorT>
+    template <not_adaptor T>
+    static std::add_pointer_t<RefT> fn(const T& self);
+
+    template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr std::add_pointer_t<RefT> fn(const IteratorAdaptorT& adaptor) {
         return std::to_address(adaptor.iterator);
     }

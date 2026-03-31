@@ -3,6 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_POLICIES_HPP
 #define BEMAN_ANY_VIEW_DETAIL_POLICIES_HPP
 
+#include <beman/any_view/detail/adaptor_base.hpp>
 #include <beman/any_view/detail/vtable.hpp>
 
 #include <typeinfo>
@@ -31,7 +32,10 @@ struct impl<binding<PolicyT, AdaptorT>, T, RetT(ArgsT...) noexcept(NoexceptV)> {
 
 template <class StorageT>
 struct move_policy : nullary_policy {
-    template <class AdaptorT>
+    template <not_adaptor>
+    static StorageT fn(StorageT&& source) noexcept;
+
+    template <adaptor AdaptorT>
     [[nodiscard]] static constexpr StorageT fn(StorageT&& source) noexcept {
         return {std::move(source), std::in_place_type<AdaptorT>};
     }
@@ -39,7 +43,10 @@ struct move_policy : nullary_policy {
 
 template <class StorageT>
 struct copy_policy : nullary_policy {
-    template <class AdaptorT>
+    template <not_adaptor>
+    static StorageT fn(const StorageT& source);
+
+    template <adaptor AdaptorT>
     [[nodiscard]] static constexpr StorageT fn(const StorageT& source) {
         return {source, std::in_place_type<AdaptorT>};
     }
@@ -47,7 +54,10 @@ struct copy_policy : nullary_policy {
 
 template <class StorageT>
 struct destroy_policy : nullary_policy {
-    template <class AdaptorT>
+    template <not_adaptor>
+    static void fn(StorageT& source) noexcept;
+
+    template <adaptor AdaptorT>
     static constexpr void fn(StorageT& source) noexcept {
         source.destroy(std::in_place_type<AdaptorT>);
     }

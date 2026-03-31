@@ -49,7 +49,7 @@ target_sources(
         BASE_DIRS #
             include
         FILES
-            include/beman/any_view/detail/base.hpp
+            include/beman/any_view/detail/adaptor_base.hpp
             include/beman/any_view/detail/compressed_ptr.hpp
             include/beman/any_view/detail/concepts.hpp
             include/beman/any_view/detail/default_view.hpp

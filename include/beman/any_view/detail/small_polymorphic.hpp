@@ -3,7 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_SMALL_POLYMORPHIC_HPP
 #define BEMAN_ANY_VIEW_DETAIL_SMALL_POLYMORPHIC_HPP
 
-#include <beman/any_view/detail/base.hpp>
+#include <beman/any_view/detail/adaptor_base.hpp>
 #include <beman/any_view/detail/compressed_ptr.hpp>
 #include <beman/any_view/detail/policies.hpp>
 #include <beman/any_view/detail/vtable.hpp>
@@ -42,7 +42,7 @@ class small_polymorphic {
         : storage(detail::fn<move_policy<StorageT>, small_polymorphic>(other, std::move(other.storage))),
           vtable_ptrs(other.vtable_ptrs) {}
 
-    template <std::derived_from<base> AdaptorT>
+    template <adaptor AdaptorT>
     constexpr small_polymorphic(AdaptorT&& adaptor)
         : storage(std::forward<AdaptorT>(adaptor)),
           vtable_ptrs(std::addressof(detail::vtable_for<PolicyTs, StorageT, AdaptorT>)...) {}
@@ -88,7 +88,7 @@ class small_polymorphic {
         return *this;
     }
 
-    template <std::derived_from<base> AdaptorT>
+    template <adaptor AdaptorT>
     constexpr small_polymorphic& operator=(AdaptorT&& adaptor) {
         std::destroy_at(this);
         std::construct_at(this, std::forward<AdaptorT>(adaptor));

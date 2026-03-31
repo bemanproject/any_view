@@ -3,7 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_SMALL_STORAGE_HPP
 #define BEMAN_ANY_VIEW_DETAIL_SMALL_STORAGE_HPP
 
-#include <beman/any_view/detail/base.hpp>
+#include <beman/any_view/detail/adaptor_base.hpp>
 #include <beman/any_view/detail/policies.hpp>
 
 #include <concepts>
@@ -18,11 +18,11 @@ template <std::size_t SizeV, std::size_t AlignV = alignof(void*)>
 class small_storage {
     union {
         alignas(AlignV) std::byte inplace[SizeV];
-        base* pointer{};
+        adaptor_base* pointer{};
     };
 
   public:
-    template <std::derived_from<base> AdaptorT>
+    template <adaptor AdaptorT>
     constexpr explicit small_storage(AdaptorT&& adaptor) {
         visit(
             *this,
@@ -34,7 +34,7 @@ class small_storage {
             [&](auto& storage) { storage = ::new AdaptorT(std::forward<AdaptorT>(adaptor)); });
     }
 
-    template <std::derived_from<base> AdaptorT>
+    template <adaptor AdaptorT>
     constexpr small_storage(const small_storage& other, std::in_place_type_t<AdaptorT>) {
         visit(
             *this,
@@ -46,7 +46,7 @@ class small_storage {
             [&](auto& storage) { storage = ::new AdaptorT(static_cast<const AdaptorT&>(*other.pointer)); });
     }
 
-    template <std::derived_from<base> AdaptorT>
+    template <adaptor AdaptorT>
     constexpr small_storage(small_storage&& other, std::in_place_type_t<AdaptorT>) noexcept {
         visit(
             *this,
@@ -58,7 +58,7 @@ class small_storage {
             [&](auto& storage) { storage = std::exchange(other.pointer, nullptr); });
     }
 
-    template <std::derived_from<base> AdaptorT>
+    template <adaptor AdaptorT>
     constexpr void destroy(std::in_place_type_t<AdaptorT>) noexcept {
         visit(
             *this,
