@@ -26,7 +26,7 @@ constexpr auto sum(proxy_any_view<proxy_any_view<int>> views) {
 
 TEST(ConstexprTest, sum_vector_of_vector) {
 #ifndef _MSC_VER
-    // ICE on MSVC
+    // error C2131: expression did not evaluate to a constant
     static_assert(10 == sum(std::vector{std::vector{1, 2}, std::vector{3, 4}}));
 #endif
     EXPECT_EQ(10, sum(std::vector{std::vector{1, 2}, std::vector{3, 4}}));
@@ -38,7 +38,7 @@ TEST(ConstexprTest, sum_transform_view_of_iota_view) {
     constexpr auto view = iota(5) | std::views::transform(iota);
 
 #ifndef _MSC_VER
-    // ICE on MSVC
+    // error C2131: expression did not evaluate to a constant
     static_assert(35 == sum(view));
 #endif
     EXPECT_EQ(35, sum(view));
@@ -46,7 +46,7 @@ TEST(ConstexprTest, sum_transform_view_of_iota_view) {
 
 TEST(ConstexprTest, sum_vector_of_iota_view) {
 #ifndef _MSC_VER
-    // ICE on MSVC
+    // error C2131: expression did not evaluate to a constant
     static_assert(22 == sum(std::vector{iota(1), iota(3), iota(5)}));
 #endif
     EXPECT_EQ(22, sum(std::vector{iota(1), iota(3), iota(5)}));
@@ -59,7 +59,7 @@ constexpr auto sort(any_view<int, random_access> view) {
 
 TEST(ConstexprTest, sort_vector) {
 #ifndef _MSC_VER
-    // ICE on MSVC
+    // error C2131: expression did not evaluate to a constant
     static_assert(sort(std::vector{6, 8, 7, 5, 3, 0, 9}));
 #endif
     EXPECT_TRUE(sort(std::vector{6, 8, 7, 5, 3, 0, 9}));
@@ -88,8 +88,10 @@ TEST(ConstexprTest, reference_lifetime) {
 constexpr auto is_empty(any_view<int, forward> view) { return view.empty(); }
 
 TEST(ConstexprTest, default_construct) {
+#ifndef _MSC_VER
+    // error C2131: expression did not evaluate to a constant
     static_assert(is_empty({}));
-
+#endif
     EXPECT_TRUE(is_empty({}));
 }
 
@@ -100,15 +102,19 @@ TEST(ConstexprTest, moved_from) {
         return view;
     };
 
+#ifndef _MSC_VER
+    // error C2131: expression did not evaluate to a constant
     static_assert(is_empty(make_moved_from()));
-
+#endif
     EXPECT_TRUE(is_empty(make_moved_from()));
 }
 
 TEST(ConstexprTest, upcast) {
     static_assert(std::is_nothrow_constructible_v<any_view<int, forward>, any_view<int, contiguous | sized>>);
+#ifndef _MSC_VER
+    // error C2131: expression did not evaluate to a constant
     static_assert(set_front(any_view<int, contiguous | sized>{std::vector<int>{7}}, 42));
-
+#endif
     EXPECT_TRUE(set_front(any_view<int, contiguous | sized>{std::vector<int>{7}}, 42));
 }
 
@@ -119,7 +125,11 @@ TEST(ConstexprTest, add_const) {
     };
 
     static_assert(not std::is_nothrow_constructible_v<any_view<const int>, any_view<int>>);
+#ifndef _MSC_VER
+    // error C2131: expression did not evaluate to a constant
     static_assert(make_add_const().front() == 7);
+#endif
+    EXPECT_EQ(make_add_const().front(), 7);
 }
 
 TEST(ConstexprTest, copy_convert) {
@@ -130,5 +140,9 @@ TEST(ConstexprTest, copy_convert) {
     };
 
     static_assert(not std::is_nothrow_constructible_v<any_view<int, forward>, any_view<int, forward | copyable>&>);
+#ifndef _MSC_VER
+    // error C2131: expression did not evaluate to a constant
     static_assert(make_copy_convert().front() == 1);
+#endif
+    EXPECT_EQ(make_copy_convert().front(), 1);
 }

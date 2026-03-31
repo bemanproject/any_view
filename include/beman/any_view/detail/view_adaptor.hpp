@@ -4,7 +4,7 @@
 #define BEMAN_ANY_VIEW_DETAIL_VIEW_ADAPTOR_HPP
 
 #include <beman/any_view/any_view_options.hpp>
-#include <beman/any_view/detail/base.hpp>
+#include <beman/any_view/detail/adaptor_base.hpp>
 #include <beman/any_view/detail/iterator_adaptor.hpp>
 #include <beman/any_view/detail/no_unique_address.hpp>
 
@@ -13,7 +13,7 @@
 namespace beman::any_view::detail {
 
 template <any_view_options OptsV, std::ranges::view ViewT>
-struct view_adaptor : base {
+struct view_adaptor : adaptor_base {
     static constexpr any_view_options options = OptsV;
 
     using view_type = ViewT;

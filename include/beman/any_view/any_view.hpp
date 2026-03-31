@@ -61,8 +61,10 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
                                                                   detail::is_any_view<std::remove_cvref_t<RangeT>>{})))
         : any_view(std::forward<RangeT>(range), detail::is_any_view<std::remove_cvref_t<RangeT>>{}) {
         static_assert(std::ranges::viewable_range<RangeT>, "range must be viewable");
-        static_assert(detail::any_compatible_copyable_view<std::views::all_t<RangeT>, OptsV>,
-                      "range must be convertible to copyable view if any_view is copyable");
+        if constexpr (detail::flag_is_set<OptsV, any_view_options::copyable>) {
+            static_assert(std::copyable<std::views::all_t<RangeT>>,
+                          "range must be convertible to copyable view if any_view is copyable");
+        }
     }
 
     constexpr any_view() noexcept : any_view(detail::default_view<ElementT, RefT, RValueRefT, DiffT>{}) {}
