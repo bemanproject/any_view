@@ -27,44 +27,91 @@ range as an argument that can be consumed directly, rather than copying it into 
 
 ## Usage
 
+### Basic Example: Library Function with Type Erasure
+
+The main use case for `any_view` is allowing library functions to accept and return ranges without exposing
+implementation details.
+
 ```cpp
 #include <beman/any_view/any_view.hpp>
 
+#include <print>
 #include <ranges>
 #include <vector>
 
 namespace bav = beman::any_view;
 using opt = bav::any_view_options;
 
-template <class T>
-using proxy_any_view = bav::any_view<T, opt::input, T>;
-
-constexpr auto sum(proxy_any_view<proxy_any_view<int>> views) {
-    auto result = 0;
-
-    for (auto view : views) {
-        for (const auto value : view) {
-            result += value;
-        }
+// Computes average for any sized forward range of integers
+// Users don't need to provide a specific container type
+auto average(bav::any_view<int, opt::forward | opt::sized, int> values) {
+    int sum = 0;
+    for (int value : values) {
+        sum += value;
     }
+    return sum / values.size();
+}
 
+int main() {
+    // Users can pass any compatible range
+    std::vector<int> vec{1, 2, 3, 4, 5};
+    // Outputs 3
+    std::println("{}", average(vec));
+
+    // Works with generated ranges too
+    std::println("{}", average(std::views::iota(1, 6))); // Also outputs 3
+}
+```
+
+### Return Type Encapsulation
+
+`any_view` allows a library to hide the complexity of its implementation from users:
+
+```cpp
+namespace bav = beman::any_view;
+
+// Library can return this without exposing complex range composition
+// Users just get an opaque input view of strings
+auto get_configuration_keys_starting_with(std::string_view prefix)
+    -> bav::any_view<const std::string> {
+    // get_configuration() could return something like std::map<std::string, int>
+    return get_configuration()
+      | std::views::keys
+      | std::views::filter([=](std::string_view key) {
+            return key.starts_with(prefix);
+        });
+}
+
+// Users can consume it naturally
+for (const auto& key : get_configuration_keys_starting_with("max")) {
+    std::println("{}", key);
+}
+```
+
+### Compile-Time Range Processing
+
+`any_view` also supports constant evaluation for compile-time range operations:
+
+```cpp
+constexpr auto sum(bav::any_view<const int> values) -> int {
+    int result = 0;
+    for (int value : values) {
+        result += value;
+    }
     return result;
 }
 
-static_assert(10 == sum(std::vector{std::vector{1, 2}, std::vector{3, 4}}));
-
-constexpr auto iota(int n) { return std::views::iota(1) | std::views::take(n); };
-
-static_assert(35 == sum(iota(5) | std::views::transform(iota)));
-
-static_assert(22 == sum(std::vector{iota(1), iota(3), iota(5)}));
+static_assert(15 == sum(std::vector{1, 2, 3, 4, 5}));
 ```
 
-Full code can be found in [tests/beman/any_view/constexpr.test.cpp](tests/beman/any_view/constexpr.test.cpp).
+More complete examples can be found in [examples](examples/) and [tests](tests/beman/any_view/).
 
-`std::ranges::any_view` is a class template that provides a type-erased interface for `std::ranges::view`.
-It may additionally model other concepts like `std::ranges::contiguous_range`, `std::ranges::sized_range`,
-`std::ranges::borrowed_range`, and `std::copyable` depending on the instantiation.
+### What `any_view` Provides
+
+`std::ranges::any_view` is a class template that type-erases a range and models `std::ranges::view`.
+It decouples library interfaces from implementation, allowing users to pass any compatible range without modification.
+The type may additionally model concepts like `std::ranges::contiguous_range`, `std::ranges::sized_range`,
+`std::ranges::borrowed_range`, and `std::copyable` depending on configuration.
 
 ## Integrate beman.any_view into your project
 
@@ -131,8 +178,8 @@ struct /*rvalue-ref*/<T&> {
 template <class T>
 using /*rvalue-ref-t*/ = /*rvalue-ref*/<T>::type;
 
-template <class RangeT, class AnyViewT>
-concept ext_any_compatible_viewable_range = /* ... */;
+template <class RangeT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
+concept ext_any_compatible_range = /* ... */;
 
 template <class ElementT,
           any_view_options OptsV = any_view_options::input,
@@ -147,6 +194,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     // [range.any.ctor]
     template <class RangeT>
     constexpr any_view(RangeT&& range);
+    constexpr any_view() noexcept;
     constexpr any_view(const any_view&);
     constexpr any_view(any_view&&) noexcept;
 
@@ -179,6 +227,48 @@ inline constexpr bool std::ranges::enable_borrowed_range<
 ```
 
 </details>
+
+### Configuration Options
+
+The `any_view_options` enum controls the capabilities exposed by the view. Combine options using the `|` operator:
+
+| Option | Purpose |
+|--------|---------|
+| `input` | Iterator only models `std::input_iterator` (Required) |
+| `forward` | Iterator models `std::forward_iterator` |
+| `bidirectional` | Iterator models `std::bidirectional_iterator` |
+| `random_access` | Iterator models `std::random_access_iterator` |
+| `contiguous` | Iterator models `std::contiguous_iterator` |
+| `approximately_sized` | Provides `reserve_hint()` for approximate size |
+| `sized` | Provides `size()` |
+| `borrowed` | Enables `std::ranges::borrowed_range` for iterator lifetime extension |
+| `copyable` | View is copyable; otherwise move-only |
+
+### Template Parameters
+
+- `ElementT`: The element type exposed by the view
+- `OptsV`: Capability flags (default: `input`)
+- `RefT`: The reference type returned by `operator*` (default: `ElementT&`)
+- `RValueRefT`: The rvalue reference type (default: deduced from `RefT`)
+- `DiffT`: Difference type for iteration (default: `std::ptrdiff_t`)
+
+Most code only needs to specify `ElementT` and `OptsV`; other parameters take sensible defaults.
+
+### When to use `any_view`
+
+**Use when:**
+
+- Library functions need to accept ranges but hide implementation coupling
+- You want to return views without exposing internal composition
+- Supporting many range types without template bloat
+- Creating ABI-stable library interfaces with C++ ranges
+- Working across compilation boundaries
+
+**Avoid when:**
+
+- The range type is known and fixed at compile time
+- Maximum performance is critical and you can't afford runtime polymorphism overhead
+- You only handle a single range type
 
 ## Building
 
