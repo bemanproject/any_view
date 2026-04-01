@@ -12,18 +12,18 @@ auto sum(bav::any_view<const int> v1, bav::any_view<const int> v2) {
     auto result = 0;
 
     for (auto elem : v1) {
-        result = result + elem;
+        result += elem;
     }
 
     for (auto elem : v2) {
-        result = result + elem;
+        result += elem;
     }
 
     return result;
 }
 
 int main() {
-    auto res = sum(std::vector{1, 2}, std::array<int, 2>{3, 4});
+    auto res = sum(std::vector{1, 2}, std::array{3, 4});
     std::cout << res << "\n";
     return 0;
 }
