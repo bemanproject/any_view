@@ -39,7 +39,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     using sentinel         = std::default_sentinel_t;
     using size_type        = std::make_unsigned_t<DiffT>;
 
-    template <class PolicyT>
+    template <detail::policy PolicyT>
     static constexpr auto dispatch = detail::dispatch<PolicyT, polymorphic_type>;
 
     polymorphic_type poly;

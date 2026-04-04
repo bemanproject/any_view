@@ -3,7 +3,6 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_SMALL_POLYMORPHIC_HPP
 #define BEMAN_ANY_VIEW_DETAIL_SMALL_POLYMORPHIC_HPP
 
-#include <beman/any_view/detail/adaptor_base.hpp>
 #include <beman/any_view/detail/compressed_ptr.hpp>
 #include <beman/any_view/detail/policies.hpp>
 #include <beman/any_view/detail/vtable.hpp>
@@ -14,15 +13,15 @@
 
 namespace beman::any_view::detail {
 
-template <class PolicyT>
+template <policy PolicyT>
 struct entry_t {
     explicit entry_t() = default;
 };
 
-template <class PolicyT>
+template <policy PolicyT>
 inline constexpr entry_t<PolicyT> entry{};
 
-template <class StorageT, class... PolicyTs>
+template <storage StorageT, policy... PolicyTs>
 class small_polymorphic {
     using vtable_ptrs_type = compressed_ptr<const vtable<PolicyTs, StorageT>...>;
 
@@ -106,7 +105,7 @@ class small_polymorphic {
 
     constexpr const vtable_ptrs_type& entries() const noexcept { return vtable_ptrs; }
 
-    template <class PolicyT>
+    template <policy PolicyT>
         requires(... or std::derived_from<PolicyTs, PolicyT>)
     constexpr const signature<PolicyT, StorageT>* operator[](entry_t<PolicyT>) const noexcept {
         return vtable_ptrs->*&vtable<PolicyT, StorageT>::entry;
@@ -114,45 +113,44 @@ class small_polymorphic {
 };
 
 template <class T>
-inline constexpr bool is_polymorphic_v = false;
+inline constexpr bool enable_polymorphic = false;
 
-template <class StorageT, class... PolicyTs>
-inline constexpr bool is_polymorphic_v<small_polymorphic<StorageT, PolicyTs...>> = true;
+template <storage StorageT, policy... PolicyTs>
+inline constexpr bool enable_polymorphic<small_polymorphic<StorageT, PolicyTs...>> = true;
+
+template <class T>
+concept polymorphic = enable_polymorphic<T>;
 
 // dispatches to storage bindings for nullary policies
-template <std::derived_from<nullary_policy> PolicyT, class PolyT, class RetT, class... ArgsT>
-    requires is_polymorphic_v<PolyT>
-struct impl<PolicyT, PolyT, RetT(ArgsT...)> {
+template <std::derived_from<nullary_policy> NullaryT, polymorphic PolyT, class RetT, class... ArgsT>
+struct impl<NullaryT, PolyT, RetT(ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, ArgsT... args) {
-        return self[entry<PolicyT>](std::forward<ArgsT>(args)...);
+        return self[entry<NullaryT>](std::forward<ArgsT>(args)...);
     }
 };
 
 // dispatches to storage bindings for noexcept nullary policies
-template <std::derived_from<nullary_policy> PolicyT, class PolyT, class RetT, class... ArgsT>
-    requires is_polymorphic_v<PolyT>
-struct impl<PolicyT, PolyT, RetT(ArgsT...) noexcept> {
+template <std::derived_from<nullary_policy> NullaryT, polymorphic PolyT, class RetT, class... ArgsT>
+struct impl<NullaryT, PolyT, RetT(ArgsT...) noexcept> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, ArgsT... args) noexcept {
-        return self[entry<PolicyT>](std::forward<ArgsT>(args)...);
+        return self[entry<NullaryT>](std::forward<ArgsT>(args)...);
     }
 };
 
 // dispatches to storage bindings for unary policies
-template <std::derived_from<unary_policy> PolicyT, class PolyT, class RetT, class SelfT, class... ArgsT>
-    requires is_polymorphic_v<PolyT>
-struct impl<PolicyT, PolyT, RetT(SelfT&, ArgsT...)> {
+template <std::derived_from<unary_policy> UnaryT, polymorphic PolyT, class RetT, class SelfT, class... ArgsT>
+struct impl<UnaryT, PolyT, RetT(SelfT&, ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(SelfT& self, ArgsT... args) {
-        return self[entry<PolicyT>](self.get(), std::forward<ArgsT>(args)...);
+        return self[entry<UnaryT>](self.get(), std::forward<ArgsT>(args)...);
     }
 };
 
 // dispatches to storage bindings for symmetric binary policies
 // requires type_policy to be implemented
-template <std::derived_from<symmetric_binary_policy> PolicyT, class PolyT, class RetT>
-    requires is_polymorphic_v<PolyT>
-struct impl<PolicyT, PolyT, RetT(const PolyT&, const PolyT&, const std::type_info&)> {
+template <std::derived_from<symmetric_binary_policy> SymmetricBinaryT, polymorphic PolyT, class RetT>
+struct impl<SymmetricBinaryT, PolyT, RetT(const PolyT&, const PolyT&, const std::type_info&)> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, const PolyT& other) {
-        return self[entry<PolicyT>](self.get(), other.get(), other[entry<type_policy>]());
+        return self[entry<SymmetricBinaryT>](self.get(), other.get(), other[entry<type_policy>]());
     }
 };
 

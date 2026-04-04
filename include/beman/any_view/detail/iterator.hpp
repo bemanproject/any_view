@@ -49,7 +49,7 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
 
     static constexpr bool has_cache = not std::is_same_v<cache_type, no_cache>;
 
-    template <class PolicyT>
+    template <policy PolicyT>
     static constexpr auto dispatch = detail::dispatch<PolicyT, polymorphic_type>;
 
     polymorphic_type                            poly;

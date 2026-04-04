@@ -3,7 +3,6 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_SMALL_STORAGE_HPP
 #define BEMAN_ANY_VIEW_DETAIL_SMALL_STORAGE_HPP
 
-#include <beman/any_view/detail/adaptor_base.hpp>
 #include <beman/any_view/detail/policies.hpp>
 
 #include <concepts>
@@ -100,20 +99,16 @@ class small_storage {
     }
 };
 
-template <class T>
-inline constexpr bool is_storage_v = false;
-
 template <std::size_t SizeV>
-inline constexpr bool is_storage_v<small_storage<SizeV>> = true;
+inline constexpr bool enable_storage<small_storage<SizeV>> = true;
 
 // storage bindings for unary policies
 template <std::derived_from<unary_policy> PolicyT,
           adaptor                         AdaptorT,
-          class StorageT,
+          storage                         StorageT,
           class RetT,
           class SelfT,
           class... ArgsT>
-    requires is_storage_v<StorageT>
 struct impl<binding<PolicyT, AdaptorT>, StorageT, RetT(SelfT&, ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(SelfT& self, ArgsT... args) {
         return dispatch<PolicyT, AdaptorT>(unchecked_get<AdaptorT>(self), std::forward<ArgsT>(args)...);
@@ -121,8 +116,7 @@ struct impl<binding<PolicyT, AdaptorT>, StorageT, RetT(SelfT&, ArgsT...)> {
 };
 
 // storage bindings for symmetric binary policies
-template <std::derived_from<symmetric_binary_policy> PolicyT, adaptor AdaptorT, class StorageT, class RetT>
-    requires is_storage_v<StorageT>
+template <std::derived_from<symmetric_binary_policy> PolicyT, adaptor AdaptorT, storage StorageT, class RetT>
 struct impl<binding<PolicyT, AdaptorT>, StorageT, RetT(const StorageT&, const StorageT&, const std::type_info&)> {
     [[nodiscard]] static constexpr RetT
     fn(const StorageT& self, const StorageT& other, const std::type_info& other_type) {

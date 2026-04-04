@@ -3,8 +3,8 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_ITERATOR_ADAPTOR_HPP
 #define BEMAN_ANY_VIEW_DETAIL_ITERATOR_ADAPTOR_HPP
 
-#include <beman/any_view/detail/adaptor_base.hpp>
 #include <beman/any_view/detail/no_unique_address.hpp>
+#include <beman/any_view/detail/vtable.hpp>
 
 #include <iterator>
 
