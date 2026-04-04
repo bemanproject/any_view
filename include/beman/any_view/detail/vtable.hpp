@@ -14,7 +14,7 @@ struct impl {
 };
 
 template <class PolicyT, class T>
-inline constexpr auto& fn = impl<PolicyT, T>::fn;
+inline constexpr auto& dispatch = impl<PolicyT, T>::fn;
 
 template <class... Ts>
 struct inherit : Ts... {};
@@ -24,7 +24,7 @@ struct binding : PolicyT {};
 
 template <class PolicyT, class StorageT>
 struct vtable {
-    signature<PolicyT, StorageT>* fn;
+    signature<PolicyT, StorageT>* entry;
 };
 
 template <class... PolicyTs, class StorageT>
@@ -32,7 +32,7 @@ struct vtable<inherit<PolicyTs...>, StorageT> : vtable<PolicyTs, StorageT>... {}
 
 template <class PolicyT, class StorageT, class AdaptorT>
 inline constexpr vtable<PolicyT, StorageT> vtable_for{
-    .fn = fn<binding<PolicyT, AdaptorT>, StorageT>,
+    .entry = dispatch<binding<PolicyT, AdaptorT>, StorageT>,
 };
 
 template <class... PolicyTs, class StorageT, class AdaptorT>

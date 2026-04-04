@@ -38,17 +38,28 @@ struct iterator_category_type<IterTagT, true> {
 
 template <class ElementT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
 class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::is_reference_v<RefT>> {
-    using cache_type = std::conditional_t<flag_is_set<OptsV, any_view_options::forward>, iter_cache_t<RefT>, no_cache>;
+    static constexpr bool forward       = flag_is_set<OptsV, any_view_options::forward>;
+    static constexpr bool bidirectional = flag_is_set<OptsV, any_view_options::bidirectional>;
+    static constexpr bool random_access = flag_is_set<OptsV, any_view_options::random_access>;
+    static constexpr bool contiguous    = flag_is_set<OptsV, any_view_options::contiguous>;
+
+    // do not cache an iterator reference without multi-pass guarantee
+    using cache_type       = std::conditional_t<forward, iter_cache_t<RefT>, no_cache>;
     using polymorphic_type = polymorphic_iterator<RefT, RValueRefT, DiffT, OptsV>;
+
+    static constexpr bool has_cache = not std::is_same_v<cache_type, no_cache>;
+
+    template <class PolicyT>
+    static constexpr auto dispatch = detail::dispatch<PolicyT, polymorphic_type>;
 
     polymorphic_type                            poly;
     BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS cache_type cache;
 
     constexpr cache_type make_cache() const {
-        if constexpr (std::same_as<cache_type, no_cache>) {
-            return cache_type{};
+        if constexpr (has_cache) {
+            return dispatch<cache_policy<RefT>>(poly);
         } else {
-            return detail::fn<cache_policy<RefT>, polymorphic_type>(poly);
+            return {};
         }
     }
 
@@ -57,51 +68,56 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
     using value_type       = std::remove_cv_t<ElementT>;
     using difference_type  = DiffT;
 
-    constexpr explicit iterator(polymorphic_type&& poly) : poly(std::move(poly)), cache(make_cache()) {}
+    template <class GetPolyT>
+        requires std::is_invocable_r_v<polymorphic_type, GetPolyT>
+    constexpr explicit iterator(GetPolyT get_poly) : poly(get_poly()), cache(make_cache()) {}
 
     constexpr iterator() noexcept
-        requires flag_is_set<OptsV, any_view_options::forward>
+        requires forward
         : poly(iterator_adaptor_for<default_view<ElementT, RefT, RValueRefT, DiffT>>{}), cache(make_cache()) {}
 
     constexpr iterator(const iterator&)
-        requires flag_is_set<OptsV, any_view_options::forward>
+        requires forward
     = default;
 
     constexpr iterator(iterator&&) noexcept = default;
 
     constexpr iterator& operator=(const iterator&)
-        requires flag_is_set<OptsV, any_view_options::forward>
+        requires forward
     = default;
 
     constexpr iterator& operator=(iterator&&) noexcept = default;
 
     [[nodiscard]] constexpr RefT operator*() const {
-        if constexpr (std::same_as<cache_type, no_cache>) {
-            return detail::fn<dereference_policy<RefT>, polymorphic_type>(poly);
-        } else {
+        if constexpr (has_cache) {
             return *cache;
+        } else {
+            return dispatch<dereference_policy<RefT>>(poly);
         }
     }
 
-    [[nodiscard]] friend constexpr RValueRefT iter_move(const iterator& other) {
-        return detail::fn<iter_move_policy<RValueRefT>, polymorphic_type>(other.poly);
+    [[nodiscard]] constexpr friend RValueRefT iter_move(const iterator& self) {
+        if constexpr (has_cache) {
+            return std::ranges::iter_move(self.cache);
+        } else {
+            return dispatch<iter_move_policy<RValueRefT>>(self.poly);
+        }
     }
 
     [[nodiscard]] constexpr std::add_pointer_t<RefT> operator->() const
-        requires flag_is_set<OptsV, any_view_options::contiguous>
+        requires contiguous
     {
-        if constexpr (std::same_as<cache_type, no_cache>) {
-            return detail::fn<to_address_policy<RefT>, polymorphic_type>(poly);
-        } else {
-            return cache;
-        }
+        static_assert(has_cache, "contiguous iterator requires lvalue reference");
+        return cache;
     }
 
     constexpr iterator& operator++() {
-        if constexpr (std::same_as<cache_type, no_cache>) {
-            detail::fn<increment_policy, polymorphic_type>(poly);
+        if constexpr (contiguous) {
+            ++cache;
+        } else if constexpr (has_cache) {
+            cache = dispatch<next_policy<RefT>>(poly);
         } else {
-            cache = detail::fn<next_policy<RefT>, polymorphic_type>(poly);
+            dispatch<increment_policy>(poly);
         }
         return *this;
     }
@@ -109,7 +125,7 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
     constexpr void operator++(int) { ++*this; }
 
     [[nodiscard]] constexpr iterator operator++(int)
-        requires flag_is_set<OptsV, any_view_options::forward>
+        requires forward
     {
         const auto other = *this;
         ++*this;
@@ -117,24 +133,30 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
     }
 
     [[nodiscard]] constexpr bool operator==(const iterator& other) const
-        requires flag_is_set<OptsV, any_view_options::forward>
+        requires forward
     {
-        return detail::fn<equality_compare_policy, polymorphic_type>(poly, other.poly);
+        if constexpr (contiguous) {
+            return cache == other.cache;
+        } else {
+            return dispatch<equality_compare_policy>(poly, other.poly);
+        }
     }
 
     constexpr iterator& operator--()
-        requires flag_is_set<OptsV, any_view_options::bidirectional>
+        requires bidirectional
     {
-        if constexpr (std::same_as<cache_type, no_cache>) {
-            detail::fn<decrement_policy, polymorphic_type>(poly);
+        if constexpr (contiguous) {
+            --cache;
+        } else if constexpr (has_cache) {
+            cache = dispatch<prev_policy<RefT>>(poly);
         } else {
-            cache = detail::fn<prev_policy<RefT>, polymorphic_type>(poly);
+            dispatch<decrement_policy>(poly);
         }
         return *this;
     }
 
     [[nodiscard]] constexpr iterator operator--(int)
-        requires flag_is_set<OptsV, any_view_options::bidirectional>
+        requires bidirectional
     {
         const auto other = *this;
         --*this;
@@ -142,44 +164,54 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
     }
 
     [[nodiscard]] constexpr std::partial_ordering operator<=>(const iterator& other) const
-        requires flag_is_set<OptsV, any_view_options::random_access>
+        requires random_access
     {
-        return detail::fn<three_way_compare_policy, polymorphic_type>(poly, other.poly);
+        if constexpr (contiguous) {
+            return cache <=> other.cache;
+        } else {
+            return dispatch<three_way_compare_policy>(poly, other.poly);
+        }
     }
 
     [[nodiscard]] constexpr difference_type operator-(const iterator& other) const
-        requires flag_is_set<OptsV, any_view_options::random_access>
+        requires random_access
     {
-        return detail::fn<subtract_policy<DiffT>, polymorphic_type>(poly, other.poly);
+        if constexpr (contiguous) {
+            return cache - other.cache;
+        } else {
+            return dispatch<subtract_policy<DiffT>>(poly, other.poly);
+        }
     }
 
     constexpr iterator& operator+=(difference_type offset)
-        requires flag_is_set<OptsV, any_view_options::random_access>
+        requires random_access
     {
-        if constexpr (std::same_as<cache_type, no_cache>) {
-            detail::fn<compound_add_policy<DiffT>, polymorphic_type>(poly, offset);
+        if constexpr (contiguous) {
+            cache += offset;
+        } else if constexpr (has_cache) {
+            cache = dispatch<advance_policy<RefT, DiffT>>(poly, offset);
         } else {
-            cache = detail::fn<advance_policy<RefT, DiffT>, polymorphic_type>(poly, offset);
+            dispatch<compound_add_policy<DiffT>>(poly, offset);
         }
         return *this;
     }
 
     [[nodiscard]] constexpr iterator operator+(difference_type offset) const
-        requires flag_is_set<OptsV, any_view_options::random_access>
+        requires random_access
     {
         auto other = *this;
         other += offset;
         return other;
     }
 
-    [[nodiscard]] friend constexpr iterator operator+(difference_type offset, const iterator& other)
-        requires flag_is_set<OptsV, any_view_options::random_access>
+    [[nodiscard]] constexpr friend iterator operator+(difference_type offset, const iterator& other)
+        requires random_access
     {
         return other + offset;
     }
 
     constexpr iterator& operator-=(difference_type offset)
-        requires flag_is_set<OptsV, any_view_options::random_access>
+        requires random_access
     {
         // TODO: should virtual function for operator-= be provided to avoid signed overflow for max difference type?
         *this += -offset;
@@ -187,7 +219,7 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
     }
 
     [[nodiscard]] constexpr iterator operator-(difference_type offset) const
-        requires flag_is_set<OptsV, any_view_options::random_access>
+        requires random_access
     {
         auto other = *this;
         other -= offset;
@@ -195,16 +227,17 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
     }
 
     [[nodiscard]] constexpr RefT operator[](difference_type offset) const
-        requires flag_is_set<OptsV, any_view_options::random_access>
+        requires random_access
     {
         return *(*this + offset);
     }
 
-    [[nodiscard]] constexpr bool operator==(std::default_sentinel_t sentinel) const {
-        if constexpr (std::same_as<cache_type, no_cache>) {
-            return detail::fn<sentinel_compare_policy, polymorphic_type>(poly, sentinel);
-        } else {
+    [[nodiscard]] constexpr bool operator==(std::default_sentinel_t) const {
+        // sentinel comparison must dispatch for a contiguous iterator
+        if constexpr (has_cache and not contiguous) {
             return cache == cache_type{};
+        } else {
+            return dispatch<sentinel_compare_policy>(poly);
         }
     }
 };

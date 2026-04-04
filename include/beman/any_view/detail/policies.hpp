@@ -21,7 +21,7 @@ struct symmetric_binary_policy {};
 template <std::derived_from<nullary_policy> PolicyT, class AdaptorT, class T, class RetT, class... ArgsT>
 struct impl<binding<PolicyT, AdaptorT>, T, RetT(ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(ArgsT... args) {
-        return detail::fn<PolicyT, AdaptorT>(std::forward<ArgsT>(args)...);
+        return dispatch<PolicyT, AdaptorT>(std::forward<ArgsT>(args)...);
     }
 };
 
@@ -29,7 +29,7 @@ struct impl<binding<PolicyT, AdaptorT>, T, RetT(ArgsT...)> {
 template <std::derived_from<nullary_policy> PolicyT, class AdaptorT, class T, class RetT, class... ArgsT>
 struct impl<binding<PolicyT, AdaptorT>, T, RetT(ArgsT...) noexcept> {
     [[nodiscard]] static constexpr RetT fn(ArgsT... args) noexcept {
-        return detail::fn<PolicyT, AdaptorT>(std::forward<ArgsT>(args)...);
+        return dispatch<PolicyT, AdaptorT>(std::forward<ArgsT>(args)...);
     }
 };
 
@@ -62,7 +62,7 @@ struct destroy_policy : nullary_policy {
 
     template <adaptor AdaptorT>
     static constexpr void fn(StorageT& source) noexcept {
-        source.destroy(std::in_place_type<AdaptorT>);
+        destroy_as<AdaptorT>(source);
     }
 };
 

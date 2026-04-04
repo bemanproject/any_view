@@ -25,7 +25,7 @@ template <class ElementT,
           class RValueRefT       = detail::rvalue_ref_t<RefT>,
           class DiffT            = std::ptrdiff_t>
 class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, RefT, RValueRefT, DiffT>> {
-    static_assert((OptsV & any_view_options::input) == any_view_options::input, "any_view must model input_range");
+    static_assert(detail::flag_is_set<OptsV, any_view_options::input>, "any_view must model input_range");
 
     template <class OtherElementT,
               any_view_options OtherOptsV,
@@ -38,6 +38,9 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     using polymorphic_type = detail::polymorphic_view<RefT, RValueRefT, DiffT, OptsV>;
     using sentinel         = std::default_sentinel_t;
     using size_type        = std::make_unsigned_t<DiffT>;
+
+    template <class PolicyT>
+    static constexpr auto dispatch = detail::dispatch<PolicyT, polymorphic_type>;
 
     polymorphic_type poly;
 
@@ -87,17 +90,23 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     constexpr ~any_view() = default;
 
     // [range.any.access]
-    [[nodiscard]] constexpr iterator begin() {
+    [[nodiscard]] constexpr auto begin() {
         using derived_vtable_type =
             detail::vtable<detail::iterator_policy<RefT, RValueRefT, DiffT, OptsV>, detail::iterator_storage>;
 
-        const auto base_vtable_ptr =
-            detail::fn<detail::vtable_policy<RefT, RValueRefT, DiffT>, polymorphic_type>(poly);
+        const auto get_poly = [this] {
+            const auto base_vtable_ptr = dispatch<detail::vtable_policy<RefT, RValueRefT, DiffT>>(poly);
 
-        return iterator{detail::polymorphic_iterator<RefT, RValueRefT, DiffT, OptsV>{
-            [this] { return detail::fn<detail::begin_policy<RefT, RValueRefT, DiffT>, polymorphic_type>(poly); },
-            static_cast<const derived_vtable_type*>(base_vtable_ptr),
-        }};
+            return detail::polymorphic_iterator<RefT, RValueRefT, DiffT, OptsV>{
+                [this] { return dispatch<detail::begin_policy<RefT, RValueRefT, DiffT>>(poly); },
+                static_cast<const derived_vtable_type*>(base_vtable_ptr)};
+        };
+
+        if constexpr (detail::flag_is_set<OptsV, any_view_options::contiguous | any_view_options::sized>) {
+            return std::counted_iterator{std::to_address(iterator{get_poly}), std::ranges::ssize(*this)};
+        } else {
+            return iterator{get_poly};
+        }
     }
 
     [[nodiscard]] constexpr sentinel end() { return std::default_sentinel; }
@@ -105,13 +114,13 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     [[nodiscard]] constexpr size_type size() const
         requires detail::flag_is_set<OptsV, any_view_options::sized>
     {
-        return detail::fn<detail::size_policy<DiffT>, polymorphic_type>(poly);
+        return dispatch<detail::size_policy<DiffT>>(poly);
     }
 
     [[nodiscard]] constexpr size_type reserve_hint() const
         requires detail::flag_is_set<OptsV, any_view_options::approximately_sized>
     {
-        return detail::fn<detail::reserve_hint_policy<DiffT>, polymorphic_type>(poly);
+        return dispatch<detail::reserve_hint_policy<DiffT>>(poly);
     }
 
     // [range.any.swap]
