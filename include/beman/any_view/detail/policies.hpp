@@ -3,7 +3,6 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_POLICIES_HPP
 #define BEMAN_ANY_VIEW_DETAIL_POLICIES_HPP
 
-#include <beman/any_view/detail/adaptor_base.hpp>
 #include <beman/any_view/detail/vtable.hpp>
 
 #include <typeinfo>
@@ -17,23 +16,32 @@ struct unary_policy {};
 
 struct symmetric_binary_policy {};
 
+template <std::derived_from<nullary_policy> T>
+inline constexpr bool enable_policy<T> = true;
+
+template <std::derived_from<unary_policy> T>
+inline constexpr bool enable_policy<T> = true;
+
+template <std::derived_from<symmetric_binary_policy> T>
+inline constexpr bool enable_policy<T> = true;
+
 // bindings for nullary policies
-template <std::derived_from<nullary_policy> PolicyT, class AdaptorT, class T, class RetT, class... ArgsT>
-struct impl<binding<PolicyT, AdaptorT>, T, RetT(ArgsT...)> {
+template <std::derived_from<nullary_policy> NullaryT, adaptor AdaptorT, storage StorageT, class RetT, class... ArgsT>
+struct impl<binding<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(ArgsT... args) {
-        return detail::fn<PolicyT, AdaptorT>(std::forward<ArgsT>(args)...);
+        return dispatch<NullaryT, AdaptorT>(std::forward<ArgsT>(args)...);
     }
 };
 
 // bindings for noexcept nullary policies
-template <std::derived_from<nullary_policy> PolicyT, class AdaptorT, class T, class RetT, class... ArgsT>
-struct impl<binding<PolicyT, AdaptorT>, T, RetT(ArgsT...) noexcept> {
+template <std::derived_from<nullary_policy> NullaryT, adaptor AdaptorT, storage StorageT, class RetT, class... ArgsT>
+struct impl<binding<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...) noexcept> {
     [[nodiscard]] static constexpr RetT fn(ArgsT... args) noexcept {
-        return detail::fn<PolicyT, AdaptorT>(std::forward<ArgsT>(args)...);
+        return dispatch<NullaryT, AdaptorT>(std::forward<ArgsT>(args)...);
     }
 };
 
-template <class StorageT>
+template <storage StorageT>
 struct move_policy : nullary_policy {
     template <not_adaptor>
     static StorageT fn(StorageT&& source) noexcept;
@@ -44,7 +52,7 @@ struct move_policy : nullary_policy {
     }
 };
 
-template <class StorageT>
+template <storage StorageT>
 struct copy_policy : nullary_policy {
     template <not_adaptor>
     static StorageT fn(const StorageT& source);
@@ -55,14 +63,14 @@ struct copy_policy : nullary_policy {
     }
 };
 
-template <class StorageT>
+template <storage StorageT>
 struct destroy_policy : nullary_policy {
     template <not_adaptor>
     static void fn(StorageT& source) noexcept;
 
     template <adaptor AdaptorT>
     static constexpr void fn(StorageT& source) noexcept {
-        source.destroy(std::in_place_type<AdaptorT>);
+        destroy_as<AdaptorT>(source);
     }
 };
 

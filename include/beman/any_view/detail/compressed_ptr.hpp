@@ -3,28 +3,49 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_COMPRESSED_PTR_HPP
 #define BEMAN_ANY_VIEW_DETAIL_COMPRESSED_PTR_HPP
 
+#include <concepts>
 #include <type_traits>
 
 namespace beman::any_view::detail {
 
+template <class... Ts>
+class compressed_ptr : public compressed_ptr<Ts>... {
+  public:
+    constexpr explicit compressed_ptr(Ts*... values) noexcept : compressed_ptr<Ts>(values)... {}
+
+    template <std::derived_from<Ts>... OtherTs>
+    constexpr compressed_ptr(const compressed_ptr<OtherTs...>& other) noexcept : compressed_ptr<Ts>(other)... {}
+
+    using compressed_ptr<Ts>::operator->*...;
+};
+
 template <class T>
-class compressed_ptr {
+class compressed_ptr<T> {
     T* value;
 
   public:
-    constexpr compressed_ptr(T* value) noexcept : value(value) {}
+    constexpr explicit compressed_ptr(T* value) noexcept : value(value) {}
 
-    [[nodiscard]] constexpr T* operator->() const noexcept { return value; }
-    [[nodiscard]] constexpr T& operator*() const noexcept { return *value; }
+    [[nodiscard]] constexpr operator T*() const noexcept { return value; }
+
+    template <class MemberT, class BaseT>
+        requires std::derived_from<T, BaseT>
+    [[nodiscard]] constexpr const MemberT& operator->*(MemberT BaseT::*member_ptr) const noexcept {
+        return value->*member_ptr;
+    }
 };
 
 template <class T>
     requires std::is_empty_v<T>
 class compressed_ptr<T> {
   public:
-    constexpr compressed_ptr(T*) noexcept {}
+    constexpr explicit compressed_ptr(T*) noexcept {}
 
-    [[nodiscard]] constexpr T* operator->() const noexcept { return nullptr; }
+    [[nodiscard]] constexpr operator T*() const noexcept { return nullptr; }
+
+    template <class MemberT, class BaseT>
+        requires std::derived_from<T, BaseT>
+    const MemberT& operator->*(MemberT BaseT::*) const = delete;
 };
 
 } // namespace beman::any_view::detail

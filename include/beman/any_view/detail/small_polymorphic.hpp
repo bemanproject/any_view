@@ -3,7 +3,6 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_SMALL_POLYMORPHIC_HPP
 #define BEMAN_ANY_VIEW_DETAIL_SMALL_POLYMORPHIC_HPP
 
-#include <beman/any_view/detail/adaptor_base.hpp>
 #include <beman/any_view/detail/compressed_ptr.hpp>
 #include <beman/any_view/detail/policies.hpp>
 #include <beman/any_view/detail/vtable.hpp>
@@ -14,59 +13,49 @@
 
 namespace beman::any_view::detail {
 
-template <class PolyT>
-struct polymorphic_traits;
+template <policy PolicyT>
+struct entry_t {
+    explicit entry_t() = default;
+};
 
-template <class StorageT, class... PolicyTs>
+template <policy PolicyT>
+inline constexpr entry_t<PolicyT> entry{};
+
+template <storage StorageT, policy... PolicyTs>
 class small_polymorphic {
-    friend polymorphic_traits<small_polymorphic>;
+    using vtable_ptrs_type = compressed_ptr<const vtable<PolicyTs, StorageT>...>;
 
-    template <class OtherStorageT, class... OtherPolicyTs>
-    friend class small_polymorphic;
-
-    template <class PolicyT>
-    using vtable_ptr = compressed_ptr<const vtable<PolicyT, StorageT>>;
-
-    template <class... OtherPolicyTs>
-    using rebind_traits = polymorphic_traits<small_polymorphic<StorageT, OtherPolicyTs...>>;
-
-    StorageT                         storage;
-    inherit<vtable_ptr<PolicyTs>...> vtable_ptrs;
+    StorageT         storage;
+    vtable_ptrs_type vtable_ptrs;
 
   public:
     constexpr small_polymorphic(const small_polymorphic& other)
-        : storage(detail::fn<copy_policy<StorageT>, small_polymorphic>(other, other.storage)),
-          vtable_ptrs(other.vtable_ptrs) {}
+        : storage(other[entry<copy_policy<StorageT>>](other.get())), vtable_ptrs(other.entries()) {}
 
     constexpr small_polymorphic(small_polymorphic&& other) noexcept
-        : storage(detail::fn<move_policy<StorageT>, small_polymorphic>(other, std::move(other.storage))),
-          vtable_ptrs(other.vtable_ptrs) {}
+        : storage(other[entry<move_policy<StorageT>>](std::move(other.get()))), vtable_ptrs(other.entries()) {}
 
     template <adaptor AdaptorT>
     constexpr small_polymorphic(AdaptorT&& adaptor)
         : storage(std::forward<AdaptorT>(adaptor)),
-          vtable_ptrs(std::addressof(detail::vtable_for<PolicyTs, StorageT, AdaptorT>)...) {}
+          vtable_ptrs(std::addressof(vtable_for<PolicyTs, StorageT, AdaptorT>)...) {}
 
     template <class GetStorageT>
         requires std::is_invocable_r_v<StorageT, GetStorageT>
-    constexpr small_polymorphic(GetStorageT&& get_storage, const vtable<PolicyTs, StorageT>*... vtable_ptrs)
-        : storage(std::forward<GetStorageT>(get_storage)()), vtable_ptrs(vtable_ptrs...) {}
+    constexpr small_polymorphic(GetStorageT get_storage, const vtable<PolicyTs, StorageT>*... vtable_ptrs)
+        : storage(get_storage()), vtable_ptrs(vtable_ptrs...) {}
 
     // converting constructors
 
     template <std::derived_from<PolicyTs>... OtherPolicyTs>
     constexpr small_polymorphic(const small_polymorphic<StorageT, OtherPolicyTs...>& other)
-        : storage(
-              detail::fn<copy_policy<StorageT>, small_polymorphic<StorageT, OtherPolicyTs...>>(other, other.storage)),
-          vtable_ptrs(std::to_address<vtable_ptr<OtherPolicyTs>>(other.vtable_ptrs)...) {}
+        : storage(other[entry<copy_policy<StorageT>>](other.get())), vtable_ptrs(other.entries()) {}
 
     template <std::derived_from<PolicyTs>... OtherPolicyTs>
     constexpr small_polymorphic(small_polymorphic<StorageT, OtherPolicyTs...>&& other) noexcept
-        : storage(detail::fn<move_policy<StorageT>, small_polymorphic<StorageT, OtherPolicyTs...>>(
-              other, std::move(other.storage))),
-          vtable_ptrs(std::to_address<vtable_ptr<OtherPolicyTs>>(other.vtable_ptrs)...) {}
+        : storage(other[entry<move_policy<StorageT>>](std::move(other.get()))), vtable_ptrs(other.entries()) {}
 
-    constexpr ~small_polymorphic() { detail::fn<destroy_policy<StorageT>, small_polymorphic>(*this, storage); }
+    constexpr ~small_polymorphic() { dispatch<destroy_policy<StorageT>, small_polymorphic>(*this, storage); }
 
     constexpr small_polymorphic& operator=(const small_polymorphic& other) {
         if (this == std::addressof(other)) {
@@ -110,89 +99,58 @@ class small_polymorphic {
         std::construct_at(this, std::move(other));
         return *this;
     }
+
+    constexpr StorageT&       get() noexcept { return storage; }
+    constexpr const StorageT& get() const noexcept { return storage; }
+
+    constexpr const vtable_ptrs_type& entries() const noexcept { return vtable_ptrs; }
+
+    template <policy PolicyT>
+        requires(... or std::derived_from<PolicyTs, PolicyT>)
+    constexpr const signature<PolicyT, StorageT>* operator[](entry_t<PolicyT>) const noexcept {
+        return vtable_ptrs->*&vtable<PolicyT, StorageT>::entry;
+    }
 };
 
 template <class T>
-inline constexpr bool is_polymorphic_v = false;
+inline constexpr bool enable_polymorphic = false;
 
-template <class StorageT, class... PolicyTs>
-inline constexpr bool is_polymorphic_v<small_polymorphic<StorageT, PolicyTs...>> = true;
+template <storage StorageT, policy... PolicyTs>
+inline constexpr bool enable_polymorphic<small_polymorphic<StorageT, PolicyTs...>> = true;
 
-template <class StorageT, class... PolicyTs>
-struct polymorphic_traits<small_polymorphic<StorageT, PolicyTs...>> {
-    using polymorphic_type = small_polymorphic<StorageT, PolicyTs...>;
-
-    template <class PolicyT>
-    [[nodiscard]] static constexpr auto fn(const polymorphic_type& poly, std::in_place_type_t<PolicyT>) {
-        constexpr auto recur = [](auto self, auto first, auto... rest) {
-            using first_type = typename decltype(first)::type;
-            if constexpr (std::is_base_of_v<PolicyT, first_type>) {
-                return first;
-            } else if constexpr (sizeof...(rest) > 0) {
-                return self(self, rest...);
-            }
-        };
-
-        using derived_type    = typename decltype(recur(recur, std::type_identity<PolicyTs>{}...))::type;
-        using vtable_ptr_type = typename polymorphic_type::template vtable_ptr<derived_type>;
-        using vtable_type     = vtable<PolicyT, StorageT>;
-
-        const vtable_ptr_type& vtable_ptr = poly.vtable_ptrs;
-        const vtable_type&     vtable     = *vtable_ptr;
-
-        return vtable.fn;
-    }
-
-    template <class PolyT>
-    [[nodiscard]] static constexpr auto&& storage(PolyT&& poly) {
-        return std::forward<PolyT>(poly).storage;
-    }
-};
+template <class T>
+concept polymorphic = enable_polymorphic<T>;
 
 // dispatches to storage bindings for nullary policies
-template <std::derived_from<nullary_policy> PolicyT, class PolyT, class RetT, class... ArgsT>
-    requires is_polymorphic_v<PolyT>
-struct impl<PolicyT, PolyT, RetT(ArgsT...)> {
+template <std::derived_from<nullary_policy> NullaryT, polymorphic PolyT, class RetT, class... ArgsT>
+struct impl<NullaryT, PolyT, RetT(ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, ArgsT... args) {
-        return polymorphic_traits<PolyT>::fn(self, std::in_place_type<PolicyT>)(std::forward<ArgsT>(args)...);
+        return self[entry<NullaryT>](std::forward<ArgsT>(args)...);
     }
 };
 
 // dispatches to storage bindings for noexcept nullary policies
-template <std::derived_from<nullary_policy> PolicyT, class PolyT, class RetT, class... ArgsT>
-    requires is_polymorphic_v<PolyT>
-struct impl<PolicyT, PolyT, RetT(ArgsT...) noexcept> {
+template <std::derived_from<nullary_policy> NullaryT, polymorphic PolyT, class RetT, class... ArgsT>
+struct impl<NullaryT, PolyT, RetT(ArgsT...) noexcept> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, ArgsT... args) noexcept {
-        return polymorphic_traits<PolyT>::fn(self, std::in_place_type<PolicyT>)(std::forward<ArgsT>(args)...);
+        return self[entry<NullaryT>](std::forward<ArgsT>(args)...);
     }
 };
 
 // dispatches to storage bindings for unary policies
-template <std::derived_from<unary_policy> PolicyT, class PolyT, class RetT, class SelfT, class... ArgsT>
-    requires is_polymorphic_v<PolyT>
-struct impl<PolicyT, PolyT, RetT(SelfT&, ArgsT...)> {
+template <std::derived_from<unary_policy> UnaryT, polymorphic PolyT, class RetT, class SelfT, class... ArgsT>
+struct impl<UnaryT, PolyT, RetT(SelfT&, ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(SelfT& self, ArgsT... args) {
-        return polymorphic_traits<PolyT>::fn(self, std::in_place_type<PolicyT>)(
-            polymorphic_traits<PolyT>::storage(self), std::forward<ArgsT>(args)...);
+        return self[entry<UnaryT>](self.get(), std::forward<ArgsT>(args)...);
     }
 };
 
 // dispatches to storage bindings for symmetric binary policies
 // requires type_policy to be implemented
-template <std::derived_from<symmetric_binary_policy> PolicyT, class PolyT, class RetT>
-    requires is_polymorphic_v<PolyT>
-struct impl<PolicyT, PolyT, RetT(const PolyT&, const PolyT&)> {
+template <std::derived_from<symmetric_binary_policy> SymmetricBinaryT, polymorphic PolyT, class RetT>
+struct impl<SymmetricBinaryT, PolyT, RetT(const PolyT&, const PolyT&, const std::type_info&)> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, const PolyT& other) {
-        const auto& self_type  = detail::fn<type_policy, PolyT>(self);
-        const auto& other_type = detail::fn<type_policy, PolyT>(other);
-
-        // std::type_info::operator== is not constexpr until C++23
-        if (std::is_constant_evaluated() ? &self_type != &other_type : self_type != other_type) {
-            return PolicyT::default_value();
-        }
-
-        return polymorphic_traits<PolyT>::fn(self, std::in_place_type<PolicyT>)(
-            polymorphic_traits<PolyT>::storage(self), polymorphic_traits<PolyT>::storage(other));
+        return self[entry<SymmetricBinaryT>](self.get(), other.get(), other[entry<type_policy>]());
     }
 };
 
