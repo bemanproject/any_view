@@ -125,14 +125,25 @@ struct prev_policy : unary_policy {
     }
 };
 
-template <class DiffT>
-struct compound_add_policy : unary_policy {
+template <class RefT, class DiffT>
+struct dereference_at_policy : unary_policy {
     template <not_adaptor T>
-    static void fn(T& self, DiffT n);
+    static RefT fn(const T& self, DiffT n);
 
     template <adaptor IteratorAdaptorT>
-    static constexpr void fn(IteratorAdaptorT& adaptor, DiffT n) {
-        adaptor.iterator += n;
+    static constexpr RefT fn(const IteratorAdaptorT& adaptor, DiffT n) {
+        return adaptor.iterator[n];
+    }
+};
+
+template <class RvalueRefT, class DiffT>
+struct iter_move_at_policy : unary_policy {
+    template <not_adaptor T>
+    static RvalueRefT fn(const T& self, DiffT n);
+
+    template <adaptor IteratorAdaptorT>
+    static constexpr RvalueRefT fn(const IteratorAdaptorT& adaptor, DiffT n) {
+        return std::ranges::iter_move(adaptor.iterator + n);
     }
 };
 
@@ -143,7 +154,7 @@ struct advance_policy : unary_policy {
 
     template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr iter_cache_t<RefT> fn(IteratorAdaptorT& adaptor, DiffT n) {
-        dispatch<compound_add_policy<DiffT>, IteratorAdaptorT>(adaptor, n);
+        adaptor.iterator += n;
         return dispatch<cache_policy<RefT>, IteratorAdaptorT>(adaptor);
     }
 };
@@ -236,7 +247,9 @@ using bidirectional_policy = inherit<forward_policy<RefT, RValueRefT>,
 template <class RefT, class RValueRefT, class DiffT>
 using random_access_policy =
     inherit<bidirectional_policy<RefT, RValueRefT>,
-            std::conditional_t<has_cache_v<RefT>, advance_policy<RefT, DiffT>, compound_add_policy<DiffT>>,
+            std::conditional_t<has_cache_v<RefT>,
+                               advance_policy<RefT, DiffT>,
+                               inherit<dereference_at_policy<RefT, DiffT>, iter_move_at_policy<RValueRefT, DiffT>>>,
             three_way_compare_policy,
             subtract_policy<DiffT>>;
 
