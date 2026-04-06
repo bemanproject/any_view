@@ -62,6 +62,7 @@ beman_add_benchmark(
 beman_add_tests(
     concepts
     constexpr
+    iterator
     sfinae
     type_traits
 )
