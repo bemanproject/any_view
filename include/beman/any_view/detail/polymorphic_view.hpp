@@ -48,17 +48,6 @@ struct reserve_hint_policy : unary_policy {
     }
 };
 
-template <class DiffT>
-struct size_policy : unary_policy {
-    template <not_adaptor T>
-    static std::make_unsigned_t<DiffT> fn(const T& self);
-
-    template <adaptor ViewAdaptorT>
-    [[nodiscard]] static constexpr std::make_unsigned_t<DiffT> fn(const ViewAdaptorT& adaptor) {
-        return std::ranges::size(adaptor.view);
-    }
-};
-
 // inplace storage sufficient for a std::vector<T>
 using view_storage = small_storage<3 * sizeof(void*)>;
 
@@ -74,10 +63,7 @@ using copyable_policy = inherit<uncopyable_policy<RefT, RValueRefT, DiffT>, copy
 using unsized_policy = inherit<>;
 
 template <class DiffT>
-using approximately_sized_policy = inherit<unsized_policy, reserve_hint_policy<DiffT>>;
-
-template <class DiffT>
-using sized_policy = inherit<approximately_sized_policy<DiffT>, size_policy<DiffT>>;
+using sized_policy = inherit<unsized_policy, reserve_hint_policy<DiffT>>;
 
 template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
 consteval auto get_copyable_policy() {
@@ -94,10 +80,8 @@ template <class DiffT, any_view_options OptsV>
 consteval auto get_sized_policy() {
     using enum any_view_options;
 
-    if constexpr (flag_is_set<OptsV, sized>) {
+    if constexpr (flag_is_set<OptsV, approximately_sized>) {
         return sized_policy<DiffT>{};
-    } else if constexpr (flag_is_set<OptsV, approximately_sized>) {
-        return approximately_sized_policy<DiffT>{};
     } else {
         return unsized_policy{};
     }
