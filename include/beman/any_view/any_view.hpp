@@ -137,7 +137,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     [[nodiscard]] constexpr size_type size() const
         requires sized
     {
-        return dispatch<detail::size_policy<DiffT>>(poly);
+        return dispatch<detail::reserve_hint_policy<DiffT>>(poly);
     }
 
     [[nodiscard]] constexpr size_type reserve_hint() const
