@@ -1,21 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef BEMAN_ANY_VIEW_DETAIL_ITERATOR_POLICIES_HPP
-#define BEMAN_ANY_VIEW_DETAIL_ITERATOR_POLICIES_HPP
+#ifndef BEMAN_ANY_VIEW_DETAIL_POLYMORPHIC_ITERATOR_HPP
+#define BEMAN_ANY_VIEW_DETAIL_POLYMORPHIC_ITERATOR_HPP
 
-#include <beman/any_view/any_view_options.hpp>
 #include <beman/any_view/detail/concepts.hpp>
-#include <beman/any_view/detail/policies.hpp>
-#include <beman/any_view/detail/small_polymorphic.hpp>
+#include <beman/any_view/detail/polymorphic.hpp>
 #include <beman/any_view/detail/small_storage.hpp>
-#include <beman/any_view/detail/utility.hpp>
-#include <beman/any_view/detail/vtable.hpp>
+#include <beman/any_view/detail/unreachable.hpp>
 
-#include <compare>
-#include <iterator>
-#include <memory>
 #include <optional>
-#include <type_traits>
 
 namespace beman::any_view::detail {
 
@@ -173,8 +166,11 @@ struct iter_move_policy : unary_policy {
 struct equality_compare_policy : symmetric_binary_policy {
     [[nodiscard]] static constexpr bool default_value() noexcept { return false; }
 
-    template <not_adaptor T>
-    static bool fn(const T& self, const T& other, const std::type_info& other_type);
+    template <polymorphic PolyT>
+    static bool fn(const PolyT& self, const PolyT& other);
+
+    template <storage StorageT>
+    static bool fn(const StorageT& self, const StorageT& other, const std::type_info& other_type);
 
     template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr bool fn(const IteratorAdaptorT& adaptor, const IteratorAdaptorT& other) {
@@ -187,8 +183,11 @@ struct three_way_compare_policy : symmetric_binary_policy {
         return std::partial_ordering::unordered;
     }
 
-    template <not_adaptor T>
-    static std::partial_ordering fn(const T& self, const T& other, const std::type_info& other_type);
+    template <polymorphic PolyT>
+    static std::partial_ordering fn(const PolyT& self, const PolyT& other);
+
+    template <storage StorageT>
+    static std::partial_ordering fn(const StorageT& self, const StorageT& other, const std::type_info& other_type);
 
     template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr std::partial_ordering fn(const IteratorAdaptorT& adaptor,
@@ -209,8 +208,11 @@ template <class DiffT>
 struct subtract_policy : symmetric_binary_policy {
     [[noreturn]] static DiffT default_value() { unreachable(); }
 
-    template <not_adaptor T>
-    static DiffT fn(const T& self, const T& other, const std::type_info& other_type);
+    template <polymorphic PolyT>
+    static DiffT fn(const PolyT& self, const PolyT& other);
+
+    template <storage StorageT>
+    static DiffT fn(const StorageT& self, const StorageT& other, const std::type_info& other_type);
 
     template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr DiffT fn(const IteratorAdaptorT& adaptor, const IteratorAdaptorT& other) {
@@ -272,8 +274,8 @@ template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
 using iterator_policy = decltype(get_iterator_policy<RefT, RValueRefT, DiffT, OptsV>());
 
 template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-using polymorphic_iterator = small_polymorphic<iterator_storage, iterator_policy<RefT, RValueRefT, DiffT, OptsV>>;
+using polymorphic_iterator = basic_polymorphic<iterator_storage, iterator_policy<RefT, RValueRefT, DiffT, OptsV>>;
 
 } // namespace beman::any_view::detail
 
-#endif // BEMAN_ANY_VIEW_DETAIL_ITERATOR_POLICIES_HPP
+#endif // BEMAN_ANY_VIEW_DETAIL_POLYMORPHIC_ITERATOR_HPP

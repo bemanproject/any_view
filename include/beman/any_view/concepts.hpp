@@ -3,11 +3,8 @@
 #ifndef BEMAN_ANY_VIEW_CONCEPTS_HPP
 #define BEMAN_ANY_VIEW_CONCEPTS_HPP
 
-#include <beman/any_view/any_view_options.hpp>
 #include <beman/any_view/detail/concepts.hpp>
 #include <beman/any_view/reserve_hint.hpp>
-
-#include <ranges>
 
 namespace beman::any_view {
 namespace detail {
@@ -53,6 +50,9 @@ struct make_view<RangeT> {
 
 template <class RangeT>
 using make_view_t = typename make_view<RangeT>::type;
+
+template <class T, class U>
+concept different_from = not std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
 
 } // namespace detail
 

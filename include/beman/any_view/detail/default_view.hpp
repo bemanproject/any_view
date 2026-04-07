@@ -3,19 +3,28 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_DEFAULT_VIEW_HPP
 #define BEMAN_ANY_VIEW_DETAIL_DEFAULT_VIEW_HPP
 
-#include <beman/any_view/detail/unreachable_iterator.hpp>
+#include <beman/any_view/detail/default_iterator.hpp>
+#include <beman/any_view/detail/no_unique_address.hpp>
 
 #include <ranges>
 
 namespace beman::any_view::detail {
 
 template <class ElementT, class RefT, class RValueRefT, class DiffT>
-class default_view : public std::ranges::subrange<unreachable_iterator<ElementT, RefT, RValueRefT, DiffT>> {
+class default_view : public std::ranges::view_interface<default_view<ElementT, RefT, RValueRefT, DiffT>> {
+    using iterator = default_iterator<ElementT, RefT, RValueRefT, DiffT>;
+    BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS std::ranges::subrange<iterator> view;
+
   public:
-    using std::ranges::subrange<unreachable_iterator<ElementT, RefT, RValueRefT, DiffT>>::subrange;
-    using std::ranges::subrange<unreachable_iterator<ElementT, RefT, RValueRefT, DiffT>>::operator=;
+    [[nodiscard]] constexpr iterator begin() const { return view.begin(); }
+    [[nodiscard]] constexpr iterator end() const { return view.end(); }
 };
 
 } // namespace beman::any_view::detail
+
+template <class ElementT, class RefT, class RValueRefT, class DiffT>
+inline constexpr bool
+    std::ranges::enable_borrowed_range<beman::any_view::detail::default_view<ElementT, RefT, RValueRefT, DiffT>> =
+        true;
 
 #endif // BEMAN_ANY_VIEW_DETAIL_DEFAULT_VIEW_HPP

@@ -16,7 +16,9 @@ class compressed_ptr : public compressed_ptr<Ts>... {
     template <std::derived_from<Ts>... OtherTs>
     constexpr compressed_ptr(const compressed_ptr<OtherTs...>& other) noexcept : compressed_ptr<Ts>(other)... {}
 
+#if _MSC_VER
     using compressed_ptr<Ts>::operator->*...;
+#endif // _MSC_VER
 };
 
 template <class T>
@@ -28,11 +30,13 @@ class compressed_ptr<T> {
 
     [[nodiscard]] constexpr operator T*() const noexcept { return value; }
 
+#if _MSC_VER
     template <class MemberT, class BaseT>
         requires std::derived_from<T, BaseT>
     [[nodiscard]] constexpr const MemberT& operator->*(MemberT BaseT::*member_ptr) const noexcept {
         return value->*member_ptr;
     }
+#endif // _MSC_VER
 };
 
 template <class T>
@@ -43,9 +47,11 @@ class compressed_ptr<T> {
 
     [[nodiscard]] constexpr operator T*() const noexcept { return nullptr; }
 
+#if _MSC_VER
     template <class MemberT, class BaseT>
         requires std::derived_from<T, BaseT>
     const MemberT& operator->*(MemberT BaseT::*) const = delete;
+#endif // _MSC_VER
 };
 
 } // namespace beman::any_view::detail

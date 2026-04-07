@@ -1,18 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef BEMAN_ANY_VIEW_DETAIL_VIEW_POLICIES_HPP
-#define BEMAN_ANY_VIEW_DETAIL_VIEW_POLICIES_HPP
+#ifndef BEMAN_ANY_VIEW_DETAIL_POLYMORPHIC_VIEW_HPP
+#define BEMAN_ANY_VIEW_DETAIL_POLYMORPHIC_VIEW_HPP
 
-#include <beman/any_view/any_view_options.hpp>
-#include <beman/any_view/detail/iterator_adaptor.hpp>
-#include <beman/any_view/detail/iterator_policies.hpp>
-#include <beman/any_view/detail/policies.hpp>
-#include <beman/any_view/detail/small_polymorphic.hpp>
-#include <beman/any_view/detail/small_storage.hpp>
-#include <beman/any_view/detail/vtable.hpp>
+#include <beman/any_view/detail/polymorphic_iterator.hpp>
 #include <beman/any_view/reserve_hint.hpp>
-
-#include <iterator>
 
 namespace beman::any_view::detail {
 
@@ -24,10 +16,9 @@ struct vtable_policy : nullary_policy {
     template <adaptor ViewAdaptorT>
     [[nodiscard]] static constexpr const vtable<input_policy<RefT, RValueRefT>, iterator_storage>* fn() noexcept {
         constexpr auto options = ViewAdaptorT::options;
-        using view_type        = typename ViewAdaptorT::view_type;
-        return std::addressof(vtable_for<iterator_policy<RefT, RValueRefT, DiffT, options>,
-                                         iterator_storage,
-                                         iterator_adaptor_for<view_type>>);
+        using adaptor_type     = typename ViewAdaptorT::adaptor_type;
+        return std::addressof(
+            vtable_for<iterator_policy<RefT, RValueRefT, DiffT, options>, iterator_storage, adaptor_type>);
     }
 };
 
@@ -38,8 +29,8 @@ struct begin_policy : unary_policy {
 
     template <adaptor ViewAdaptorT>
     [[nodiscard]] static constexpr iterator_storage fn(ViewAdaptorT& adaptor) {
-        using view_type = typename ViewAdaptorT::view_type;
-        return iterator_storage{iterator_adaptor_for<view_type>{
+        using adaptor_type = typename ViewAdaptorT::adaptor_type;
+        return iterator_storage{adaptor_type{
             .iterator = std::ranges::begin(adaptor.view),
             .sentinel = std::ranges::end(adaptor.view),
         }};
@@ -113,10 +104,10 @@ consteval auto get_sized_policy() {
 }
 
 template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-using polymorphic_view = small_polymorphic<view_storage,
+using polymorphic_view = basic_polymorphic<view_storage,
                                            decltype(get_copyable_policy<RefT, RValueRefT, DiffT, OptsV>()),
                                            decltype(get_sized_policy<DiffT, OptsV>())>;
 
 } // namespace beman::any_view::detail
 
-#endif // BEMAN_ANY_VIEW_DETAIL_VIEW_POLICIES_HPP
+#endif // BEMAN_ANY_VIEW_DETAIL_POLYMORPHIC_VIEW_HPP

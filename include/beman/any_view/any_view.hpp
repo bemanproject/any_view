@@ -3,19 +3,28 @@
 #ifndef BEMAN_ANY_VIEW_ANY_VIEW_HPP
 #define BEMAN_ANY_VIEW_ANY_VIEW_HPP
 
-#include <beman/any_view/any_view_options.hpp>
-#include <beman/any_view/detail/default_view.hpp>
-#include <beman/any_view/detail/iterator_policies.hpp>
+#include <beman/any_view/concepts.hpp>
 #include <beman/any_view/detail/iterator.hpp>
-#include <beman/any_view/detail/view_adaptor.hpp>
-#include <beman/any_view/detail/view_policies.hpp>
-#include <beman/any_view/detail/vtable.hpp>
+#include <beman/any_view/detail/polymorphic_view.hpp>
 
 namespace beman::any_view {
 namespace detail {
 
 template <class>
 struct is_any_view : std::false_type {};
+
+template <class T>
+struct rvalue_ref {
+    using type = T;
+};
+
+template <class T>
+struct rvalue_ref<T&> {
+    using type = T&&;
+};
+
+template <class T>
+using rvalue_ref_t = typename rvalue_ref<T>::type;
 
 } // namespace detail
 
@@ -54,22 +63,27 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
 
     template <class RangeT, bool IsAnyView>
     constexpr any_view(RangeT&& range, std::bool_constant<IsAnyView>)
-        : poly(detail::view_adaptor<OptsV, std::views::all_t<RangeT>>{
+        : poly(detail::view_adaptor<std::views::all_t<RangeT>, OptsV>{
               .view = std::views::all(std::forward<RangeT>(range))}) {}
 
     template <class RangeT>
+    static consteval bool is_noexcept() {
+        return detail::is_any_view<std::remove_cvref_t<RangeT>>::value and requires {
+            { polymorphic_type(std::declval<RangeT>().poly) } noexcept;
+        };
+    }
+
+    template <class RangeT>
         requires std::constructible_from<polymorphic_type, decltype(std::declval<RangeT>().poly)>
-    constexpr any_view(RangeT&& range,
-                       std::true_type) noexcept(noexcept(polymorphic_type(std::declval<RangeT>().poly)))
+    constexpr any_view(RangeT&& range, std::true_type) noexcept(is_noexcept<RangeT>())
         : poly(std::forward<RangeT>(range).poly) {}
 
   public:
     // [range.any.ctor]
     template <class RangeT>
-        requires(not std::same_as<std::remove_cvref_t<RangeT>, any_view> and
-                 ext_any_compatible_range<RangeT, RefT, RValueRefT, DiffT, OptsV>)
-    constexpr any_view(RangeT&& range) noexcept(noexcept(any_view(std::declval<RangeT>(),
-                                                                  detail::is_any_view<std::remove_cvref_t<RangeT>>{})))
+        requires detail::different_from<RangeT, any_view> and
+                 ext_any_compatible_range<RangeT, RefT, RValueRefT, DiffT, OptsV>
+    constexpr any_view(RangeT&& range) noexcept(is_noexcept<RangeT>())
         : any_view(std::forward<RangeT>(range), detail::is_any_view<std::remove_cvref_t<RangeT>>{}) {
         static_assert(std::ranges::viewable_range<RangeT>, "range must be viewable");
         if constexpr (copyable) {

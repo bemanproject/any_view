@@ -3,9 +3,8 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_SMALL_STORAGE_HPP
 #define BEMAN_ANY_VIEW_DETAIL_SMALL_STORAGE_HPP
 
-#include <beman/any_view/detail/policies.hpp>
+#include <beman/any_view/detail/vtable.hpp>
 
-#include <concepts>
 #include <cstddef>
 #include <memory>
 #include <type_traits>
@@ -101,35 +100,6 @@ class small_storage {
 
 template <std::size_t SizeV>
 inline constexpr bool enable_storage<small_storage<SizeV>> = true;
-
-// storage bindings for unary policies
-template <std::derived_from<unary_policy> PolicyT,
-          adaptor                         AdaptorT,
-          storage                         StorageT,
-          class RetT,
-          class SelfT,
-          class... ArgsT>
-struct impl<binding<PolicyT, AdaptorT>, StorageT, RetT(SelfT&, ArgsT...)> {
-    [[nodiscard]] static constexpr RetT fn(SelfT& self, ArgsT... args) {
-        return dispatch<PolicyT, AdaptorT>(unchecked_get<AdaptorT>(self), std::forward<ArgsT>(args)...);
-    }
-};
-
-// storage bindings for symmetric binary policies
-template <std::derived_from<symmetric_binary_policy> PolicyT, adaptor AdaptorT, storage StorageT, class RetT>
-struct impl<binding<PolicyT, AdaptorT>, StorageT, RetT(const StorageT&, const StorageT&, const std::type_info&)> {
-    [[nodiscard]] static constexpr RetT
-    fn(const StorageT& self, const StorageT& other, const std::type_info& other_type) {
-        const auto& self_type = dispatch<type_policy, AdaptorT>();
-
-        // std::type_info::operator== is not constexpr until C++23
-        if (std::is_constant_evaluated() ? &self_type != &other_type : self_type != other_type) {
-            return PolicyT::default_value();
-        }
-
-        return dispatch<PolicyT, AdaptorT>(unchecked_get<AdaptorT>(self), unchecked_get<AdaptorT>(other));
-    }
-};
 
 } // namespace beman::any_view::detail
 
