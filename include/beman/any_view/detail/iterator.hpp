@@ -3,18 +3,30 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_ITERATOR_HPP
 #define BEMAN_ANY_VIEW_DETAIL_ITERATOR_HPP
 
-#include <beman/any_view/any_view_options.hpp>
-#include <beman/any_view/concepts.hpp>
 #include <beman/any_view/detail/default_view.hpp>
-#include <beman/any_view/detail/iterator_adaptor.hpp>
-#include <beman/any_view/detail/iterator_policies.hpp>
-#include <beman/any_view/detail/no_unique_address.hpp>
-#include <beman/any_view/detail/type_traits.hpp>
-#include <beman/any_view/detail/vtable.hpp>
-
-#include <iterator>
+#include <beman/any_view/detail/polymorphic_iterator.hpp>
 
 namespace beman::any_view::detail {
+
+template <any_view_options OptsV>
+[[nodiscard]] consteval auto get_iterator_concept() {
+    using enum any_view_options;
+
+    if constexpr (flag_is_set<OptsV, contiguous>) {
+        return std::contiguous_iterator_tag{};
+    } else if constexpr (flag_is_set<OptsV, random_access>) {
+        return std::random_access_iterator_tag{};
+    } else if constexpr (flag_is_set<OptsV, bidirectional>) {
+        return std::bidirectional_iterator_tag{};
+    } else if constexpr (flag_is_set<OptsV, forward>) {
+        return std::forward_iterator_tag{};
+    } else if constexpr (flag_is_set<OptsV, input>) {
+        return std::input_iterator_tag{};
+    }
+}
+
+template <any_view_options OptsV>
+using iterator_concept_t = decltype(get_iterator_concept<OptsV>());
 
 // [range.any.iterator]
 

@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <ranges>
-
 #ifndef BEMAN_ANY_VIEW_RESERVE_HINT_HPP
 #define BEMAN_ANY_VIEW_RESERVE_HINT_HPP
+
+#include <concepts>
+#include <ranges>
+#include <type_traits>
+#include <utility>
 
 namespace beman::any_view {
 namespace detail {
@@ -30,7 +33,7 @@ concept adl_reserve_hint = requires(T& t) {
 struct reserve_hint_cpo {
   private:
     template <class T>
-    static constexpr bool is_noexcept() {
+    static consteval bool is_noexcept() {
         if constexpr (std::ranges::sized_range<T>) {
             return noexcept(std::ranges::size(std::declval<T&>()));
         } else if constexpr (member_reserve_hint<T>) {

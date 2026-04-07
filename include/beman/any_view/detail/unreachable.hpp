@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef BEMAN_ANY_VIEW_DETAIL_UTILITY_HPP
-#define BEMAN_ANY_VIEW_DETAIL_UTILITY_HPP
+#ifndef BEMAN_ANY_VIEW_DETAIL_UNREACHABLE_HPP
+#define BEMAN_ANY_VIEW_DETAIL_UNREACHABLE_HPP
 
 namespace beman::any_view::detail {
 
@@ -15,4 +15,4 @@ namespace beman::any_view::detail {
 
 } // namespace beman::any_view::detail
 
-#endif // BEMAN_ANY_VIEW_DETAIL_UTILITY_HPP
+#endif // BEMAN_ANY_VIEW_DETAIL_UNREACHABLE_HPP

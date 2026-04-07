@@ -3,15 +3,29 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_VTABLE_HPP
 #define BEMAN_ANY_VIEW_DETAIL_VTABLE_HPP
 
-#include <concepts>
+#include <beman/any_view/detail/adaptors.hpp>
 
 namespace beman::any_view::detail {
 
+struct policy_base {};
+
 template <class T>
-inline constexpr bool enable_policy = false;
+inline constexpr bool enable_policy = std::derived_from<T, policy_base>;
+
+template <class T>
+inline constexpr bool enable_storage = false;
+
+template <class T>
+inline constexpr bool enable_polymorphic = false;
 
 template <class T>
 concept policy = enable_policy<T>;
+
+template <class T>
+concept storage = enable_storage<T>;
+
+template <class T>
+concept polymorphic = enable_polymorphic<T>;
 
 template <policy PolicyT, class T>
 using signature = decltype(PolicyT::template fn<T>);
@@ -23,20 +37,6 @@ struct impl {
 
 template <policy PolicyT, class T>
 inline constexpr auto& dispatch = impl<PolicyT, T>::fn;
-
-struct adaptor_base {};
-
-template <class T>
-concept adaptor = std::derived_from<T, adaptor_base>;
-
-template <class T>
-concept not_adaptor = not adaptor<T>;
-
-template <class T>
-inline constexpr bool enable_storage = false;
-
-template <class T>
-concept storage = enable_storage<T>;
 
 template <class... Ts>
 struct inherit : Ts... {};

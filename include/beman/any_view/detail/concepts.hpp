@@ -6,7 +6,9 @@
 #include <beman/any_view/any_view_options.hpp>
 #include <beman/any_view/detail/reference_converts_from_temporary.hpp>
 
+#include <concepts>
 #include <iterator>
+#include <type_traits>
 
 namespace beman::any_view::detail {
 

@@ -112,3 +112,7 @@ TEST(SfinaeTest, any_view) {
     // does not copy construct copyable any_view because std::views::all decays it
     static_assert(not std::constructible_from<any_view<int>, const any_view<int, input | copyable>&>);
 }
+
+TEST(SfinaeTest, default_view) {
+    static_assert(std::default_initializable<any_view<int, contiguous | sized | borrowed | copyable>>);
+}
