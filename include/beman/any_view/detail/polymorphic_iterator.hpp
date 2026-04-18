@@ -38,7 +38,7 @@ struct iter_cache<RefT> {
 template <class RefT>
 using iter_cache_t = typename iter_cache<RefT>::type;
 
-struct sentinel_compare_policy : unary_policy {
+struct sentinel_compare_t : unary_capability {
     template <not_adaptor T>
     static bool fn(const T& self);
 
@@ -49,7 +49,7 @@ struct sentinel_compare_policy : unary_policy {
 };
 
 template <class RefT>
-struct dereference_policy : unary_policy {
+struct dereference_t : unary_capability {
     template <not_adaptor T>
     static RefT fn(const T& self);
 
@@ -60,21 +60,21 @@ struct dereference_policy : unary_policy {
 };
 
 template <class RefT>
-struct cache_policy : unary_policy {
+struct cache_t : unary_capability {
     template <not_adaptor T>
     static iter_cache_t<RefT> fn(const T& self);
 
     template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr iter_cache_t<RefT> fn(const IteratorAdaptorT& adaptor) {
-        if (dispatch<sentinel_compare_policy, IteratorAdaptorT>(adaptor)) {
+        if (dispatch<sentinel_compare_t, IteratorAdaptorT>(adaptor)) {
             return {};
         }
 
-        return iter_cache<RefT>::make(dispatch<dereference_policy<RefT>, IteratorAdaptorT>(adaptor));
+        return iter_cache<RefT>::make(dispatch<dereference_t<RefT>, IteratorAdaptorT>(adaptor));
     }
 };
 
-struct increment_policy : unary_policy {
+struct increment_t : unary_capability {
     template <not_adaptor T>
     static void fn(T& self);
 
@@ -85,18 +85,18 @@ struct increment_policy : unary_policy {
 };
 
 template <class RefT>
-struct next_policy : unary_policy {
+struct next_t : unary_capability {
     template <not_adaptor T>
     static iter_cache_t<RefT> fn(T& self);
 
     template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr iter_cache_t<RefT> fn(IteratorAdaptorT& adaptor) {
-        dispatch<increment_policy, IteratorAdaptorT>(adaptor);
-        return dispatch<cache_policy<RefT>, IteratorAdaptorT>(adaptor);
+        dispatch<increment_t, IteratorAdaptorT>(adaptor);
+        return dispatch<cache_t<RefT>, IteratorAdaptorT>(adaptor);
     }
 };
 
-struct decrement_policy : unary_policy {
+struct decrement_t : unary_capability {
     template <not_adaptor T>
     static void fn(T& self);
 
@@ -107,19 +107,19 @@ struct decrement_policy : unary_policy {
 };
 
 template <class RefT>
-struct prev_policy : unary_policy {
+struct prev_t : unary_capability {
     template <not_adaptor T>
     static iter_cache_t<RefT> fn(T& self);
 
     template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr iter_cache_t<RefT> fn(IteratorAdaptorT& adaptor) {
-        dispatch<decrement_policy, IteratorAdaptorT>(adaptor);
-        return dispatch<cache_policy<RefT>, IteratorAdaptorT>(adaptor);
+        dispatch<decrement_t, IteratorAdaptorT>(adaptor);
+        return dispatch<cache_t<RefT>, IteratorAdaptorT>(adaptor);
     }
 };
 
 template <class RefT, class DiffT>
-struct dereference_at_policy : unary_policy {
+struct dereference_at_t : unary_capability {
     template <not_adaptor T>
     static RefT fn(const T& self, DiffT n);
 
@@ -130,7 +130,7 @@ struct dereference_at_policy : unary_policy {
 };
 
 template <class RvalueRefT, class DiffT>
-struct iter_move_at_policy : unary_policy {
+struct iter_move_at_t : unary_capability {
     template <not_adaptor T>
     static RvalueRefT fn(const T& self, DiffT n);
 
@@ -141,19 +141,19 @@ struct iter_move_at_policy : unary_policy {
 };
 
 template <class RefT, class DiffT>
-struct advance_policy : unary_policy {
+struct advance_t : unary_capability {
     template <not_adaptor T>
     static iter_cache_t<RefT> fn(T& self, DiffT n);
 
     template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr iter_cache_t<RefT> fn(IteratorAdaptorT& adaptor, DiffT n) {
         adaptor.iterator += n;
-        return dispatch<cache_policy<RefT>, IteratorAdaptorT>(adaptor);
+        return dispatch<cache_t<RefT>, IteratorAdaptorT>(adaptor);
     }
 };
 
 template <class RValueRefT>
-struct iter_move_policy : unary_policy {
+struct iter_move_t : unary_capability {
     template <not_adaptor T>
     static RValueRefT fn(const T& self);
 
@@ -163,7 +163,7 @@ struct iter_move_policy : unary_policy {
     }
 };
 
-struct equality_compare_policy : symmetric_binary_policy {
+struct equality_compare_t : symmetric_binary_capability {
     [[nodiscard]] static constexpr bool default_value() noexcept { return false; }
 
     template <polymorphic PolyT>
@@ -178,7 +178,7 @@ struct equality_compare_policy : symmetric_binary_policy {
     }
 };
 
-struct three_way_compare_policy : symmetric_binary_policy {
+struct three_way_compare_t : symmetric_binary_capability {
     [[nodiscard]] static constexpr std::partial_ordering default_value() noexcept {
         return std::partial_ordering::unordered;
     }
@@ -205,7 +205,7 @@ struct three_way_compare_policy : symmetric_binary_policy {
 };
 
 template <class DiffT>
-struct subtract_policy : symmetric_binary_policy {
+struct subtract_t : symmetric_binary_capability {
     [[noreturn]] static DiffT default_value() { unreachable(); }
 
     template <polymorphic PolyT>
@@ -224,57 +224,58 @@ struct subtract_policy : symmetric_binary_policy {
 using iterator_storage = small_storage<2 * sizeof(void*)>;
 
 template <class RefT, class RValueRefT>
-using input_policy = inherit<move_policy<iterator_storage>,
-                             destroy_policy<iterator_storage>,
-                             dereference_policy<RefT>,
-                             iter_move_policy<RValueRefT>,
-                             increment_policy,
-                             sentinel_compare_policy>;
+using input_capabilities = inherit<move_t<iterator_storage>,
+                                   destroy_t<iterator_storage>,
+                                   dereference_t<RefT>,
+                                   iter_move_t<RValueRefT>,
+                                   increment_t,
+                                   sentinel_compare_t>;
 
 template <class RefT>
 inline constexpr bool has_cache_v = not std::is_same_v<iter_cache_t<RefT>, no_cache>;
 
 template <class RefT, class RValueRefT>
-using forward_policy =
-    inherit<input_policy<RefT, RValueRefT>,
-            copy_policy<iterator_storage>,
-            std::conditional_t<has_cache_v<RefT>, inherit<cache_policy<RefT>, next_policy<RefT>>, inherit<>>,
-            type_policy,
-            equality_compare_policy>;
+using forward_capabilities =
+    inherit<input_capabilities<RefT, RValueRefT>,
+            copy_t<iterator_storage>,
+            std::conditional_t<has_cache_v<RefT>, inherit<cache_t<RefT>, next_t<RefT>>, inherit<>>,
+            type_t,
+            equality_compare_t>;
 
 template <class RefT, class RValueRefT>
-using bidirectional_policy = inherit<forward_policy<RefT, RValueRefT>,
-                                     std::conditional_t<has_cache_v<RefT>, prev_policy<RefT>, decrement_policy>>;
+using bidirectional_capabilities =
+    inherit<forward_capabilities<RefT, RValueRefT>, std::conditional_t<has_cache_v<RefT>, prev_t<RefT>, decrement_t>>;
 
 template <class RefT, class RValueRefT, class DiffT>
-using random_access_policy =
-    inherit<bidirectional_policy<RefT, RValueRefT>,
+using random_access_capabilities =
+    inherit<bidirectional_capabilities<RefT, RValueRefT>,
             std::conditional_t<has_cache_v<RefT>,
-                               advance_policy<RefT, DiffT>,
-                               inherit<dereference_at_policy<RefT, DiffT>, iter_move_at_policy<RValueRefT, DiffT>>>,
-            three_way_compare_policy,
-            subtract_policy<DiffT>>;
+                               advance_t<RefT, DiffT>,
+                               inherit<dereference_at_t<RefT, DiffT>, iter_move_at_t<RValueRefT, DiffT>>>,
+            three_way_compare_t,
+            subtract_t<DiffT>>;
 
 template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-[[nodiscard]] consteval auto get_iterator_policy() {
+[[nodiscard]] consteval auto get_iterator_capabilities() {
     using enum any_view_options;
 
     if constexpr (flag_is_set<OptsV, random_access>) {
-        return random_access_policy<RefT, RValueRefT, DiffT>{};
+        return random_access_capabilities<RefT, RValueRefT, DiffT>{};
     } else if constexpr (flag_is_set<OptsV, bidirectional>) {
-        return bidirectional_policy<RefT, RValueRefT>{};
+        return bidirectional_capabilities<RefT, RValueRefT>{};
     } else if constexpr (flag_is_set<OptsV, forward>) {
-        return forward_policy<RefT, RValueRefT>{};
+        return forward_capabilities<RefT, RValueRefT>{};
     } else if constexpr (flag_is_set<OptsV, input>) {
-        return input_policy<RefT, RValueRefT>{};
+        return input_capabilities<RefT, RValueRefT>{};
     }
 }
 
 template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-using iterator_policy = decltype(get_iterator_policy<RefT, RValueRefT, DiffT, OptsV>());
+using iterator_capabilities = decltype(get_iterator_capabilities<RefT, RValueRefT, DiffT, OptsV>());
 
 template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-using polymorphic_iterator = basic_polymorphic<iterator_storage, iterator_policy<RefT, RValueRefT, DiffT, OptsV>>;
+using polymorphic_iterator =
+    basic_polymorphic<iterator_storage, iterator_capabilities<RefT, RValueRefT, DiffT, OptsV>>;
 
 } // namespace beman::any_view::detail
 

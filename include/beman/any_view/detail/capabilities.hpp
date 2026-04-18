@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef BEMAN_ANY_VIEW_DETAIL_POLICIES_HPP
-#define BEMAN_ANY_VIEW_DETAIL_POLICIES_HPP
+#ifndef BEMAN_ANY_VIEW_DETAIL_CAPABILITIES_HPP
+#define BEMAN_ANY_VIEW_DETAIL_CAPABILITIES_HPP
 
 #include <beman/any_view/detail/vtable.hpp>
 
@@ -11,22 +11,22 @@
 
 namespace beman::any_view::detail {
 
-struct nullary_policy : policy_base {};
+struct nullary_capability : capability_base {};
 
-struct unary_policy : policy_base {};
+struct unary_capability : capability_base {};
 
-struct symmetric_binary_policy : policy_base {};
-
-template <class T>
-concept nullary = policy<T> and std::derived_from<T, nullary_policy>;
+struct symmetric_binary_capability : capability_base {};
 
 template <class T>
-concept unary = policy<T> and std::derived_from<T, unary_policy>;
+concept nullary = capability<T> and std::derived_from<T, nullary_capability>;
 
 template <class T>
-concept symmetric_binary = policy<T> and std::derived_from<T, symmetric_binary_policy>;
+concept unary = capability<T> and std::derived_from<T, unary_capability>;
 
-// bindings for nullary policies
+template <class T>
+concept symmetric_binary = capability<T> and std::derived_from<T, symmetric_binary_capability>;
+
+// bindings for nullary capabilities
 template <nullary NullaryT, adaptor AdaptorT, storage StorageT, class RetT, class... ArgsT>
 struct impl<binding<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(ArgsT... args) {
@@ -34,7 +34,7 @@ struct impl<binding<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...)> {
     }
 };
 
-// bindings for noexcept nullary policies
+// bindings for noexcept nullary capabilities
 template <nullary NullaryT, adaptor AdaptorT, storage StorageT, class RetT, class... ArgsT>
 struct impl<binding<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...) noexcept> {
     [[nodiscard]] static constexpr RetT fn(ArgsT... args) noexcept {
@@ -42,7 +42,7 @@ struct impl<binding<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...) noexcept> {
     }
 };
 
-// bindings for unary policies
+// bindings for unary capabilities
 template <unary UnaryT, adaptor AdaptorT, storage StorageT, class RetT, class SelfT, class... ArgsT>
 struct impl<binding<UnaryT, AdaptorT>, StorageT, RetT(SelfT&, ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(SelfT& self, ArgsT... args) {
@@ -50,21 +50,21 @@ struct impl<binding<UnaryT, AdaptorT>, StorageT, RetT(SelfT&, ArgsT...)> {
     }
 };
 
-struct type_policy : nullary_policy {
+struct type_t : nullary_capability {
     template <class T>
     [[nodiscard]] static constexpr const std::type_info& fn() noexcept {
         return typeid(T);
     }
 };
 
-// bindings for symmetric binary policies
+// bindings for symmetric binary capabilities
 template <symmetric_binary SymmetricBinaryT, adaptor AdaptorT, storage StorageT, class RetT>
 struct impl<binding<SymmetricBinaryT, AdaptorT>,
             StorageT,
             RetT(const StorageT&, const StorageT&, const std::type_info&)> {
     [[nodiscard]] static constexpr RetT
     fn(const StorageT& self, const StorageT& other, const std::type_info& other_type) {
-        const auto& self_type = dispatch<type_policy, AdaptorT>();
+        const auto& self_type = dispatch<type_t, AdaptorT>();
 
         // std::type_info::operator== is not constexpr until C++23
         if (std::is_constant_evaluated() ? &self_type != &other_type : self_type != other_type) {
@@ -75,49 +75,41 @@ struct impl<binding<SymmetricBinaryT, AdaptorT>,
     }
 };
 
-template <policy PolicyT>
-struct entry_t {
-    explicit entry_t() = default;
-};
-
-template <policy PolicyT>
-inline constexpr entry_t<PolicyT> entry{};
-
-// dispatches to bindings for nullary policies
+// dispatches to bindings for nullary capabilities
 template <nullary NullaryT, polymorphic PolyT, class RetT, class... ArgsT>
 struct impl<NullaryT, PolyT, RetT(ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, ArgsT... args) {
-        return self[entry<NullaryT>](std::forward<ArgsT>(args)...);
+        return self.entry(NullaryT{})(std::forward<ArgsT>(args)...);
     }
 };
 
-// dispatches to bindings for noexcept nullary policies
+// dispatches to bindings for noexcept nullary capabilities
 template <nullary NullaryT, polymorphic PolyT, class RetT, class... ArgsT>
 struct impl<NullaryT, PolyT, RetT(ArgsT...) noexcept> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, ArgsT... args) noexcept {
-        return self[entry<NullaryT>](std::forward<ArgsT>(args)...);
+        return self.entry(NullaryT{})(std::forward<ArgsT>(args)...);
     }
 };
 
-// dispatches to bindings for unary policies
+// dispatches to bindings for unary capabilities
 template <unary UnaryT, polymorphic PolyT, class RetT, class SelfT, class... ArgsT>
 struct impl<UnaryT, PolyT, RetT(SelfT&, ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(SelfT& self, ArgsT... args) {
-        return self[entry<UnaryT>](self.get(), std::forward<ArgsT>(args)...);
+        return self.entry(UnaryT{})(self.get(), std::forward<ArgsT>(args)...);
     }
 };
 
-// dispatches to bindings for symmetric binary policies
-// requires type_policy to be implemented
+// dispatches to bindings for symmetric binary capabilities
+// requires type_t to be implemented
 template <symmetric_binary SymmetricBinaryT, polymorphic PolyT, class RetT>
 struct impl<SymmetricBinaryT, PolyT, RetT(const PolyT&, const PolyT&)> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, const PolyT& other) {
-        return self[entry<SymmetricBinaryT>](self.get(), other.get(), other[entry<type_policy>]());
+        return self.entry(SymmetricBinaryT{})(self.get(), other.get(), other.entry(type_t{})());
     }
 };
 
 template <storage StorageT>
-struct move_policy : nullary_policy {
+struct move_t : nullary_capability {
     template <not_adaptor>
     static StorageT fn(StorageT&& source) noexcept;
 
@@ -128,7 +120,7 @@ struct move_policy : nullary_policy {
 };
 
 template <storage StorageT>
-struct copy_policy : nullary_policy {
+struct copy_t : nullary_capability {
     template <not_adaptor>
     static StorageT fn(const StorageT& source);
 
@@ -139,7 +131,7 @@ struct copy_policy : nullary_policy {
 };
 
 template <storage StorageT>
-struct destroy_policy : nullary_policy {
+struct destroy_t : nullary_capability {
     template <not_adaptor>
     static void fn(StorageT& source) noexcept;
 
@@ -151,4 +143,4 @@ struct destroy_policy : nullary_policy {
 
 } // namespace beman::any_view::detail
 
-#endif // BEMAN_ANY_VIEW_DETAIL_POLICIES_HPP
+#endif // BEMAN_ANY_VIEW_DETAIL_CAPABILITIES_HPP

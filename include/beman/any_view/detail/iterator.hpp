@@ -66,15 +66,15 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
 
     static constexpr bool has_index = std::is_same_v<cache_or_index_type, DiffT>;
 
-    template <policy PolicyT>
-    static constexpr auto dispatch = detail::dispatch<PolicyT, polymorphic_type>;
+    template <capability CapabilityT>
+    static constexpr auto dispatch = detail::dispatch<CapabilityT, polymorphic_type>;
 
     polymorphic_type poly{iterator_adaptor_for<default_view<ElementT, RefT, RValueRefT, DiffT>>{}};
     BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS cache_or_index_type cache_or_index{make_cache_or_index()};
 
     constexpr cache_or_index_type make_cache_or_index() const {
         if constexpr (has_cache) {
-            return dispatch<cache_policy<RefT>>(poly);
+            return dispatch<cache_t<RefT>>(poly);
         } else {
             return {};
         }
@@ -109,9 +109,9 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
         if constexpr (has_cache) {
             return *cache_or_index;
         } else if constexpr (has_index) {
-            return dispatch<dereference_at_policy<RefT, DiffT>>(poly, cache_or_index);
+            return dispatch<dereference_at_t<RefT, DiffT>>(poly, cache_or_index);
         } else {
-            return dispatch<dereference_policy<RefT>>(poly);
+            return dispatch<dereference_t<RefT>>(poly);
         }
     }
 
@@ -119,9 +119,9 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
         if constexpr (has_cache) {
             return std::ranges::iter_move(self.cache_or_index);
         } else if constexpr (has_index) {
-            return dispatch<iter_move_at_policy<RValueRefT, DiffT>>(self.poly, self.cache_or_index);
+            return dispatch<iter_move_at_t<RValueRefT, DiffT>>(self.poly, self.cache_or_index);
         } else {
-            return dispatch<iter_move_policy<RValueRefT>>(self.poly);
+            return dispatch<iter_move_t<RValueRefT>>(self.poly);
         }
     }
 
@@ -136,9 +136,9 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
         if constexpr (contiguous or has_index) {
             ++cache_or_index;
         } else if constexpr (has_cache) {
-            cache_or_index = dispatch<next_policy<RefT>>(poly);
+            cache_or_index = dispatch<next_t<RefT>>(poly);
         } else {
-            dispatch<increment_policy>(poly);
+            dispatch<increment_t>(poly);
         }
         return *this;
     }
@@ -159,7 +159,7 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
         if constexpr (contiguous or has_index) {
             return cache_or_index == other.cache_or_index;
         } else {
-            return dispatch<equality_compare_policy>(poly, other.poly);
+            return dispatch<equality_compare_t>(poly, other.poly);
         }
     }
 
@@ -169,9 +169,9 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
         if constexpr (contiguous or has_index) {
             --cache_or_index;
         } else if constexpr (has_cache) {
-            cache_or_index = dispatch<prev_policy<RefT>>(poly);
+            cache_or_index = dispatch<prev_t<RefT>>(poly);
         } else {
-            dispatch<decrement_policy>(poly);
+            dispatch<decrement_t>(poly);
         }
         return *this;
     }
@@ -190,7 +190,7 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
         if constexpr (contiguous or has_index) {
             return cache_or_index <=> other.cache_or_index;
         } else {
-            return dispatch<three_way_compare_policy>(poly, other.poly);
+            return dispatch<three_way_compare_t>(poly, other.poly);
         }
     }
 
@@ -200,7 +200,7 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
         if constexpr (contiguous or has_index) {
             return cache_or_index - other.cache_or_index;
         } else {
-            return dispatch<subtract_policy<DiffT>>(poly, other.poly);
+            return dispatch<subtract_t<DiffT>>(poly, other.poly);
         }
     }
 
@@ -211,7 +211,7 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
             cache_or_index += offset;
         } else {
             static_assert(has_cache, "random access iterator with no index has cache");
-            cache_or_index = dispatch<advance_policy<RefT, DiffT>>(poly, offset);
+            cache_or_index = dispatch<advance_t<RefT, DiffT>>(poly, offset);
         }
         return *this;
     }
@@ -257,7 +257,7 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
         if constexpr (has_cache and not contiguous) {
             return cache_or_index == cache_type{};
         } else {
-            return dispatch<sentinel_compare_policy>(poly);
+            return dispatch<sentinel_compare_t>(poly);
         }
     }
 };

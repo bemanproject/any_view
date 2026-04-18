@@ -45,19 +45,19 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
 
     static constexpr bool approximately_sized = detail::flag_is_set<OptsV, any_view_options::approximately_sized>;
     static constexpr bool sized               = detail::flag_is_set<OptsV, any_view_options::sized>;
-    static constexpr bool contiguous_bitor_sized =
+    static constexpr bool contiguous_and_sized =
         detail::flag_is_set<OptsV, any_view_options::contiguous | any_view_options::sized>;
     static constexpr bool copyable = detail::flag_is_set<OptsV, any_view_options::copyable>;
 
-    using iterator         = std::conditional_t<contiguous_bitor_sized,
-                                                std::counted_iterator<std::add_pointer_t<RefT>>,
-                                                detail::iterator<ElementT, RefT, RValueRefT, DiffT, OptsV>>;
+    using uncounted_iterator = detail::iterator<ElementT, RefT, RValueRefT, DiffT, OptsV>;
+    using iterator =
+        std::conditional_t<contiguous_and_sized, std::counted_iterator<std::add_pointer_t<RefT>>, uncounted_iterator>;
     using polymorphic_type = detail::polymorphic_view<RefT, RValueRefT, DiffT, OptsV>;
     using sentinel         = std::default_sentinel_t;
     using size_type        = std::make_unsigned_t<DiffT>;
 
-    template <detail::policy PolicyT>
-    static constexpr auto dispatch = detail::dispatch<PolicyT, polymorphic_type>;
+    template <detail::capability CapabilityT>
+    static constexpr auto dispatch = detail::dispatch<CapabilityT, polymorphic_type>;
 
     polymorphic_type poly;
 
@@ -113,20 +113,19 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
 
     // [range.any.access]
     [[nodiscard]] constexpr iterator begin() {
-        using derived_vtable_type =
-            detail::vtable<detail::iterator_policy<RefT, RValueRefT, DiffT, OptsV>, detail::iterator_storage>;
+        using capability_type     = detail::iterator_capabilities<RefT, RValueRefT, DiffT, OptsV>;
+        using derived_vtable_type = detail::vtable<capability_type, detail::iterator_storage>;
 
         const auto get_poly = [this] {
-            const auto base_vtable_ptr = dispatch<detail::vtable_policy<RefT, RValueRefT, DiffT>>(poly);
+            const auto base_vtable_ptr = dispatch<detail::iterator_vtable_t<RefT, RValueRefT, DiffT>>(poly);
 
             return detail::polymorphic_iterator<RefT, RValueRefT, DiffT, OptsV>{
-                [this] { return dispatch<detail::begin_policy<RefT, RValueRefT, DiffT>>(poly); },
+                [this] { return dispatch<detail::begin_t<RefT, RValueRefT, DiffT>>(poly); },
                 static_cast<const derived_vtable_type*>(base_vtable_ptr)};
         };
 
-        if constexpr (contiguous_bitor_sized) {
-            return iterator{std::to_address(detail::iterator<ElementT, RefT, RValueRefT, DiffT, OptsV>{get_poly}),
-                            static_cast<DiffT>(size())};
+        if constexpr (contiguous_and_sized) {
+            return iterator{std::to_address(uncounted_iterator{get_poly}), static_cast<DiffT>(size())};
         } else {
             return iterator{get_poly};
         }
@@ -137,13 +136,13 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     [[nodiscard]] constexpr size_type size() const
         requires sized
     {
-        return dispatch<detail::reserve_hint_policy<DiffT>>(poly);
+        return dispatch<detail::reserve_hint_t<DiffT>>(poly);
     }
 
     [[nodiscard]] constexpr size_type reserve_hint() const
         requires approximately_sized
     {
-        return dispatch<detail::reserve_hint_policy<DiffT>>(poly);
+        return dispatch<detail::reserve_hint_t<DiffT>>(poly);
     }
 
     // [range.any.swap]
@@ -160,6 +159,6 @@ struct detail::is_any_view<any_view<ElementT, OptsV, RefT, RValueRefT, DiffT>> :
 template <class ElementT, beman::any_view::any_view_options OptsV, class RefT, class RValueRefT, class DiffT>
 inline constexpr bool
     std::ranges::enable_borrowed_range<beman::any_view::any_view<ElementT, OptsV, RefT, RValueRefT, DiffT>> =
-        (OptsV & beman::any_view::any_view_options::borrowed) == beman::any_view::any_view_options::borrowed;
+        beman::any_view::detail::flag_is_set<OptsV, beman::any_view::any_view_options::borrowed>;
 
 #endif // BEMAN_ANY_VIEW_ANY_VIEW_HPP
