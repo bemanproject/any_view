@@ -50,13 +50,13 @@ target_sources(
             include
         FILES
             include/beman/any_view/detail/adaptors.hpp
+            include/beman/any_view/detail/capabilities.hpp
             include/beman/any_view/detail/compressed_ptr.hpp
             include/beman/any_view/detail/concepts.hpp
             include/beman/any_view/detail/default_iterator.hpp
             include/beman/any_view/detail/default_view.hpp
             include/beman/any_view/detail/iterator.hpp
             include/beman/any_view/detail/no_unique_address.hpp
-            include/beman/any_view/detail/policies.hpp
             include/beman/any_view/detail/polymorphic_iterator.hpp
             include/beman/any_view/detail/polymorphic_view.hpp
             include/beman/any_view/detail/polymorphic.hpp

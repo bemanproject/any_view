@@ -14,10 +14,13 @@ namespace beman::any_view::detail {
 
 template <std::size_t SizeV>
 class small_storage {
+    using inplace_type = std::byte[SizeV];
+    // static_cast from void pointer is not constexpr until C++26
+    using pointer_type = adaptor_base*;
+
     union {
-        std::byte inplace[SizeV];
-        // static_cast from void pointer is not constexpr until C++26
-        adaptor_base* pointer;
+        inplace_type inplace;
+        pointer_type pointer;
     };
 
   public:
@@ -25,12 +28,9 @@ class small_storage {
     constexpr explicit small_storage(AdaptorT&& adaptor) {
         visit<AdaptorT>(
             *this,
-            [&](auto& inplace) {
-                std::construct_at(reinterpret_cast<AdaptorT*>(std::addressof(inplace)),
-                                  std::forward<AdaptorT>(adaptor));
-            },
-            [&](auto& pointer) {
-                std::construct_at(std::addressof(pointer), ::new AdaptorT(std::forward<AdaptorT>(adaptor)));
+            [&](inplace_type& inplace) { ::new (&inplace) AdaptorT(std::forward<AdaptorT>(adaptor)); },
+            [&](pointer_type& pointer) {
+                std::construct_at(&pointer, ::new AdaptorT(std::forward<AdaptorT>(adaptor)));
             });
     }
 
@@ -38,13 +38,11 @@ class small_storage {
     constexpr small_storage(const small_storage& other, std::in_place_type_t<AdaptorT>) {
         visit<AdaptorT>(
             *this,
-            [&](auto& inplace) {
-                std::construct_at(reinterpret_cast<AdaptorT*>(std::addressof(inplace)),
-                                  reinterpret_cast<const AdaptorT&>(other.inplace));
+            [&](inplace_type& inplace) {
+                ::new (&inplace) AdaptorT(reinterpret_cast<const AdaptorT&>(other.inplace));
             },
-            [&](auto& pointer) {
-                std::construct_at(std::addressof(pointer),
-                                  ::new AdaptorT(static_cast<const AdaptorT&>(*other.pointer)));
+            [&](pointer_type& pointer) {
+                std::construct_at(&pointer, ::new AdaptorT(static_cast<const AdaptorT&>(*other.pointer)));
             });
     }
 
@@ -52,35 +50,32 @@ class small_storage {
     constexpr small_storage(small_storage&& other, std::in_place_type_t<AdaptorT>) noexcept {
         visit<AdaptorT>(
             *this,
-            [&](auto& inplace) {
-                std::construct_at(reinterpret_cast<AdaptorT*>(std::addressof(inplace)),
-                                  reinterpret_cast<AdaptorT&&>(std::move(other).inplace));
-            },
-            [&](auto& pointer) { std::construct_at(std::addressof(pointer), std::exchange(other.pointer, nullptr)); });
+            [&](inplace_type& inplace) { ::new (&inplace) AdaptorT(reinterpret_cast<AdaptorT&&>(other.inplace)); },
+            [&](pointer_type& pointer) { std::construct_at(&pointer, std::exchange(other.pointer, nullptr)); });
     }
 
     template <adaptor AdaptorT>
     constexpr friend void destroy_as(small_storage& self) noexcept {
         visit<AdaptorT>(
             self,
-            [](auto& inplace) { std::destroy_at(reinterpret_cast<AdaptorT*>(std::addressof(inplace))); },
-            [](auto& pointer) { ::delete static_cast<AdaptorT*>(std::exchange(pointer, nullptr)); });
+            [](inplace_type& inplace) { reinterpret_cast<AdaptorT&>(inplace).~AdaptorT(); },
+            [](pointer_type& pointer) { ::delete static_cast<AdaptorT*>(std::exchange(pointer, nullptr)); });
     }
 
     template <adaptor AdaptorT>
     [[nodiscard]] constexpr friend AdaptorT& unchecked_get(small_storage& self) {
         return visit<AdaptorT>(
             self,
-            [](auto& inplace) -> AdaptorT& { return reinterpret_cast<AdaptorT&>(inplace); },
-            [](auto& pointer) -> AdaptorT& { return static_cast<AdaptorT&>(*pointer); });
+            [](inplace_type& inplace) -> AdaptorT& { return reinterpret_cast<AdaptorT&>(inplace); },
+            [](pointer_type& pointer) -> AdaptorT& { return static_cast<AdaptorT&>(*pointer); });
     }
 
     template <adaptor AdaptorT>
     [[nodiscard]] constexpr friend const AdaptorT& unchecked_get(const small_storage& self) {
         return visit<AdaptorT>(
             self,
-            [](auto& inplace) -> const AdaptorT& { return reinterpret_cast<const AdaptorT&>(inplace); },
-            [](auto& pointer) -> const AdaptorT& { return static_cast<const AdaptorT&>(*pointer); });
+            [](const inplace_type& inplace) -> const AdaptorT& { return reinterpret_cast<const AdaptorT&>(inplace); },
+            [](const pointer_type& pointer) -> const AdaptorT& { return static_cast<const AdaptorT&>(*pointer); });
     }
 
   private:

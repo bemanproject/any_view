@@ -9,21 +9,23 @@
 namespace beman::any_view::detail {
 
 template <class RefT, class RValueRefT, class DiffT>
-struct vtable_policy : nullary_policy {
+struct iterator_vtable_t : nullary_capability {
+    using vtable_type = vtable<input_capabilities<RefT, RValueRefT>, iterator_storage>;
+
     template <not_adaptor>
-    static const vtable<input_policy<RefT, RValueRefT>, iterator_storage>* fn() noexcept;
+    static const vtable_type* fn() noexcept;
 
     template <adaptor ViewAdaptorT>
-    [[nodiscard]] static constexpr const vtable<input_policy<RefT, RValueRefT>, iterator_storage>* fn() noexcept {
+    [[nodiscard]] static constexpr const vtable_type* fn() noexcept {
         constexpr auto options = ViewAdaptorT::options;
+        using capability_type  = iterator_capabilities<RefT, RValueRefT, DiffT, options>;
         using adaptor_type     = typename ViewAdaptorT::adaptor_type;
-        return std::addressof(
-            vtable_for<iterator_policy<RefT, RValueRefT, DiffT, options>, iterator_storage, adaptor_type>);
+        return std::addressof(vtable_for<capability_type, iterator_storage, adaptor_type>);
     }
 };
 
 template <class RefT, class RValueRefT, class DiffT>
-struct begin_policy : unary_policy {
+struct begin_t : unary_capability {
     template <not_adaptor T>
     static iterator_storage fn(T& self);
 
@@ -38,12 +40,14 @@ struct begin_policy : unary_policy {
 };
 
 template <class DiffT>
-struct reserve_hint_policy : unary_policy {
+struct reserve_hint_t : unary_capability {
+    using size_type = std::make_unsigned_t<DiffT>;
+
     template <not_adaptor T>
-    static std::make_unsigned_t<DiffT> fn(const T& self);
+    static size_type fn(const T& self);
 
     template <adaptor ViewAdaptorT>
-    [[nodiscard]] static constexpr std::make_unsigned_t<DiffT> fn(const ViewAdaptorT& adaptor) {
+    [[nodiscard]] static constexpr size_type fn(const ViewAdaptorT& adaptor) {
         return beman::any_view::reserve_hint(adaptor.view);
     }
 };
@@ -52,45 +56,45 @@ struct reserve_hint_policy : unary_policy {
 using view_storage = small_storage<3 * sizeof(void*)>;
 
 template <class RefT, class RValueRefT, class DiffT>
-using uncopyable_policy = inherit<move_policy<view_storage>,
-                                  destroy_policy<view_storage>,
-                                  vtable_policy<RefT, RValueRefT, DiffT>,
-                                  begin_policy<RefT, RValueRefT, DiffT>>;
+using uncopyable_capabilities = inherit<move_t<view_storage>,
+                                        destroy_t<view_storage>,
+                                        iterator_vtable_t<RefT, RValueRefT, DiffT>,
+                                        begin_t<RefT, RValueRefT, DiffT>>;
 
 template <class RefT, class RValueRefT, class DiffT>
-using copyable_policy = inherit<uncopyable_policy<RefT, RValueRefT, DiffT>, copy_policy<view_storage>>;
+using copyable_capabilities = inherit<uncopyable_capabilities<RefT, RValueRefT, DiffT>, copy_t<view_storage>>;
 
-using unsized_policy = inherit<>;
+using unsized_capabilities = inherit<>;
 
 template <class DiffT>
-using sized_policy = inherit<unsized_policy, reserve_hint_policy<DiffT>>;
+using sized_capabilities = inherit<unsized_capabilities, reserve_hint_t<DiffT>>;
 
 template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-consteval auto get_copyable_policy() {
+consteval auto get_copyable_capabilities() {
     using enum any_view_options;
 
     if constexpr (flag_is_set<OptsV, copyable>) {
-        return copyable_policy<RefT, RValueRefT, DiffT>{};
+        return copyable_capabilities<RefT, RValueRefT, DiffT>{};
     } else {
-        return uncopyable_policy<RefT, RValueRefT, DiffT>{};
+        return uncopyable_capabilities<RefT, RValueRefT, DiffT>{};
     }
 }
 
 template <class DiffT, any_view_options OptsV>
-consteval auto get_sized_policy() {
+consteval auto get_sized_capabilities() {
     using enum any_view_options;
 
     if constexpr (flag_is_set<OptsV, approximately_sized>) {
-        return sized_policy<DiffT>{};
+        return sized_capabilities<DiffT>{};
     } else {
-        return unsized_policy{};
+        return unsized_capabilities{};
     }
 }
 
 template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
 using polymorphic_view = basic_polymorphic<view_storage,
-                                           decltype(get_copyable_policy<RefT, RValueRefT, DiffT, OptsV>()),
-                                           decltype(get_sized_policy<DiffT, OptsV>())>;
+                                           decltype(get_copyable_capabilities<RefT, RValueRefT, DiffT, OptsV>()),
+                                           decltype(get_sized_capabilities<DiffT, OptsV>())>;
 
 } // namespace beman::any_view::detail
 
