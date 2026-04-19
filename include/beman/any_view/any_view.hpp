@@ -59,12 +59,14 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     template <detail::capability CapabilityT>
     static constexpr auto dispatch = detail::dispatch<CapabilityT, polymorphic_type>;
 
-    polymorphic_type poly;
+    template <std::ranges::view ViewT>
+    using adaptor_for = detail::view_adaptor<ViewT, OptsV>;
+
+    polymorphic_type poly{std::in_place_type<adaptor_for<detail::default_view<ElementT, RefT, RValueRefT, DiffT>>>};
 
     template <class RangeT, bool IsAnyView>
     constexpr any_view(RangeT&& range, std::bool_constant<IsAnyView>)
-        : poly(detail::view_adaptor<std::views::all_t<RangeT>, OptsV>{
-              .view = std::views::all(std::forward<RangeT>(range))}) {}
+        : poly(adaptor_for<std::views::all_t<RangeT>>{.view = std::views::all(std::forward<RangeT>(range))}) {}
 
     template <class RangeT>
     static consteval bool is_noexcept() {
@@ -92,13 +94,13 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
         }
     }
 
-    constexpr any_view() noexcept : any_view(detail::default_view<ElementT, RefT, RValueRefT, DiffT>{}) {}
+    constexpr any_view() noexcept = default;
 
     constexpr any_view(const any_view&)
         requires copyable
     = default;
 
-    constexpr any_view(any_view&& other) noexcept : any_view() { swap(other); }
+    constexpr any_view(any_view&& other) noexcept { swap(other); }
 
     constexpr any_view& operator=(const any_view&)
         requires copyable
@@ -116,18 +118,16 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
         using capability_type     = detail::iterator_capabilities<RefT, RValueRefT, DiffT, OptsV>;
         using derived_vtable_type = detail::vtable<capability_type, detail::iterator_storage>;
 
-        const auto get_poly = [this] {
-            const auto base_vtable_ptr = dispatch<detail::iterator_vtable_t<RefT, RValueRefT, DiffT>>(poly);
-
-            return detail::polymorphic_iterator<RefT, RValueRefT, DiffT, OptsV>{
-                [this] { return dispatch<detail::begin_t<RefT, RValueRefT, DiffT>>(poly); },
-                static_cast<const derived_vtable_type*>(base_vtable_ptr)};
-        };
+        const auto get_storage = [this] { return dispatch<detail::begin_t<RefT, RValueRefT, DiffT>>(poly); };
+        const auto vtable_ptr  = static_cast<const derived_vtable_type*>(
+            dispatch<detail::iterator_vtable_t<RefT, RValueRefT, DiffT>>(poly));
 
         if constexpr (contiguous_and_sized) {
-            return iterator{std::to_address(uncounted_iterator{get_poly}), static_cast<DiffT>(size())};
+            const auto to_address = &detail::vtable<detail::cache_t<RefT>, detail::iterator_storage>::entry;
+            return iterator{(vtable_ptr->*to_address)(get_storage()), static_cast<DiffT>(size())};
         } else {
-            return iterator{get_poly};
+            return iterator{
+                [=] { return detail::polymorphic_iterator<RefT, RValueRefT, DiffT, OptsV>{get_storage, vtable_ptr}; }};
         }
     }
 
