@@ -46,7 +46,7 @@ struct impl<binding<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...) noexcept> {
 template <unary UnaryT, adaptor AdaptorT, storage StorageT, class RetT, class SelfT, class... ArgsT>
 struct impl<binding<UnaryT, AdaptorT>, StorageT, RetT(SelfT&, ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(SelfT& self, ArgsT... args) {
-        return dispatch<UnaryT, AdaptorT>(unchecked_get<AdaptorT>(self), std::forward<ArgsT>(args)...);
+        return dispatch<UnaryT, AdaptorT>(self.template unchecked_get<AdaptorT>(), std::forward<ArgsT>(args)...);
     }
 };
 
@@ -56,6 +56,8 @@ struct type_t : nullary_capability {
         return typeid(T);
     }
 };
+
+inline constexpr type_t type{};
 
 // bindings for symmetric binary capabilities
 template <symmetric_binary SymmetricBinaryT, adaptor AdaptorT, storage StorageT, class RetT>
@@ -71,7 +73,8 @@ struct impl<binding<SymmetricBinaryT, AdaptorT>,
             return SymmetricBinaryT::default_value();
         }
 
-        return dispatch<SymmetricBinaryT, AdaptorT>(unchecked_get<AdaptorT>(self), unchecked_get<AdaptorT>(other));
+        return dispatch<SymmetricBinaryT, AdaptorT>(self.template unchecked_get<AdaptorT>(),
+                                                    other.template unchecked_get<AdaptorT>());
     }
 };
 
@@ -104,7 +107,7 @@ struct impl<UnaryT, PolyT, RetT(SelfT&, ArgsT...)> {
 template <symmetric_binary SymmetricBinaryT, polymorphic PolyT, class RetT>
 struct impl<SymmetricBinaryT, PolyT, RetT(const PolyT&, const PolyT&)> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, const PolyT& other) {
-        return self.entry(SymmetricBinaryT{})(self.get(), other.get(), other.entry(type_t{})());
+        return self.entry(SymmetricBinaryT{})(self.get(), other.get(), other.entry(type)());
     }
 };
 
@@ -120,6 +123,9 @@ struct move_t : nullary_capability {
 };
 
 template <storage StorageT>
+inline constexpr move_t<StorageT> move{};
+
+template <storage StorageT>
 struct copy_t : nullary_capability {
     template <not_adaptor>
     static StorageT fn(const StorageT& source);
@@ -131,15 +137,21 @@ struct copy_t : nullary_capability {
 };
 
 template <storage StorageT>
+inline constexpr copy_t<StorageT> copy{};
+
+template <storage StorageT>
 struct destroy_t : nullary_capability {
     template <not_adaptor>
     static void fn(StorageT& source) noexcept;
 
     template <adaptor AdaptorT>
     static constexpr void fn(StorageT& source) noexcept {
-        destroy_as<AdaptorT>(source);
+        source.template destroy_as<AdaptorT>();
     }
 };
+
+template <storage StorageT>
+inline constexpr destroy_t<StorageT> destroy{};
 
 } // namespace beman::any_view::detail
 

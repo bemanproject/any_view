@@ -69,7 +69,7 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
     template <capability CapabilityT>
     static constexpr auto dispatch = detail::dispatch<CapabilityT, polymorphic_type>;
 
-    polymorphic_type poly{iterator_adaptor_for<default_view<ElementT, RefT, RValueRefT, DiffT>>{}};
+    polymorphic_type poly{std::in_place_type<iterator_adaptor_for<default_view<ElementT, RefT, RValueRefT, DiffT>>>};
     BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS cache_or_index_type cache_or_index{make_cache_or_index()};
 
     constexpr cache_or_index_type make_cache_or_index() const {

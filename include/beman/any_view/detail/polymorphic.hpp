@@ -19,15 +19,19 @@ class basic_polymorphic {
 
   public:
     constexpr basic_polymorphic(const basic_polymorphic& other)
-        : storage(other.entry(copy_t<StorageT>{})(other.storage)), vtable_ptrs(other.vtable_ptrs) {}
+        : storage(other.entry(copy<StorageT>)(other.storage)), vtable_ptrs(other.vtable_ptrs) {}
 
     constexpr basic_polymorphic(basic_polymorphic&& other) noexcept
-        : storage(other.entry(move_t<StorageT>{})(std::move(other.storage))), vtable_ptrs(other.vtable_ptrs) {}
+        : storage(other.entry(move<StorageT>)(std::move(other.storage))), vtable_ptrs(other.vtable_ptrs) {}
 
     template <adaptor AdaptorT>
     constexpr basic_polymorphic(AdaptorT&& adaptor)
         : storage(std::forward<AdaptorT>(adaptor)),
           vtable_ptrs(std::addressof(vtable_for<CapabilityTs, StorageT, AdaptorT>)...) {}
+
+    template <adaptor AdaptorT>
+    constexpr basic_polymorphic(std::in_place_type_t<AdaptorT> tag)
+        : storage(tag), vtable_ptrs(std::addressof(vtable_for<CapabilityTs, StorageT, AdaptorT>)...) {}
 
     template <class GetStorageT>
         requires std::is_invocable_r_v<StorageT, GetStorageT>
@@ -38,13 +42,13 @@ class basic_polymorphic {
 
     template <std::derived_from<CapabilityTs>... OtherCapabilityTs>
     constexpr basic_polymorphic(const basic_polymorphic<StorageT, OtherCapabilityTs...>& other)
-        : storage(other.entry(copy_t<StorageT>{})(other.get())), vtable_ptrs(other.entries()) {}
+        : storage(other.entry(copy<StorageT>)(other.get())), vtable_ptrs(other.entries()) {}
 
     template <std::derived_from<CapabilityTs>... OtherCapabilityTs>
     constexpr basic_polymorphic(basic_polymorphic<StorageT, OtherCapabilityTs...>&& other) noexcept
-        : storage(other.entry(move_t<StorageT>{})(std::move(other.get()))), vtable_ptrs(other.entries()) {}
+        : storage(other.entry(move<StorageT>)(std::move(other.get()))), vtable_ptrs(other.entries()) {}
 
-    constexpr ~basic_polymorphic() { entry(destroy_t<StorageT>{})(storage); }
+    constexpr ~basic_polymorphic() { entry(destroy<StorageT>)(storage); }
 
     constexpr basic_polymorphic& operator=(const basic_polymorphic& other) {
         if (this == std::addressof(other)) {
