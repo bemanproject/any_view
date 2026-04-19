@@ -66,11 +66,11 @@ struct cache_t : unary_capability {
 
     template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr iter_cache_t<RefT> fn(const IteratorAdaptorT& adaptor) {
-        if (dispatch<sentinel_compare_t, IteratorAdaptorT>(adaptor)) {
+        if (adaptor.iterator == adaptor.sentinel) {
             return {};
         }
 
-        return iter_cache<RefT>::make(dispatch<dereference_t<RefT>, IteratorAdaptorT>(adaptor));
+        return iter_cache<RefT>::make(*adaptor.iterator);
     }
 };
 
@@ -91,7 +91,7 @@ struct next_t : unary_capability {
 
     template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr iter_cache_t<RefT> fn(IteratorAdaptorT& adaptor) {
-        dispatch<increment_t, IteratorAdaptorT>(adaptor);
+        ++adaptor.iterator;
         return dispatch<cache_t<RefT>, IteratorAdaptorT>(adaptor);
     }
 };
@@ -113,7 +113,7 @@ struct prev_t : unary_capability {
 
     template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr iter_cache_t<RefT> fn(IteratorAdaptorT& adaptor) {
-        dispatch<decrement_t, IteratorAdaptorT>(adaptor);
+        --adaptor.iterator;
         return dispatch<cache_t<RefT>, IteratorAdaptorT>(adaptor);
     }
 };
@@ -192,15 +192,7 @@ struct three_way_compare_t : symmetric_binary_capability {
     template <adaptor IteratorAdaptorT>
     [[nodiscard]] static constexpr std::partial_ordering fn(const IteratorAdaptorT& adaptor,
                                                             const IteratorAdaptorT& other) {
-        // std::__wrap_iter is not three-way comparable in Apple Clang
-        if constexpr (std::three_way_comparable<decltype(adaptor.iterator)>) {
-            return adaptor.iterator <=> other.iterator;
-        } else {
-            return adaptor.iterator < other.iterator    ? std::partial_ordering::less
-                   : adaptor.iterator > other.iterator  ? std::partial_ordering::greater
-                   : adaptor.iterator == other.iterator ? std::partial_ordering::equivalent
-                                                        : std::partial_ordering::unordered;
-        }
+        return std::compare_partial_order_fallback(adaptor.iterator, other.iterator);
     }
 };
 

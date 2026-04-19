@@ -57,8 +57,6 @@ struct type_t : nullary_capability {
     }
 };
 
-inline constexpr type_t type{};
-
 // bindings for symmetric binary capabilities
 template <symmetric_binary SymmetricBinaryT, adaptor AdaptorT, storage StorageT, class RetT>
 struct impl<binding<SymmetricBinaryT, AdaptorT>,
@@ -66,7 +64,7 @@ struct impl<binding<SymmetricBinaryT, AdaptorT>,
             RetT(const StorageT&, const StorageT&, const std::type_info&)> {
     [[nodiscard]] static constexpr RetT
     fn(const StorageT& self, const StorageT& other, const std::type_info& other_type) {
-        const auto& self_type = dispatch<type_t, AdaptorT>();
+        const auto& self_type = typeid(AdaptorT);
 
         // std::type_info::operator== is not constexpr until C++23
         if (std::is_constant_evaluated() ? &self_type != &other_type : self_type != other_type) {
@@ -107,7 +105,7 @@ struct impl<UnaryT, PolyT, RetT(SelfT&, ArgsT...)> {
 template <symmetric_binary SymmetricBinaryT, polymorphic PolyT, class RetT>
 struct impl<SymmetricBinaryT, PolyT, RetT(const PolyT&, const PolyT&)> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, const PolyT& other) {
-        return self.entry(SymmetricBinaryT{})(self.get(), other.get(), other.entry(type)());
+        return self.entry(SymmetricBinaryT{})(self.get(), other.get(), other.entry(type_t{})());
     }
 };
 
@@ -123,9 +121,6 @@ struct move_t : nullary_capability {
 };
 
 template <storage StorageT>
-inline constexpr move_t<StorageT> move{};
-
-template <storage StorageT>
 struct copy_t : nullary_capability {
     template <not_adaptor>
     static StorageT fn(const StorageT& source);
@@ -137,9 +132,6 @@ struct copy_t : nullary_capability {
 };
 
 template <storage StorageT>
-inline constexpr copy_t<StorageT> copy{};
-
-template <storage StorageT>
 struct destroy_t : nullary_capability {
     template <not_adaptor>
     static void fn(StorageT& source) noexcept;
@@ -149,9 +141,6 @@ struct destroy_t : nullary_capability {
         source.template destroy_as<AdaptorT>();
     }
 };
-
-template <storage StorageT>
-inline constexpr destroy_t<StorageT> destroy{};
 
 } // namespace beman::any_view::detail
 
