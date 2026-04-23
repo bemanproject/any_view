@@ -71,7 +71,7 @@ class small_storage {
     }
 
     template <adaptor AdaptorT>
-    [[nodiscard]] constexpr AdaptorT& unchecked_get() {
+    [[nodiscard]] constexpr AdaptorT& unchecked_get() & noexcept {
         return visit<AdaptorT>(
             *this,
             [](inplace_type& inplace) -> AdaptorT& { return reinterpret_cast<AdaptorT&>(inplace); },
@@ -79,12 +79,23 @@ class small_storage {
     }
 
     template <adaptor AdaptorT>
-    [[nodiscard]] constexpr const AdaptorT& unchecked_get() const {
+    [[nodiscard]] constexpr const AdaptorT& unchecked_get() const& noexcept {
         return visit<AdaptorT>(
             *this,
             [](const inplace_type& inplace) -> const AdaptorT& { return reinterpret_cast<const AdaptorT&>(inplace); },
             [](const pointer_type& pointer) -> const AdaptorT& { return static_cast<const AdaptorT&>(*pointer); });
     }
+
+    template <adaptor AdaptorT>
+    [[nodiscard]] constexpr AdaptorT&& unchecked_get() && noexcept {
+        return visit<AdaptorT>(
+            *this,
+            [](inplace_type& inplace) -> AdaptorT&& { return reinterpret_cast<AdaptorT&&>(inplace); },
+            [](pointer_type& pointer) -> AdaptorT&& { return static_cast<AdaptorT&&>(*pointer); });
+    }
+
+    // template <adaptor AdaptorT>
+    // [[nodiscard]] constexpr const AdaptorT&& unchecked_get() const&& noexcept;
 
   private:
     template <adaptor AdaptorT, class SelfT, class InplaceVisitorT, class PointerVisitorT>

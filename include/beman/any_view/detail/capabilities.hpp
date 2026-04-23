@@ -44,9 +44,19 @@ struct impl<binding<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...) noexcept> {
 
 // bindings for unary capabilities
 template <unary UnaryT, adaptor AdaptorT, storage StorageT, class RetT, class SelfT, class... ArgsT>
-struct impl<binding<UnaryT, AdaptorT>, StorageT, RetT(SelfT&, ArgsT...)> {
-    [[nodiscard]] static constexpr RetT fn(SelfT& self, ArgsT... args) {
-        return dispatch<UnaryT, AdaptorT>(self.template unchecked_get<AdaptorT>(), std::forward<ArgsT>(args)...);
+struct impl<binding<UnaryT, AdaptorT>, StorageT, RetT(SelfT, ArgsT...)> {
+    [[nodiscard]] static constexpr RetT fn(SelfT self, ArgsT... args) {
+        return dispatch<UnaryT, AdaptorT>(std::forward<SelfT>(self).template unchecked_get<AdaptorT>(),
+                                          std::forward<ArgsT>(args)...);
+    }
+};
+
+// bindings for noexcept unary capabilities
+template <unary UnaryT, adaptor AdaptorT, storage StorageT, class RetT, class SelfT, class... ArgsT>
+struct impl<binding<UnaryT, AdaptorT>, StorageT, RetT(SelfT, ArgsT...) noexcept> {
+    [[nodiscard]] static constexpr RetT fn(SelfT self, ArgsT... args) noexcept {
+        return dispatch<UnaryT, AdaptorT>(std::forward<SelfT>(self).template unchecked_get<AdaptorT>(),
+                                          std::forward<ArgsT>(args)...);
     }
 };
 
@@ -94,9 +104,17 @@ struct impl<NullaryT, PolyT, RetT(ArgsT...) noexcept> {
 
 // dispatches to bindings for unary capabilities
 template <unary UnaryT, polymorphic PolyT, class RetT, class SelfT, class... ArgsT>
-struct impl<UnaryT, PolyT, RetT(SelfT&, ArgsT...)> {
-    [[nodiscard]] static constexpr RetT fn(SelfT& self, ArgsT... args) {
-        return self.entry(UnaryT{})(self.get(), std::forward<ArgsT>(args)...);
+struct impl<UnaryT, PolyT, RetT(SelfT, ArgsT...)> {
+    [[nodiscard]] static constexpr RetT fn(SelfT self, ArgsT... args) {
+        return self.entry(UnaryT{})(std::forward<SelfT>(self).get(), std::forward<ArgsT>(args)...);
+    }
+};
+
+// dispatches to bindings for noexcept unary capabilities
+template <unary UnaryT, polymorphic PolyT, class RetT, class SelfT, class... ArgsT>
+struct impl<UnaryT, PolyT, RetT(SelfT, ArgsT...) noexcept> {
+    [[nodiscard]] static constexpr RetT fn(SelfT self, ArgsT... args) noexcept {
+        return self.entry(UnaryT{})(std::forward<SelfT>(self).get(), std::forward<ArgsT>(args)...);
     }
 };
 
