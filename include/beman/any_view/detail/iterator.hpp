@@ -135,6 +135,9 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
     constexpr iterator& operator++() {
         if constexpr (contiguous or has_index) {
             ++cache_or_index;
+            if constexpr (contiguous) {
+                dispatch<sync_t<RefT>>(poly, cache_or_index);
+            }
         } else if constexpr (has_cache) {
             cache_or_index = dispatch<next_t<RefT>>(poly);
         } else {
@@ -168,6 +171,9 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
     {
         if constexpr (contiguous or has_index) {
             --cache_or_index;
+            if constexpr (contiguous) {
+                dispatch<sync_t<RefT>>(poly, cache_or_index);
+            }
         } else if constexpr (has_cache) {
             cache_or_index = dispatch<prev_t<RefT>>(poly);
         } else {
@@ -209,6 +215,9 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
     {
         if constexpr (contiguous or has_index) {
             cache_or_index += offset;
+            if constexpr (contiguous) {
+                dispatch<sync_t<RefT>>(poly, cache_or_index);
+            }
         } else {
             static_assert(has_cache, "random access iterator with no index has cache");
             cache_or_index = dispatch<advance_t<RefT, DiffT>>(poly, offset);

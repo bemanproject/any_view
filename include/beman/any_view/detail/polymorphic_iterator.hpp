@@ -163,6 +163,18 @@ struct iter_move_t : unary_protocol {
     }
 };
 
+template <class RefT>
+struct sync_t : unary_protocol {
+    template <not_adaptor T>
+    static void fn(T& self, iter_cache_t<RefT> cache);
+
+    template <adaptor IteratorAdaptorT>
+    static constexpr void fn(IteratorAdaptorT& adaptor, iter_cache_t<RefT> cache) {
+        const auto n = cache - std::to_address(adaptor.iterator);
+        adaptor.iterator += n;
+    }
+};
+
 struct equality_compare_t : symmetric_binary_protocol {
     [[nodiscard]] static constexpr bool default_value() noexcept { return false; }
 
@@ -260,11 +272,16 @@ struct random_access_protocol : inherit<bidirectional_protocol<RefT, RValueRefT>
                                         three_way_compare_t,
                                         subtract_t<DiffT>> {};
 
+template <class RefT, class RValueRefT, class DiffT>
+struct contiguous_protocol : inherit<random_access_protocol<RefT, RValueRefT, DiffT>, sync_t<RefT>> {};
+
 template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
 [[nodiscard]] consteval auto get_iterator_protocol() {
     using enum any_view_options;
 
-    if constexpr (flag_is_set<OptsV, random_access>) {
+    if constexpr (flag_is_set<OptsV, contiguous>) {
+        return contiguous_protocol<RefT, RValueRefT, DiffT>{};
+    } else if constexpr (flag_is_set<OptsV, random_access>) {
         return random_access_protocol<RefT, RValueRefT, DiffT>{};
     } else if constexpr (flag_is_set<OptsV, bidirectional>) {
         return bidirectional_protocol<RefT, RValueRefT>{};
