@@ -42,11 +42,11 @@ class basic_polymorphic {
 
     template <std::derived_from<ProtocolTs>... OtherProtocolTs>
     constexpr basic_polymorphic(const basic_polymorphic<StorageT, OtherProtocolTs...>& other)
-        : storage(other.entry(copy_t<StorageT>{})(other.get())), witness_ptrs(other.entries()) {}
+        : storage(other.entry(copy_t<StorageT>{})(other.get())), witness_ptrs(other.witnesses()) {}
 
     template <std::derived_from<ProtocolTs>... OtherProtocolTs>
     constexpr basic_polymorphic(basic_polymorphic<StorageT, OtherProtocolTs...>&& other) noexcept
-        : storage(other.entry(move_t<StorageT>{})(std::move(other.get()))), witness_ptrs(other.entries()) {}
+        : storage(other.entry(move_t<StorageT>{})(std::move(other.get()))), witness_ptrs(other.witnesses()) {}
 
     constexpr ~basic_polymorphic() { entry(destroy_t<StorageT>{})(storage); }
 
@@ -98,7 +98,7 @@ class basic_polymorphic {
     constexpr StorageT&&      get() && noexcept { return std::move(storage); }
     // constexpr const StorageT&& get() const&& noexcept { return std::move(storage); }
 
-    constexpr witness_ptrs_type entries() const noexcept { return witness_ptrs; }
+    constexpr witness_ptrs_type witnesses() const noexcept { return witness_ptrs; }
 
     template <protocol ProtocolT>
         requires(... or std::derived_from<ProtocolTs, ProtocolT>)

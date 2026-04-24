@@ -123,7 +123,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
 
     // const_cast
     template <class RangeT, class OtherElementT, any_view_options OtherOptsV, class OtherRefT, class OtherRValueRefT>
-        requires detail::const_capable<std::remove_cv_t<OtherElementT>, OtherRefT, OtherRValueRefT>
+        requires detail::const_convertible<std::remove_cv_t<OtherElementT>, OtherRefT, OtherRValueRefT>
     constexpr any_view(
         RangeT&& range,
         std::in_place_type_t<any_view<OtherElementT,

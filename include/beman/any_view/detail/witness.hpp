@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef BEMAN_ANY_VIEW_DETAIL_VTABLE_HPP
-#define BEMAN_ANY_VIEW_DETAIL_VTABLE_HPP
+#ifndef BEMAN_ANY_VIEW_DETAIL_WITNESS_HPP
+#define BEMAN_ANY_VIEW_DETAIL_WITNESS_HPP
 
 #include <beman/any_view/detail/adaptors.hpp>
 
@@ -39,24 +39,24 @@ struct bridge {
 };
 
 template <protocol ProtocolT, class T>
-inline constexpr auto& dispatch = *bridge<ProtocolT, T>::fn;
+inline constexpr auto dispatch = bridge<ProtocolT, T>::fn;
 
 template <class... Ts>
 struct inherit : Ts... {
-    using base_type = inherit;
+    using inherit_type = inherit;
 };
 
 template <class T>
-using base_type_t = typename T::base_type;
+using inherit_type_t = typename T::inherit_type;
 
 template <class T>
-concept derived_from_base_type = std::derived_from<T, base_type_t<T>>;
+concept derived_from_inherit = std::derived_from<T, inherit_type_t<T>>;
 
 template <class... Ts>
 inline constexpr bool enable_protocol<inherit<Ts...>> = (... and protocol<Ts>);
 
-template <derived_from_base_type T>
-inline constexpr bool enable_protocol<T> = protocol<base_type_t<T>>;
+template <derived_from_inherit T>
+inline constexpr bool enable_protocol<T> = protocol<inherit_type_t<T>>;
 
 template <protocol ProtocolT, adaptor AdaptorT>
 struct thunk : ProtocolT {};
@@ -70,8 +70,8 @@ template <protocol... ProtocolTs, storage StorageT>
 struct witness<inherit<ProtocolTs...>, StorageT> : witness<ProtocolTs, StorageT>... {};
 
 template <protocol ProtocolT, storage StorageT>
-    requires derived_from_base_type<ProtocolT>
-struct witness<ProtocolT, StorageT> : witness<base_type_t<ProtocolT>, StorageT> {};
+    requires derived_from_inherit<ProtocolT>
+struct witness<ProtocolT, StorageT> : witness<inherit_type_t<ProtocolT>, StorageT> {};
 
 template <protocol ProtocolT, storage StorageT, adaptor AdaptorT>
 inline constexpr witness<ProtocolT, StorageT> witness_for{
@@ -84,11 +84,11 @@ inline constexpr witness<inherit<ProtocolTs...>, StorageT> witness_for<inherit<P
 };
 
 template <protocol ProtocolT, storage StorageT, adaptor AdaptorT>
-    requires derived_from_base_type<ProtocolT>
+    requires derived_from_inherit<ProtocolT>
 inline constexpr witness<ProtocolT, StorageT> witness_for<ProtocolT, StorageT, AdaptorT>{
-    witness_for<base_type_t<ProtocolT>, StorageT, AdaptorT>,
+    witness_for<inherit_type_t<ProtocolT>, StorageT, AdaptorT>,
 };
 
 } // namespace beman::any_view::detail
 
-#endif // BEMAN_ANY_VIEW_DETAIL_VTABLE_HPP
+#endif // BEMAN_ANY_VIEW_DETAIL_WITNESS_HPP

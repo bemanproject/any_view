@@ -3,7 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_SMALL_STORAGE_HPP
 #define BEMAN_ANY_VIEW_DETAIL_SMALL_STORAGE_HPP
 
-#include <beman/any_view/detail/vtable.hpp>
+#include <beman/any_view/detail/witness.hpp>
 
 #include <cstddef>
 #include <memory>

@@ -3,7 +3,7 @@
 #ifndef BEMAN_ANY_VIEW_DETAIL_PROTOCOLS_HPP
 #define BEMAN_ANY_VIEW_DETAIL_PROTOCOLS_HPP
 
-#include <beman/any_view/detail/vtable.hpp>
+#include <beman/any_view/detail/witness.hpp>
 
 #include <typeinfo>
 #include <type_traits>

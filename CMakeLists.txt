@@ -63,7 +63,7 @@ target_sources(
             include/beman/any_view/detail/reference_converts_from_temporary.hpp
             include/beman/any_view/detail/small_storage.hpp
             include/beman/any_view/detail/unreachable.hpp
-            include/beman/any_view/detail/vtable.hpp
+            include/beman/any_view/detail/witness.hpp
             include/beman/any_view/any_view_options.hpp
             include/beman/any_view/any_view.hpp
             include/beman/any_view/concepts.hpp

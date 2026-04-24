@@ -100,8 +100,8 @@ template <class ValueT, std::common_reference_with<const ValueT&&> RefT>
 using const_reference_t = std::common_reference_t<const ValueT&&, RefT>;
 
 template <class ValueT, class RefT, class RValueRefT>
-concept const_capable = not std::same_as<const_reference_t<ValueT, RefT>, RefT> or
-                        not std::same_as<const_reference_t<ValueT, RValueRefT>, RValueRefT>;
+concept const_convertible = not std::same_as<const_reference_t<ValueT, RefT>, RefT> or
+                            not std::same_as<const_reference_t<ValueT, RValueRefT>, RValueRefT>;
 
 template <class DiffT, class...>
 struct const_protocol : inherit<> {};
@@ -129,7 +129,7 @@ struct sized_protocol : inherit<unsized_protocol, reserve_hint_t<DiffT>> {};
 
 template <class ValueT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV, class... ConstRefTs>
 consteval auto get_copyable_protocol() {
-    if constexpr (const_capable<ValueT, RefT, RValueRefT> and sizeof...(ConstRefTs) == 0) {
+    if constexpr (const_convertible<ValueT, RefT, RValueRefT> and sizeof...(ConstRefTs) == 0) {
         return get_copyable_protocol<ValueT,
                                      RefT,
                                      RValueRefT,
