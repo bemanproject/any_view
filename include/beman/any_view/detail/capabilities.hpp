@@ -28,7 +28,7 @@ concept symmetric_binary = capability<T> and std::derived_from<T, symmetric_bina
 
 // bindings for nullary capabilities
 template <nullary NullaryT, adaptor AdaptorT, storage StorageT, class RetT, class... ArgsT>
-struct impl<binding<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...)> {
+struct bridge<thunk<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(ArgsT... args) {
         return dispatch<NullaryT, AdaptorT>(std::forward<ArgsT>(args)...);
     }
@@ -36,7 +36,7 @@ struct impl<binding<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...)> {
 
 // bindings for noexcept nullary capabilities
 template <nullary NullaryT, adaptor AdaptorT, storage StorageT, class RetT, class... ArgsT>
-struct impl<binding<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...) noexcept> {
+struct bridge<thunk<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...) noexcept> {
     [[nodiscard]] static constexpr RetT fn(ArgsT... args) noexcept {
         return dispatch<NullaryT, AdaptorT>(std::forward<ArgsT>(args)...);
     }
@@ -44,7 +44,7 @@ struct impl<binding<NullaryT, AdaptorT>, StorageT, RetT(ArgsT...) noexcept> {
 
 // bindings for unary capabilities
 template <unary UnaryT, adaptor AdaptorT, storage StorageT, class RetT, class SelfT, class... ArgsT>
-struct impl<binding<UnaryT, AdaptorT>, StorageT, RetT(SelfT, ArgsT...)> {
+struct bridge<thunk<UnaryT, AdaptorT>, StorageT, RetT(SelfT, ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(SelfT self, ArgsT... args) {
         return dispatch<UnaryT, AdaptorT>(std::forward<SelfT>(self).template unchecked_get<AdaptorT>(),
                                           std::forward<ArgsT>(args)...);
@@ -53,7 +53,7 @@ struct impl<binding<UnaryT, AdaptorT>, StorageT, RetT(SelfT, ArgsT...)> {
 
 // bindings for noexcept unary capabilities
 template <unary UnaryT, adaptor AdaptorT, storage StorageT, class RetT, class SelfT, class... ArgsT>
-struct impl<binding<UnaryT, AdaptorT>, StorageT, RetT(SelfT, ArgsT...) noexcept> {
+struct bridge<thunk<UnaryT, AdaptorT>, StorageT, RetT(SelfT, ArgsT...) noexcept> {
     [[nodiscard]] static constexpr RetT fn(SelfT self, ArgsT... args) noexcept {
         return dispatch<UnaryT, AdaptorT>(std::forward<SelfT>(self).template unchecked_get<AdaptorT>(),
                                           std::forward<ArgsT>(args)...);
@@ -69,9 +69,9 @@ struct type_t : nullary_capability {
 
 // bindings for symmetric binary capabilities
 template <symmetric_binary SymmetricBinaryT, adaptor AdaptorT, storage StorageT, class RetT>
-struct impl<binding<SymmetricBinaryT, AdaptorT>,
-            StorageT,
-            RetT(const StorageT&, const StorageT&, const std::type_info&)> {
+struct bridge<thunk<SymmetricBinaryT, AdaptorT>,
+              StorageT,
+              RetT(const StorageT&, const StorageT&, const std::type_info&)> {
     [[nodiscard]] static constexpr RetT
     fn(const StorageT& self, const StorageT& other, const std::type_info& other_type) {
         const auto& self_type = typeid(AdaptorT);
@@ -88,7 +88,7 @@ struct impl<binding<SymmetricBinaryT, AdaptorT>,
 
 // dispatches to bindings for nullary capabilities
 template <nullary NullaryT, polymorphic PolyT, class RetT, class... ArgsT>
-struct impl<NullaryT, PolyT, RetT(ArgsT...)> {
+struct bridge<NullaryT, PolyT, RetT(ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, ArgsT... args) {
         return self.entry(NullaryT{})(std::forward<ArgsT>(args)...);
     }
@@ -96,7 +96,7 @@ struct impl<NullaryT, PolyT, RetT(ArgsT...)> {
 
 // dispatches to bindings for noexcept nullary capabilities
 template <nullary NullaryT, polymorphic PolyT, class RetT, class... ArgsT>
-struct impl<NullaryT, PolyT, RetT(ArgsT...) noexcept> {
+struct bridge<NullaryT, PolyT, RetT(ArgsT...) noexcept> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, ArgsT... args) noexcept {
         return self.entry(NullaryT{})(std::forward<ArgsT>(args)...);
     }
@@ -104,7 +104,7 @@ struct impl<NullaryT, PolyT, RetT(ArgsT...) noexcept> {
 
 // dispatches to bindings for unary capabilities
 template <unary UnaryT, polymorphic PolyT, class RetT, class SelfT, class... ArgsT>
-struct impl<UnaryT, PolyT, RetT(SelfT, ArgsT...)> {
+struct bridge<UnaryT, PolyT, RetT(SelfT, ArgsT...)> {
     [[nodiscard]] static constexpr RetT fn(SelfT self, ArgsT... args) {
         return self.entry(UnaryT{})(std::forward<SelfT>(self).get(), std::forward<ArgsT>(args)...);
     }
@@ -112,7 +112,7 @@ struct impl<UnaryT, PolyT, RetT(SelfT, ArgsT...)> {
 
 // dispatches to bindings for noexcept unary capabilities
 template <unary UnaryT, polymorphic PolyT, class RetT, class SelfT, class... ArgsT>
-struct impl<UnaryT, PolyT, RetT(SelfT, ArgsT...) noexcept> {
+struct bridge<UnaryT, PolyT, RetT(SelfT, ArgsT...) noexcept> {
     [[nodiscard]] static constexpr RetT fn(SelfT self, ArgsT... args) noexcept {
         return self.entry(UnaryT{})(std::forward<SelfT>(self).get(), std::forward<ArgsT>(args)...);
     }
@@ -121,7 +121,7 @@ struct impl<UnaryT, PolyT, RetT(SelfT, ArgsT...) noexcept> {
 // dispatches to bindings for symmetric binary capabilities
 // requires type_t to be implemented
 template <symmetric_binary SymmetricBinaryT, polymorphic PolyT, class RetT>
-struct impl<SymmetricBinaryT, PolyT, RetT(const PolyT&, const PolyT&)> {
+struct bridge<SymmetricBinaryT, PolyT, RetT(const PolyT&, const PolyT&)> {
     [[nodiscard]] static constexpr RetT fn(const PolyT& self, const PolyT& other) {
         return self.entry(SymmetricBinaryT{})(self.get(), other.get(), other.entry(type_t{})());
     }

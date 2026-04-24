@@ -90,23 +90,23 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
         : poly(std::forward<RangeT>(range).polymorphic()) {}
 
     template <detail::capability CapabilityT, detail::storage StorageT>
-    using vtable_for = detail::vtable<typename CapabilityT::template capabilities_for<OptsV>, StorageT>;
+    using witness_for = detail::witness<typename CapabilityT::template capabilities_for<OptsV>, StorageT>;
 
     template <detail::polymorphic PolyT, class GetStorageT>
         requires std::is_invocable_r_v<detail::view_storage, GetStorageT>
     [[nodiscard]] constexpr PolyT make_const(GetStorageT get_storage) const {
         using reference           = detail::const_reference_t<value_type, RefT>;
         using rvalue_reference    = detail::const_reference_t<value_type, RValueRefT>;
-        using const_copyable_type = detail::const_copyable_vtable_t<reference, rvalue_reference, DiffT>;
-        using const_sized_type    = detail::const_sized_vtable_t<reference, rvalue_reference, DiffT>;
+        using const_copyable_type = detail::const_copyable_witness_t<reference, rvalue_reference, DiffT>;
+        using const_sized_type    = detail::const_sized_witness_t<reference, rvalue_reference, DiffT>;
 
-        const auto const_copyable_vtable_ptr =
-            static_cast<const vtable_for<const_copyable_type, detail::view_storage>*>(
+        const auto const_copyable_witness_ptr =
+            static_cast<const witness_for<const_copyable_type, detail::view_storage>*>(
                 dispatch<const_copyable_type>(poly));
-        const auto const_sized_vtable_ptr =
-            static_cast<const vtable_for<const_sized_type, detail::view_storage>*>(dispatch<const_sized_type>(poly));
+        const auto const_sized_witness_ptr =
+            static_cast<const witness_for<const_sized_type, detail::view_storage>*>(dispatch<const_sized_type>(poly));
 
-        return PolyT(get_storage, const_copyable_vtable_ptr, const_sized_vtable_ptr);
+        return PolyT(get_storage, const_copyable_witness_ptr, const_sized_witness_ptr);
     }
 
     template <detail::polymorphic PolyT>
@@ -122,14 +122,8 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     }
 
     // const_cast
-    template <class RangeT,
-              class OtherElementT,
-              any_view_options OtherOptsV,
-              class OtherValueT = std::remove_cv_t<OtherElementT>,
-              detail::const_reference_with<OtherValueT> OtherRefT,
-              detail::const_reference_with<OtherValueT> OtherRValueRefT>
-        requires std::same_as<detail::const_reference_t<OtherValueT, OtherRefT>, RefT> and
-                 std::same_as<detail::const_reference_t<OtherValueT, OtherRValueRefT>, RValueRefT>
+    template <class RangeT, class OtherElementT, any_view_options OtherOptsV, class OtherRefT, class OtherRValueRefT>
+        requires detail::const_capable<std::remove_cv_t<OtherElementT>, OtherRefT, OtherRValueRefT>
     constexpr any_view(
         RangeT&& range,
         std::in_place_type_t<any_view<OtherElementT,
@@ -175,18 +169,19 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
 
     // [range.any.access]
     [[nodiscard]] constexpr iterator begin() {
-        using capability_type = detail::iterator_vtable_t<RefT, RValueRefT, DiffT>;
+        using capability_type = detail::iterator_witness_t<RefT, RValueRefT, DiffT>;
 
         const auto get_storage = [this] { return dispatch<detail::begin_t>(poly); };
-        const auto vtable_ptr =
-            static_cast<const vtable_for<capability_type, detail::iterator_storage>*>(dispatch<capability_type>(poly));
+        const auto witness_ptr = static_cast<const witness_for<capability_type, detail::iterator_storage>*>(
+            dispatch<capability_type>(poly));
 
         if constexpr (contiguous_and_sized) {
-            const auto to_address = &detail::vtable<detail::cache_t<RefT>, detail::iterator_storage>::entry;
-            return iterator{(vtable_ptr->*to_address)(get_storage()), static_cast<DiffT>(size())};
+            const auto to_address = &detail::witness<detail::cache_t<RefT>, detail::iterator_storage>::entry;
+            return iterator{(witness_ptr->*to_address)(get_storage()), static_cast<DiffT>(size())};
         } else {
-            return iterator{
-                [=] { return detail::polymorphic_iterator<RefT, RValueRefT, DiffT, OptsV>{get_storage, vtable_ptr}; }};
+            return iterator{[=] {
+                return detail::polymorphic_iterator<RefT, RValueRefT, DiffT, OptsV>{get_storage, witness_ptr};
+            }};
         }
     }
 

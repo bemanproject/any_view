@@ -9,20 +9,20 @@
 namespace beman::any_view::detail {
 
 template <class RefT, class RValueRefT, class DiffT>
-struct iterator_vtable_t : nullary_capability {
+struct iterator_witness_t : nullary_capability {
     template <any_view_options OptsV>
     using capabilities_for = iterator_capabilities<RefT, RValueRefT, DiffT, OptsV>;
 
-    using vtable_type = vtable<capabilities_for<any_view_options::input>, iterator_storage>;
+    using witness_type = witness<capabilities_for<any_view_options::input>, iterator_storage>;
 
     template <not_adaptor>
-    static const vtable_type* fn() noexcept;
+    static const witness_type* fn() noexcept;
 
     template <adaptor ViewAdaptorT>
-    [[nodiscard]] static constexpr const vtable_type* fn() noexcept {
+    [[nodiscard]] static constexpr const witness_type* fn() noexcept {
         using capability_type = capabilities_for<ViewAdaptorT::options>;
         using adaptor_type    = typename ViewAdaptorT::adaptor_type;
-        return std::addressof(vtable_for<capability_type, iterator_storage, adaptor_type>);
+        return std::addressof(witness_for<capability_type, iterator_storage, adaptor_type>);
     }
 };
 
@@ -56,23 +56,23 @@ struct reserve_hint_t : unary_capability {
 // inplace storage sufficient for a std::vector<T>
 using view_storage = small_storage<3 * sizeof(void*)>;
 
-template <class ValueT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
+template <class ValueT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV, class... ConstRefTs>
 consteval auto get_copyable_capabilities();
 
 template <class ConstRefT, class ConstRValueRefT, class DiffT>
-struct const_copyable_vtable_t : nullary_capability {
+struct const_copyable_witness_t : nullary_capability {
     template <any_view_options OptsV>
     using capabilities_for = decltype(get_copyable_capabilities<void, ConstRefT, ConstRValueRefT, DiffT, OptsV>());
 
-    using vtable_type = vtable<capabilities_for<any_view_options{}>, view_storage>;
+    using witness_type = witness<capabilities_for<any_view_options{}>, view_storage>;
 
     template <not_adaptor>
-    static const vtable_type* fn() noexcept;
+    static const witness_type* fn() noexcept;
 
     template <adaptor ViewAdaptorT>
-    [[nodiscard]] static constexpr const vtable_type* fn() noexcept {
+    [[nodiscard]] static constexpr const witness_type* fn() noexcept {
         using capability_type = capabilities_for<ViewAdaptorT::options>;
-        return std::addressof(vtable_for<capability_type, view_storage, ViewAdaptorT>);
+        return std::addressof(witness_for<capability_type, view_storage, ViewAdaptorT>);
     }
 };
 
@@ -80,68 +80,69 @@ template <class DiffT, any_view_options OptsV>
 consteval auto get_sized_capabilities();
 
 template <class ConstRefT, class ConstRValueRefT, class DiffT>
-struct const_sized_vtable_t : nullary_capability {
+struct const_sized_witness_t : nullary_capability {
     template <any_view_options OptsV>
     using capabilities_for = decltype(get_sized_capabilities<DiffT, OptsV>());
 
-    using vtable_type = vtable<capabilities_for<any_view_options{}>, view_storage>;
+    using witness_type = witness<capabilities_for<any_view_options{}>, view_storage>;
 
     template <not_adaptor>
-    static const vtable_type* fn() noexcept;
+    static const witness_type* fn() noexcept;
 
     template <adaptor ViewAdaptorT>
-    [[nodiscard]] static constexpr const vtable_type* fn() noexcept {
+    [[nodiscard]] static constexpr const witness_type* fn() noexcept {
         using capability_type = capabilities_for<ViewAdaptorT::options>;
-        return std::addressof(vtable_for<capability_type, view_storage, ViewAdaptorT>);
+        return std::addressof(witness_for<capability_type, view_storage, ViewAdaptorT>);
     }
 };
 
-template <class ValueT, class RefT>
+template <class ValueT, std::common_reference_with<const ValueT&&> RefT>
 using const_reference_t = std::common_reference_t<const ValueT&&, RefT>;
 
-template <class RefT, class ValueT>
-concept const_reference_with =
-    std::common_reference_with<RefT, const ValueT&&> and not std::same_as<RefT, const_reference_t<ValueT, RefT>>;
+template <class ValueT, class RefT, class RValueRefT>
+concept const_capable = not std::same_as<const_reference_t<ValueT, RefT>, RefT> or
+                        not std::same_as<const_reference_t<ValueT, RValueRefT>, RValueRefT>;
 
-template <class ValueT, class RefT, class RValueRefT, class DiffT>
-struct const_capabilities {
-    using type = inherit<>;
-};
+template <class DiffT, class...>
+struct const_capabilities : inherit<> {};
 
-template <class ValueT, const_reference_with<ValueT> RefT, const_reference_with<ValueT> RValueRefT, class DiffT>
-struct const_capabilities<ValueT, RefT, RValueRefT, DiffT> {
-    using reference        = const_reference_t<ValueT, RefT>;
-    using rvalue_reference = const_reference_t<ValueT, RValueRefT>;
-    using type             = inherit<const_copyable_vtable_t<reference, rvalue_reference, DiffT>,
-                                     const_sized_vtable_t<reference, rvalue_reference, DiffT>>;
-};
+template <class ConstRefT, class ConstRValueRefT, class DiffT>
+struct const_capabilities<ConstRefT, ConstRValueRefT, DiffT>
+    : inherit<const_copyable_witness_t<ConstRefT, ConstRValueRefT, DiffT>,
+              const_sized_witness_t<ConstRefT, ConstRValueRefT, DiffT>> {};
 
-template <class ValueT, class RefT, class RValueRefT, class DiffT>
-using const_capabilities_t = typename const_capabilities<ValueT, RefT, RValueRefT, DiffT>::type;
+template <class RefT, class RValueRefT, class DiffT, class... ConstRefTs>
+struct uncopyable_capabilities : inherit<move_t<view_storage>,
+                                         destroy_t<view_storage>,
+                                         iterator_witness_t<RefT, RValueRefT, DiffT>,
+                                         begin_t,
+                                         const_capabilities<ConstRefTs..., DiffT>> {};
 
-template <class ValueT, class RefT, class RValueRefT, class DiffT>
-using uncopyable_capabilities = inherit<move_t<view_storage>,
-                                        destroy_t<view_storage>,
-                                        iterator_vtable_t<RefT, RValueRefT, DiffT>,
-                                        begin_t,
-                                        const_capabilities_t<ValueT, RefT, RValueRefT, DiffT>>;
+template <class RefT, class RValueRefT, class DiffT, class... ConstRefTs>
+struct copyable_capabilities
+    : inherit<uncopyable_capabilities<RefT, RValueRefT, DiffT, ConstRefTs...>, copy_t<view_storage>> {};
 
-template <class ValueT, class RefT, class RValueRefT, class DiffT>
-using copyable_capabilities = inherit<uncopyable_capabilities<ValueT, RefT, RValueRefT, DiffT>, copy_t<view_storage>>;
-
-using unsized_capabilities = inherit<>;
+struct unsized_capabilities : inherit<> {};
 
 template <class DiffT>
-using sized_capabilities = inherit<unsized_capabilities, reserve_hint_t<DiffT>>;
+struct sized_capabilities : inherit<unsized_capabilities, reserve_hint_t<DiffT>> {};
 
-template <class ValueT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
+template <class ValueT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV, class... ConstRefTs>
 consteval auto get_copyable_capabilities() {
     using enum any_view_options;
 
-    if constexpr (flag_is_set<OptsV, copyable>) {
-        return copyable_capabilities<ValueT, RefT, RValueRefT, DiffT>{};
+    if constexpr (const_capable<ValueT, RefT, RValueRefT> and sizeof...(ConstRefTs) == 0) {
+        return get_copyable_capabilities<ValueT,
+                                         RefT,
+                                         RValueRefT,
+                                         DiffT,
+                                         OptsV,
+                                         const_reference_t<ValueT, RefT>,
+                                         const_reference_t<ValueT, RValueRefT>>();
+    } else if constexpr (flag_is_set<OptsV, copyable>) {
+        return copyable_capabilities<RefT, RValueRefT, DiffT, ConstRefTs...>{};
     } else {
-        return uncopyable_capabilities<ValueT, RefT, RValueRefT, DiffT>{};
+        return uncopyable_capabilities<RefT, RValueRefT, DiffT, ConstRefTs...>{};
     }
 }
 

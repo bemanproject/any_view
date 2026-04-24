@@ -216,36 +216,50 @@ struct subtract_t : symmetric_binary_capability {
 using iterator_storage = small_storage<2 * sizeof(void*)>;
 
 template <class RefT, class RValueRefT>
-using input_capabilities = inherit<move_t<iterator_storage>,
-                                   destroy_t<iterator_storage>,
-                                   dereference_t<RefT>,
-                                   iter_move_t<RValueRefT>,
-                                   increment_t,
-                                   sentinel_compare_t>;
+struct input_capabilities : inherit<move_t<iterator_storage>,
+                                    destroy_t<iterator_storage>,
+                                    dereference_t<RefT>,
+                                    iter_move_t<RValueRefT>,
+                                    increment_t,
+                                    sentinel_compare_t> {};
 
 template <class RefT>
-inline constexpr bool has_cache_v = not std::is_same_v<iter_cache_t<RefT>, no_cache>;
+concept has_cache = not std::same_as<iter_cache_t<RefT>, no_cache>;
+
+template <class RefT>
+struct forward_cache_capabilities : inherit<> {};
+
+template <has_cache RefT>
+struct forward_cache_capabilities<RefT> : inherit<cache_t<RefT>, next_t<RefT>> {};
 
 template <class RefT, class RValueRefT>
-using forward_capabilities =
-    inherit<input_capabilities<RefT, RValueRefT>,
-            copy_t<iterator_storage>,
-            std::conditional_t<has_cache_v<RefT>, inherit<cache_t<RefT>, next_t<RefT>>, inherit<>>,
-            type_t,
-            equality_compare_t>;
+struct forward_capabilities : inherit<input_capabilities<RefT, RValueRefT>,
+                                      copy_t<iterator_storage>,
+                                      forward_cache_capabilities<RefT>,
+                                      type_t,
+                                      equality_compare_t> {};
+
+template <class RefT>
+struct bidirectional_cache_capabilities : inherit<decrement_t> {};
+
+template <has_cache RefT>
+struct bidirectional_cache_capabilities<RefT> : inherit<prev_t<RefT>> {};
 
 template <class RefT, class RValueRefT>
-using bidirectional_capabilities =
-    inherit<forward_capabilities<RefT, RValueRefT>, std::conditional_t<has_cache_v<RefT>, prev_t<RefT>, decrement_t>>;
+struct bidirectional_capabilities
+    : inherit<forward_capabilities<RefT, RValueRefT>, bidirectional_cache_capabilities<RefT>> {};
 
 template <class RefT, class RValueRefT, class DiffT>
-using random_access_capabilities =
-    inherit<bidirectional_capabilities<RefT, RValueRefT>,
-            std::conditional_t<has_cache_v<RefT>,
-                               advance_t<RefT, DiffT>,
-                               inherit<dereference_at_t<RefT, DiffT>, iter_move_at_t<RValueRefT, DiffT>>>,
-            three_way_compare_t,
-            subtract_t<DiffT>>;
+struct random_access_cache_capabilities : inherit<dereference_at_t<RefT, DiffT>, iter_move_at_t<RValueRefT, DiffT>> {};
+
+template <has_cache RefT, class RValueRefT, class DiffT>
+struct random_access_cache_capabilities<RefT, RValueRefT, DiffT> : inherit<advance_t<RefT, DiffT>> {};
+
+template <class RefT, class RValueRefT, class DiffT>
+struct random_access_capabilities : inherit<bidirectional_capabilities<RefT, RValueRefT>,
+                                            random_access_cache_capabilities<RefT, RValueRefT, DiffT>,
+                                            three_way_compare_t,
+                                            subtract_t<DiffT>> {};
 
 template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
 [[nodiscard]] consteval auto get_iterator_capabilities() {
