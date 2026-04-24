@@ -10,9 +10,6 @@
 namespace beman::any_view {
 namespace detail {
 
-template <class>
-struct is_any_view : std::false_type {};
-
 template <class T>
 struct rvalue_ref {
     using type = T;
@@ -52,7 +49,8 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     using uncounted_iterator = detail::iterator<ElementT, RefT, RValueRefT, DiffT, OptsV>;
     using iterator =
         std::conditional_t<contiguous_and_sized, std::counted_iterator<std::add_pointer_t<RefT>>, uncounted_iterator>;
-    using polymorphic_type = detail::polymorphic_view<RefT, RValueRefT, DiffT, OptsV>;
+    using value_type       = std::remove_cv_t<ElementT>;
+    using polymorphic_type = detail::polymorphic_view<value_type, RefT, RValueRefT, DiffT, OptsV>;
     using sentinel         = std::default_sentinel_t;
     using size_type        = std::make_unsigned_t<DiffT>;
 
@@ -62,31 +60,93 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     template <std::ranges::view ViewT>
     using adaptor_for = detail::view_adaptor<ViewT, OptsV>;
 
-    polymorphic_type poly{std::in_place_type<adaptor_for<detail::default_view<ElementT, RefT, RValueRefT, DiffT>>>};
-
-    template <class RangeT, bool IsAnyView>
-    constexpr any_view(RangeT&& range, std::bool_constant<IsAnyView>)
-        : poly(adaptor_for<std::views::all_t<RangeT>>{.view = std::views::all(std::forward<RangeT>(range))}) {}
-
-    template <class RangeT>
-    static consteval bool is_noexcept() {
-        return detail::is_any_view<std::remove_cvref_t<RangeT>>::value and requires {
-            { polymorphic_type(std::declval<RangeT>().poly) } noexcept;
-        };
+    static constexpr polymorphic_type make_default() {
+        return polymorphic_type(
+            std::in_place_type<adaptor_for<detail::default_view<ElementT, RefT, RValueRefT, DiffT>>>);
     }
 
-    template <class RangeT>
-        requires std::constructible_from<polymorphic_type, decltype(std::declval<RangeT>().poly)>
-    constexpr any_view(RangeT&& range, std::true_type) noexcept(is_noexcept<RangeT>())
-        : poly(std::forward<RangeT>(range).poly) {}
+    polymorphic_type poly{make_default()};
+
+    constexpr const polymorphic_type& polymorphic() const& noexcept { return poly; }
+
+    constexpr polymorphic_type polymorphic() && noexcept { return std::exchange(poly, make_default()); }
+
+    // type erase
+    template <class RangeT, class InPlaceTypeT>
+    constexpr any_view(RangeT&& range, InPlaceTypeT)
+        : poly(adaptor_for<std::views::all_t<RangeT>>{.view = std::views::all(std::forward<RangeT>(range))}) {}
+
+    // upcast
+    template <class RangeT, class OtherElementT, any_view_options OtherOptsV>
+        requires std::constructible_from<polymorphic_type, decltype(std::declval<RangeT>().polymorphic())>
+    constexpr any_view(
+        RangeT&& range,
+        std::in_place_type_t<any_view<OtherElementT,
+                                      OtherOptsV,
+                                      RefT,
+                                      RValueRefT,
+                                      DiffT>>) noexcept(noexcept(polymorphic_type(std::forward<RangeT>(range)
+                                                                                      .polymorphic())))
+        : poly(std::forward<RangeT>(range).polymorphic()) {}
+
+    template <detail::capability CapabilityT, detail::storage StorageT>
+    using vtable_for = detail::vtable<typename CapabilityT::template capabilities_for<OptsV>, StorageT>;
+
+    template <detail::polymorphic PolyT, class GetStorageT>
+        requires std::is_invocable_r_v<detail::view_storage, GetStorageT>
+    [[nodiscard]] constexpr PolyT make_const(GetStorageT get_storage) const {
+        using reference           = detail::const_reference_t<value_type, RefT>;
+        using rvalue_reference    = detail::const_reference_t<value_type, RValueRefT>;
+        using const_copyable_type = detail::const_copyable_vtable_t<reference, rvalue_reference, DiffT>;
+        using const_sized_type    = detail::const_sized_vtable_t<reference, rvalue_reference, DiffT>;
+
+        const auto const_copyable_vtable_ptr =
+            static_cast<const vtable_for<const_copyable_type, detail::view_storage>*>(
+                dispatch<const_copyable_type>(poly));
+        const auto const_sized_vtable_ptr =
+            static_cast<const vtable_for<const_sized_type, detail::view_storage>*>(dispatch<const_sized_type>(poly));
+
+        return PolyT(get_storage, const_copyable_vtable_ptr, const_sized_vtable_ptr);
+    }
+
+    template <detail::polymorphic PolyT>
+    [[nodiscard]] constexpr explicit operator PolyT() const& {
+        return make_const<PolyT>([this] { return dispatch<detail::copy_t<detail::view_storage>>(poly); });
+    }
+
+    template <detail::polymorphic PolyT>
+    [[nodiscard]] constexpr explicit operator PolyT() && noexcept {
+        return make_const<PolyT>([this] {
+            return poly.entry(detail::move_t<detail::view_storage>{})(std::move(*this).polymorphic().get());
+        });
+    }
+
+    // const_cast
+    template <class RangeT,
+              class OtherElementT,
+              any_view_options OtherOptsV,
+              class OtherValueT = std::remove_cv_t<OtherElementT>,
+              detail::const_reference_with<OtherValueT> OtherRefT,
+              detail::const_reference_with<OtherValueT> OtherRValueRefT>
+        requires std::same_as<detail::const_reference_t<OtherValueT, OtherRefT>, RefT> and
+                 std::same_as<detail::const_reference_t<OtherValueT, OtherRValueRefT>, RValueRefT>
+    constexpr any_view(
+        RangeT&& range,
+        std::in_place_type_t<any_view<OtherElementT,
+                                      OtherOptsV,
+                                      OtherRefT,
+                                      OtherRValueRefT,
+                                      DiffT>>) noexcept(noexcept(polymorphic_type(std::forward<RangeT>(range))))
+        : poly(std::forward<RangeT>(range)) {}
 
   public:
     // [range.any.ctor]
     template <class RangeT>
         requires detail::different_from<RangeT, any_view> and
                  ext_any_compatible_range<RangeT, RefT, RValueRefT, DiffT, OptsV>
-    constexpr any_view(RangeT&& range) noexcept(is_noexcept<RangeT>())
-        : any_view(std::forward<RangeT>(range), detail::is_any_view<std::remove_cvref_t<RangeT>>{}) {
+    constexpr any_view(RangeT&& range) noexcept(noexcept(any_view(std::forward<RangeT>(range),
+                                                                  std::in_place_type<std::remove_cvref_t<RangeT>>)))
+        : any_view(std::forward<RangeT>(range), std::in_place_type<std::remove_cvref_t<RangeT>>) {
         static_assert(std::ranges::viewable_range<RangeT>, "range must be viewable");
         if constexpr (copyable) {
             static_assert(std::copyable<std::views::all_t<RangeT>>,
@@ -115,12 +175,11 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
 
     // [range.any.access]
     [[nodiscard]] constexpr iterator begin() {
-        using capability_type     = detail::iterator_capabilities<RefT, RValueRefT, DiffT, OptsV>;
-        using derived_vtable_type = detail::vtable<capability_type, detail::iterator_storage>;
+        using capability_type = detail::iterator_vtable_t<RefT, RValueRefT, DiffT>;
 
-        const auto get_storage = [this] { return dispatch<detail::begin_t<RefT, RValueRefT, DiffT>>(poly); };
-        const auto vtable_ptr  = static_cast<const derived_vtable_type*>(
-            dispatch<detail::iterator_vtable_t<RefT, RValueRefT, DiffT>>(poly));
+        const auto get_storage = [this] { return dispatch<detail::begin_t>(poly); };
+        const auto vtable_ptr =
+            static_cast<const vtable_for<capability_type, detail::iterator_storage>*>(dispatch<capability_type>(poly));
 
         if constexpr (contiguous_and_sized) {
             const auto to_address = &detail::vtable<detail::cache_t<RefT>, detail::iterator_storage>::entry;
@@ -150,9 +209,6 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
 
     constexpr friend void swap(any_view& lhs, any_view& rhs) noexcept { return lhs.swap(rhs); }
 };
-
-template <class ElementT, any_view_options OptsV, class RefT, class RValueRefT, class DiffT>
-struct detail::is_any_view<any_view<ElementT, OptsV, RefT, RValueRefT, DiffT>> : std::true_type {};
 
 } // namespace beman::any_view
 

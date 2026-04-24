@@ -124,7 +124,7 @@ TEST(ConstexprTest, add_const) {
         return view;
     };
 
-    static_assert(not std::is_nothrow_constructible_v<any_view<const int>, any_view<int>>);
+    static_assert(std::is_nothrow_constructible_v<any_view<const int>, any_view<int>>);
 #ifndef _MSC_VER
     // error C2131: expression did not evaluate to a constant
     static_assert(make_add_const().front() == 7);

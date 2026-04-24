@@ -93,8 +93,10 @@ class basic_polymorphic {
         return *this;
     }
 
-    constexpr StorageT&       get() noexcept { return storage; }
-    constexpr const StorageT& get() const noexcept { return storage; }
+    constexpr StorageT&       get() & noexcept { return storage; }
+    constexpr const StorageT& get() const& noexcept { return storage; }
+    constexpr StorageT&&      get() && noexcept { return std::move(storage); }
+    // constexpr const StorageT&& get() const&& noexcept { return std::move(storage); }
 
     constexpr vtable_ptrs_type entries() const noexcept { return vtable_ptrs; }
 
