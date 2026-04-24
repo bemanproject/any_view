@@ -9,10 +9,10 @@
 
 namespace beman::any_view::detail {
 
-struct capability_base {};
+struct protocol_base {};
 
 template <class T>
-inline constexpr bool enable_capability = std::derived_from<T, capability_base>;
+inline constexpr bool enable_protocol = std::derived_from<T, protocol_base>;
 
 template <class T>
 inline constexpr bool enable_storage = false;
@@ -21,7 +21,7 @@ template <class T>
 inline constexpr bool enable_polymorphic = false;
 
 template <class T>
-concept capability = std::is_empty_v<T> and enable_capability<T>;
+concept protocol = std::is_empty_v<T> and enable_protocol<T>;
 
 template <class T>
 concept storage = enable_storage<T>;
@@ -29,17 +29,17 @@ concept storage = enable_storage<T>;
 template <class T>
 concept polymorphic = enable_polymorphic<T>;
 
-template <capability CapabilityT, class T>
-using signature = decltype(CapabilityT::template fn<T>);
+template <protocol ProtocolT, class T>
+using signature = decltype(ProtocolT::template fn<T>);
 
-template <capability CapabilityT, class T, class SignatureT = signature<CapabilityT, T>>
+template <protocol ProtocolT, class T, class SignatureT = signature<ProtocolT, T>>
     requires std::is_function_v<SignatureT>
 struct bridge {
-    static constexpr SignatureT* fn = CapabilityT::template fn<T>;
+    static constexpr SignatureT* fn = ProtocolT::template fn<T>;
 };
 
-template <capability CapabilityT, class T>
-inline constexpr auto& dispatch = *bridge<CapabilityT, T>::fn;
+template <protocol ProtocolT, class T>
+inline constexpr auto& dispatch = *bridge<ProtocolT, T>::fn;
 
 template <class... Ts>
 struct inherit : Ts... {
@@ -53,40 +53,40 @@ template <class T>
 concept derived_from_base_type = std::derived_from<T, base_type_t<T>>;
 
 template <class... Ts>
-inline constexpr bool enable_capability<inherit<Ts...>> = (... and capability<Ts>);
+inline constexpr bool enable_protocol<inherit<Ts...>> = (... and protocol<Ts>);
 
 template <derived_from_base_type T>
-inline constexpr bool enable_capability<T> = capability<base_type_t<T>>;
+inline constexpr bool enable_protocol<T> = protocol<base_type_t<T>>;
 
-template <capability CapabilityT, adaptor AdaptorT>
-struct thunk : CapabilityT {};
+template <protocol ProtocolT, adaptor AdaptorT>
+struct thunk : ProtocolT {};
 
-template <capability CapabilityT, storage StorageT>
+template <protocol ProtocolT, storage StorageT>
 struct witness {
-    signature<CapabilityT, StorageT>* entry;
+    signature<ProtocolT, StorageT>* entry;
 };
 
-template <capability... CapabilityTs, storage StorageT>
-struct witness<inherit<CapabilityTs...>, StorageT> : witness<CapabilityTs, StorageT>... {};
+template <protocol... ProtocolTs, storage StorageT>
+struct witness<inherit<ProtocolTs...>, StorageT> : witness<ProtocolTs, StorageT>... {};
 
-template <capability CapabilityT, storage StorageT>
-    requires derived_from_base_type<CapabilityT>
-struct witness<CapabilityT, StorageT> : witness<base_type_t<CapabilityT>, StorageT> {};
+template <protocol ProtocolT, storage StorageT>
+    requires derived_from_base_type<ProtocolT>
+struct witness<ProtocolT, StorageT> : witness<base_type_t<ProtocolT>, StorageT> {};
 
-template <capability CapabilityT, storage StorageT, adaptor AdaptorT>
-inline constexpr witness<CapabilityT, StorageT> witness_for{
-    .entry = dispatch<thunk<CapabilityT, AdaptorT>, StorageT>,
+template <protocol ProtocolT, storage StorageT, adaptor AdaptorT>
+inline constexpr witness<ProtocolT, StorageT> witness_for{
+    .entry = dispatch<thunk<ProtocolT, AdaptorT>, StorageT>,
 };
 
-template <capability... CapabilityTs, storage StorageT, adaptor AdaptorT>
-inline constexpr witness<inherit<CapabilityTs...>, StorageT> witness_for<inherit<CapabilityTs...>, StorageT, AdaptorT>{
-    witness_for<CapabilityTs, StorageT, AdaptorT>...,
+template <protocol... ProtocolTs, storage StorageT, adaptor AdaptorT>
+inline constexpr witness<inherit<ProtocolTs...>, StorageT> witness_for<inherit<ProtocolTs...>, StorageT, AdaptorT>{
+    witness_for<ProtocolTs, StorageT, AdaptorT>...,
 };
 
-template <capability CapabilityT, storage StorageT, adaptor AdaptorT>
-    requires derived_from_base_type<CapabilityT>
-inline constexpr witness<CapabilityT, StorageT> witness_for<CapabilityT, StorageT, AdaptorT>{
-    witness_for<base_type_t<CapabilityT>, StorageT, AdaptorT>,
+template <protocol ProtocolT, storage StorageT, adaptor AdaptorT>
+    requires derived_from_base_type<ProtocolT>
+inline constexpr witness<ProtocolT, StorageT> witness_for<ProtocolT, StorageT, AdaptorT>{
+    witness_for<base_type_t<ProtocolT>, StorageT, AdaptorT>,
 };
 
 } // namespace beman::any_view::detail

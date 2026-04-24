@@ -66,8 +66,8 @@ class iterator : public iterator_category_type<iterator_concept_t<OptsV>, std::i
 
     static constexpr bool has_index = std::is_same_v<cache_or_index_type, DiffT>;
 
-    template <capability CapabilityT>
-    static constexpr auto dispatch = detail::dispatch<CapabilityT, polymorphic_type>;
+    template <protocol ProtocolT>
+    static constexpr auto dispatch = detail::dispatch<ProtocolT, polymorphic_type>;
 
     polymorphic_type poly{std::in_place_type<iterator_adaptor_for<default_view<ElementT, RefT, RValueRefT, DiffT>>>};
     BEMAN_ANY_VIEW_NO_UNIQUE_ADDRESS cache_or_index_type cache_or_index{make_cache_or_index()};

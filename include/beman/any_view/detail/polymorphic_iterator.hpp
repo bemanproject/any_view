@@ -38,7 +38,7 @@ struct iter_cache<RefT> {
 template <class RefT>
 using iter_cache_t = typename iter_cache<RefT>::type;
 
-struct sentinel_compare_t : unary_capability {
+struct sentinel_compare_t : unary_protocol {
     template <not_adaptor T>
     static bool fn(const T& self);
 
@@ -49,7 +49,7 @@ struct sentinel_compare_t : unary_capability {
 };
 
 template <class RefT>
-struct dereference_t : unary_capability {
+struct dereference_t : unary_protocol {
     template <not_adaptor T>
     static RefT fn(const T& self);
 
@@ -60,7 +60,7 @@ struct dereference_t : unary_capability {
 };
 
 template <class RefT>
-struct cache_t : unary_capability {
+struct cache_t : unary_protocol {
     template <not_adaptor T>
     static iter_cache_t<RefT> fn(const T& self);
 
@@ -74,7 +74,7 @@ struct cache_t : unary_capability {
     }
 };
 
-struct increment_t : unary_capability {
+struct increment_t : unary_protocol {
     template <not_adaptor T>
     static void fn(T& self);
 
@@ -85,7 +85,7 @@ struct increment_t : unary_capability {
 };
 
 template <class RefT>
-struct next_t : unary_capability {
+struct next_t : unary_protocol {
     template <not_adaptor T>
     static iter_cache_t<RefT> fn(T& self);
 
@@ -96,7 +96,7 @@ struct next_t : unary_capability {
     }
 };
 
-struct decrement_t : unary_capability {
+struct decrement_t : unary_protocol {
     template <not_adaptor T>
     static void fn(T& self);
 
@@ -107,7 +107,7 @@ struct decrement_t : unary_capability {
 };
 
 template <class RefT>
-struct prev_t : unary_capability {
+struct prev_t : unary_protocol {
     template <not_adaptor T>
     static iter_cache_t<RefT> fn(T& self);
 
@@ -119,7 +119,7 @@ struct prev_t : unary_capability {
 };
 
 template <class RefT, class DiffT>
-struct dereference_at_t : unary_capability {
+struct dereference_at_t : unary_protocol {
     template <not_adaptor T>
     static RefT fn(const T& self, DiffT n);
 
@@ -130,7 +130,7 @@ struct dereference_at_t : unary_capability {
 };
 
 template <class RvalueRefT, class DiffT>
-struct iter_move_at_t : unary_capability {
+struct iter_move_at_t : unary_protocol {
     template <not_adaptor T>
     static RvalueRefT fn(const T& self, DiffT n);
 
@@ -141,7 +141,7 @@ struct iter_move_at_t : unary_capability {
 };
 
 template <class RefT, class DiffT>
-struct advance_t : unary_capability {
+struct advance_t : unary_protocol {
     template <not_adaptor T>
     static iter_cache_t<RefT> fn(T& self, DiffT n);
 
@@ -153,7 +153,7 @@ struct advance_t : unary_capability {
 };
 
 template <class RValueRefT>
-struct iter_move_t : unary_capability {
+struct iter_move_t : unary_protocol {
     template <not_adaptor T>
     static RValueRefT fn(const T& self);
 
@@ -163,7 +163,7 @@ struct iter_move_t : unary_capability {
     }
 };
 
-struct equality_compare_t : symmetric_binary_capability {
+struct equality_compare_t : symmetric_binary_protocol {
     [[nodiscard]] static constexpr bool default_value() noexcept { return false; }
 
     template <polymorphic PolyT>
@@ -178,7 +178,7 @@ struct equality_compare_t : symmetric_binary_capability {
     }
 };
 
-struct three_way_compare_t : symmetric_binary_capability {
+struct three_way_compare_t : symmetric_binary_protocol {
     [[nodiscard]] static constexpr std::partial_ordering default_value() noexcept {
         return std::partial_ordering::unordered;
     }
@@ -197,7 +197,7 @@ struct three_way_compare_t : symmetric_binary_capability {
 };
 
 template <class DiffT>
-struct subtract_t : symmetric_binary_capability {
+struct subtract_t : symmetric_binary_protocol {
     [[noreturn]] static DiffT default_value() { unreachable(); }
 
     template <polymorphic PolyT>
@@ -216,72 +216,70 @@ struct subtract_t : symmetric_binary_capability {
 using iterator_storage = small_storage<2 * sizeof(void*)>;
 
 template <class RefT, class RValueRefT>
-struct input_capabilities : inherit<move_t<iterator_storage>,
-                                    destroy_t<iterator_storage>,
-                                    dereference_t<RefT>,
-                                    iter_move_t<RValueRefT>,
-                                    increment_t,
-                                    sentinel_compare_t> {};
+struct input_protocol : inherit<move_t<iterator_storage>,
+                                destroy_t<iterator_storage>,
+                                dereference_t<RefT>,
+                                iter_move_t<RValueRefT>,
+                                increment_t,
+                                sentinel_compare_t> {};
 
 template <class RefT>
 concept has_cache = not std::same_as<iter_cache_t<RefT>, no_cache>;
 
 template <class RefT>
-struct forward_cache_capabilities : inherit<> {};
+struct forward_cache_protocol : inherit<> {};
 
 template <has_cache RefT>
-struct forward_cache_capabilities<RefT> : inherit<cache_t<RefT>, next_t<RefT>> {};
+struct forward_cache_protocol<RefT> : inherit<cache_t<RefT>, next_t<RefT>> {};
 
 template <class RefT, class RValueRefT>
-struct forward_capabilities : inherit<input_capabilities<RefT, RValueRefT>,
-                                      copy_t<iterator_storage>,
-                                      forward_cache_capabilities<RefT>,
-                                      type_t,
-                                      equality_compare_t> {};
+struct forward_protocol : inherit<input_protocol<RefT, RValueRefT>,
+                                  copy_t<iterator_storage>,
+                                  forward_cache_protocol<RefT>,
+                                  type_t,
+                                  equality_compare_t> {};
 
 template <class RefT>
-struct bidirectional_cache_capabilities : inherit<decrement_t> {};
+struct bidirectional_cache_protocol : inherit<decrement_t> {};
 
 template <has_cache RefT>
-struct bidirectional_cache_capabilities<RefT> : inherit<prev_t<RefT>> {};
+struct bidirectional_cache_protocol<RefT> : inherit<prev_t<RefT>> {};
 
 template <class RefT, class RValueRefT>
-struct bidirectional_capabilities
-    : inherit<forward_capabilities<RefT, RValueRefT>, bidirectional_cache_capabilities<RefT>> {};
+struct bidirectional_protocol : inherit<forward_protocol<RefT, RValueRefT>, bidirectional_cache_protocol<RefT>> {};
 
 template <class RefT, class RValueRefT, class DiffT>
-struct random_access_cache_capabilities : inherit<dereference_at_t<RefT, DiffT>, iter_move_at_t<RValueRefT, DiffT>> {};
+struct random_access_cache_protocol : inherit<dereference_at_t<RefT, DiffT>, iter_move_at_t<RValueRefT, DiffT>> {};
 
 template <has_cache RefT, class RValueRefT, class DiffT>
-struct random_access_cache_capabilities<RefT, RValueRefT, DiffT> : inherit<advance_t<RefT, DiffT>> {};
+struct random_access_cache_protocol<RefT, RValueRefT, DiffT> : inherit<advance_t<RefT, DiffT>> {};
 
 template <class RefT, class RValueRefT, class DiffT>
-struct random_access_capabilities : inherit<bidirectional_capabilities<RefT, RValueRefT>,
-                                            random_access_cache_capabilities<RefT, RValueRefT, DiffT>,
-                                            three_way_compare_t,
-                                            subtract_t<DiffT>> {};
+struct random_access_protocol : inherit<bidirectional_protocol<RefT, RValueRefT>,
+                                        random_access_cache_protocol<RefT, RValueRefT, DiffT>,
+                                        three_way_compare_t,
+                                        subtract_t<DiffT>> {};
 
 template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-[[nodiscard]] consteval auto get_iterator_capabilities() {
+[[nodiscard]] consteval auto get_iterator_protocol() {
     using enum any_view_options;
 
     if constexpr (flag_is_set<OptsV, random_access>) {
-        return random_access_capabilities<RefT, RValueRefT, DiffT>{};
+        return random_access_protocol<RefT, RValueRefT, DiffT>{};
     } else if constexpr (flag_is_set<OptsV, bidirectional>) {
-        return bidirectional_capabilities<RefT, RValueRefT>{};
+        return bidirectional_protocol<RefT, RValueRefT>{};
     } else if constexpr (flag_is_set<OptsV, forward>) {
-        return forward_capabilities<RefT, RValueRefT>{};
+        return forward_protocol<RefT, RValueRefT>{};
     } else if constexpr (flag_is_set<OptsV, input>) {
-        return input_capabilities<RefT, RValueRefT>{};
+        return input_protocol<RefT, RValueRefT>{};
     }
 }
 
 template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-using iterator_capabilities = decltype(get_iterator_capabilities<RefT, RValueRefT, DiffT, OptsV>());
+using iterator_protocol = decltype(get_iterator_protocol<RefT, RValueRefT, DiffT, OptsV>());
 
 template <class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-using polymorphic_iterator =
-    basic_polymorphic<iterator_storage, iterator_capabilities<RefT, RValueRefT, DiffT, OptsV>>;
+using polymorphic_iterator = basic_polymorphic<iterator_storage, iterator_protocol<RefT, RValueRefT, DiffT, OptsV>>;
 
 } // namespace beman::any_view::detail
 

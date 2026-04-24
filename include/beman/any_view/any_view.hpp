@@ -54,8 +54,8 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     using sentinel         = std::default_sentinel_t;
     using size_type        = std::make_unsigned_t<DiffT>;
 
-    template <detail::capability CapabilityT>
-    static constexpr auto dispatch = detail::dispatch<CapabilityT, polymorphic_type>;
+    template <detail::protocol ProtocolT>
+    static constexpr auto dispatch = detail::dispatch<ProtocolT, polymorphic_type>;
 
     template <std::ranges::view ViewT>
     using adaptor_for = detail::view_adaptor<ViewT, OptsV>;
@@ -89,8 +89,8 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
                                                                                       .polymorphic())))
         : poly(std::forward<RangeT>(range).polymorphic()) {}
 
-    template <detail::capability CapabilityT, detail::storage StorageT>
-    using witness_for = detail::witness<typename CapabilityT::template capabilities_for<OptsV>, StorageT>;
+    template <detail::protocol ProtocolT, detail::storage StorageT>
+    using witness_for = detail::witness<typename ProtocolT::template protocol_for<OptsV>, StorageT>;
 
     template <detail::polymorphic PolyT, class GetStorageT>
         requires std::is_invocable_r_v<detail::view_storage, GetStorageT>
@@ -169,11 +169,11 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
 
     // [range.any.access]
     [[nodiscard]] constexpr iterator begin() {
-        using capability_type = detail::iterator_witness_t<RefT, RValueRefT, DiffT>;
+        using protocol_type = detail::iterator_witness_t<RefT, RValueRefT, DiffT>;
 
         const auto get_storage = [this] { return dispatch<detail::begin_t>(poly); };
-        const auto witness_ptr = static_cast<const witness_for<capability_type, detail::iterator_storage>*>(
-            dispatch<capability_type>(poly));
+        const auto witness_ptr =
+            static_cast<const witness_for<protocol_type, detail::iterator_storage>*>(dispatch<protocol_type>(poly));
 
         if constexpr (contiguous_and_sized) {
             const auto to_address = &detail::witness<detail::cache_t<RefT>, detail::iterator_storage>::entry;
