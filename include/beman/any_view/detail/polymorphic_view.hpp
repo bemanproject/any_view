@@ -9,24 +9,24 @@
 namespace beman::any_view::detail {
 
 template <class RefT, class RValueRefT, class DiffT>
-struct iterator_vtable_t : nullary_capability {
+struct iterator_witness_t : nullary_protocol {
     template <any_view_options OptsV>
-    using capabilities_for = iterator_capabilities<RefT, RValueRefT, DiffT, OptsV>;
+    using protocol_for = iterator_protocol<RefT, RValueRefT, DiffT, OptsV>;
 
-    using vtable_type = vtable<capabilities_for<any_view_options::input>, iterator_storage>;
+    using witness_type = witness<protocol_for<any_view_options::input>, iterator_storage>;
 
     template <not_adaptor>
-    static const vtable_type* fn() noexcept;
+    static const witness_type* fn() noexcept;
 
     template <adaptor ViewAdaptorT>
-    [[nodiscard]] static constexpr const vtable_type* fn() noexcept {
-        using capability_type = capabilities_for<ViewAdaptorT::options>;
-        using adaptor_type    = typename ViewAdaptorT::adaptor_type;
-        return std::addressof(vtable_for<capability_type, iterator_storage, adaptor_type>);
+    [[nodiscard]] static constexpr const witness_type* fn() noexcept {
+        using protocol_type = protocol_for<ViewAdaptorT::options>;
+        using adaptor_type  = typename ViewAdaptorT::adaptor_type;
+        return std::addressof(witness_for<protocol_type, iterator_storage, adaptor_type>);
     }
 };
 
-struct begin_t : unary_capability {
+struct begin_t : unary_protocol {
     template <not_adaptor T>
     static iterator_storage fn(T& self);
 
@@ -41,7 +41,7 @@ struct begin_t : unary_capability {
 };
 
 template <class DiffT>
-struct reserve_hint_t : unary_capability {
+struct reserve_hint_t : unary_protocol {
     using size_type = std::make_unsigned_t<DiffT>;
 
     template <not_adaptor T>
@@ -56,111 +56,107 @@ struct reserve_hint_t : unary_capability {
 // inplace storage sufficient for a std::vector<T>
 using view_storage = small_storage<3 * sizeof(void*)>;
 
-template <class ValueT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-consteval auto get_copyable_capabilities();
+template <class ValueT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV, class... ConstRefTs>
+consteval auto get_copyable_protocol();
 
 template <class ConstRefT, class ConstRValueRefT, class DiffT>
-struct const_copyable_vtable_t : nullary_capability {
+struct const_copyable_witness_t : nullary_protocol {
     template <any_view_options OptsV>
-    using capabilities_for = decltype(get_copyable_capabilities<void, ConstRefT, ConstRValueRefT, DiffT, OptsV>());
+    using protocol_for = decltype(get_copyable_protocol<void, ConstRefT, ConstRValueRefT, DiffT, OptsV>());
 
-    using vtable_type = vtable<capabilities_for<any_view_options{}>, view_storage>;
+    using witness_type = witness<protocol_for<any_view_options{}>, view_storage>;
 
     template <not_adaptor>
-    static const vtable_type* fn() noexcept;
+    static const witness_type* fn() noexcept;
 
     template <adaptor ViewAdaptorT>
-    [[nodiscard]] static constexpr const vtable_type* fn() noexcept {
-        using capability_type = capabilities_for<ViewAdaptorT::options>;
-        return std::addressof(vtable_for<capability_type, view_storage, ViewAdaptorT>);
+    [[nodiscard]] static constexpr const witness_type* fn() noexcept {
+        using protocol_type = protocol_for<ViewAdaptorT::options>;
+        return std::addressof(witness_for<protocol_type, view_storage, ViewAdaptorT>);
     }
 };
 
 template <class DiffT, any_view_options OptsV>
-consteval auto get_sized_capabilities();
+consteval auto get_sized_protocol();
 
 template <class ConstRefT, class ConstRValueRefT, class DiffT>
-struct const_sized_vtable_t : nullary_capability {
+struct const_sized_witness_t : nullary_protocol {
     template <any_view_options OptsV>
-    using capabilities_for = decltype(get_sized_capabilities<DiffT, OptsV>());
+    using protocol_for = decltype(get_sized_protocol<DiffT, OptsV>());
 
-    using vtable_type = vtable<capabilities_for<any_view_options{}>, view_storage>;
+    using witness_type = witness<protocol_for<any_view_options{}>, view_storage>;
 
     template <not_adaptor>
-    static const vtable_type* fn() noexcept;
+    static const witness_type* fn() noexcept;
 
     template <adaptor ViewAdaptorT>
-    [[nodiscard]] static constexpr const vtable_type* fn() noexcept {
-        using capability_type = capabilities_for<ViewAdaptorT::options>;
-        return std::addressof(vtable_for<capability_type, view_storage, ViewAdaptorT>);
+    [[nodiscard]] static constexpr const witness_type* fn() noexcept {
+        using protocol_type = protocol_for<ViewAdaptorT::options>;
+        return std::addressof(witness_for<protocol_type, view_storage, ViewAdaptorT>);
     }
 };
 
-template <class ValueT, class RefT>
+template <class ValueT, std::common_reference_with<const ValueT&&> RefT>
 using const_reference_t = std::common_reference_t<const ValueT&&, RefT>;
 
-template <class RefT, class ValueT>
-concept const_reference_with =
-    std::common_reference_with<RefT, const ValueT&&> and not std::same_as<RefT, const_reference_t<ValueT, RefT>>;
+template <class ValueT, class RefT, class RValueRefT>
+concept const_convertible = not std::same_as<const_reference_t<ValueT, RefT>, RefT> or
+                            not std::same_as<const_reference_t<ValueT, RValueRefT>, RValueRefT>;
 
-template <class ValueT, class RefT, class RValueRefT, class DiffT>
-struct const_capabilities {
-    using type = inherit<>;
+template <class DiffT, class...>
+struct const_protocol : inherit<> {};
+
+template <class ConstRefT, class ConstRValueRefT, class DiffT>
+struct const_protocol<ConstRefT, ConstRValueRefT, DiffT>
+    : inherit<const_copyable_witness_t<ConstRefT, ConstRValueRefT, DiffT>,
+              const_sized_witness_t<ConstRefT, ConstRValueRefT, DiffT>> {};
+
+template <class RefT, class RValueRefT, class DiffT, class... ConstRefTs>
+struct uncopyable_protocol : inherit<move_t<view_storage>,
+                                     destroy_t<view_storage>,
+                                     iterator_witness_t<RefT, RValueRefT, DiffT>,
+                                     begin_t,
+                                     const_protocol<ConstRefTs..., DiffT>> {};
+
+template <class RefT, class RValueRefT, class DiffT, class... ConstRefTs>
+struct copyable_protocol : inherit<uncopyable_protocol<RefT, RValueRefT, DiffT, ConstRefTs...>, copy_t<view_storage>> {
 };
 
-template <class ValueT, const_reference_with<ValueT> RefT, const_reference_with<ValueT> RValueRefT, class DiffT>
-struct const_capabilities<ValueT, RefT, RValueRefT, DiffT> {
-    using reference        = const_reference_t<ValueT, RefT>;
-    using rvalue_reference = const_reference_t<ValueT, RValueRefT>;
-    using type             = inherit<const_copyable_vtable_t<reference, rvalue_reference, DiffT>,
-                                     const_sized_vtable_t<reference, rvalue_reference, DiffT>>;
-};
-
-template <class ValueT, class RefT, class RValueRefT, class DiffT>
-using const_capabilities_t = typename const_capabilities<ValueT, RefT, RValueRefT, DiffT>::type;
-
-template <class ValueT, class RefT, class RValueRefT, class DiffT>
-using uncopyable_capabilities = inherit<move_t<view_storage>,
-                                        destroy_t<view_storage>,
-                                        iterator_vtable_t<RefT, RValueRefT, DiffT>,
-                                        begin_t,
-                                        const_capabilities_t<ValueT, RefT, RValueRefT, DiffT>>;
-
-template <class ValueT, class RefT, class RValueRefT, class DiffT>
-using copyable_capabilities = inherit<uncopyable_capabilities<ValueT, RefT, RValueRefT, DiffT>, copy_t<view_storage>>;
-
-using unsized_capabilities = inherit<>;
+struct unsized_protocol : inherit<> {};
 
 template <class DiffT>
-using sized_capabilities = inherit<unsized_capabilities, reserve_hint_t<DiffT>>;
+struct sized_protocol : inherit<unsized_protocol, reserve_hint_t<DiffT>> {};
 
-template <class ValueT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-consteval auto get_copyable_capabilities() {
-    using enum any_view_options;
-
-    if constexpr (flag_is_set<OptsV, copyable>) {
-        return copyable_capabilities<ValueT, RefT, RValueRefT, DiffT>{};
+template <class ValueT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV, class... ConstRefTs>
+consteval auto get_copyable_protocol() {
+    if constexpr (const_convertible<ValueT, RefT, RValueRefT> and sizeof...(ConstRefTs) == 0) {
+        return get_copyable_protocol<ValueT,
+                                     RefT,
+                                     RValueRefT,
+                                     DiffT,
+                                     OptsV,
+                                     const_reference_t<ValueT, RefT>,
+                                     const_reference_t<ValueT, RValueRefT>>();
+    } else if constexpr (flag_is_set<OptsV, any_view_options::copyable>) {
+        return copyable_protocol<RefT, RValueRefT, DiffT, ConstRefTs...>{};
     } else {
-        return uncopyable_capabilities<ValueT, RefT, RValueRefT, DiffT>{};
+        return uncopyable_protocol<RefT, RValueRefT, DiffT, ConstRefTs...>{};
     }
 }
 
 template <class DiffT, any_view_options OptsV>
-consteval auto get_sized_capabilities() {
-    using enum any_view_options;
-
-    if constexpr (flag_is_set<OptsV, approximately_sized>) {
-        return sized_capabilities<DiffT>{};
+consteval auto get_sized_protocol() {
+    if constexpr (flag_is_set<OptsV, any_view_options::approximately_sized>) {
+        return sized_protocol<DiffT>{};
     } else {
-        return unsized_capabilities{};
+        return unsized_protocol{};
     }
 }
 
 template <class ValueT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-using polymorphic_view =
-    basic_polymorphic<view_storage,
-                      decltype(get_copyable_capabilities<ValueT, RefT, RValueRefT, DiffT, OptsV>()),
-                      decltype(get_sized_capabilities<DiffT, OptsV>())>;
+using polymorphic_view = basic_polymorphic<view_storage,
+                                           decltype(get_copyable_protocol<ValueT, RefT, RValueRefT, DiffT, OptsV>()),
+                                           decltype(get_sized_protocol<DiffT, OptsV>())>;
 
 } // namespace beman::any_view::detail
 

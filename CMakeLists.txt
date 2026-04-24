@@ -50,7 +50,6 @@ target_sources(
             include
         FILES
             include/beman/any_view/detail/adaptors.hpp
-            include/beman/any_view/detail/capabilities.hpp
             include/beman/any_view/detail/compressed_ptr.hpp
             include/beman/any_view/detail/concepts.hpp
             include/beman/any_view/detail/default_iterator.hpp
@@ -60,10 +59,11 @@ target_sources(
             include/beman/any_view/detail/polymorphic_iterator.hpp
             include/beman/any_view/detail/polymorphic_view.hpp
             include/beman/any_view/detail/polymorphic.hpp
+            include/beman/any_view/detail/protocols.hpp
             include/beman/any_view/detail/reference_converts_from_temporary.hpp
             include/beman/any_view/detail/small_storage.hpp
             include/beman/any_view/detail/unreachable.hpp
-            include/beman/any_view/detail/vtable.hpp
+            include/beman/any_view/detail/witness.hpp
             include/beman/any_view/any_view_options.hpp
             include/beman/any_view/any_view.hpp
             include/beman/any_view/concepts.hpp
