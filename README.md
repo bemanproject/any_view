@@ -1,8 +1,8 @@
+# beman.any_view: A generalized type-erased view with customizable properties
+
 <!--
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# beman.any_view: A generalized type-erased view with customizable properties
 
 ![Library Status](https://raw.githubusercontent.com/bemanproject/beman/refs/heads/main/images/badges/beman_badge-beman_library_under_development.svg)
 ![Continuous Integration Tests](https://github.com/bemanproject/any_view/actions/workflows/ci_tests.yml/badge.svg)
