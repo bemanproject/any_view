@@ -2,7 +2,7 @@
 
 ## License
 
-beman.exemplar is licensed under the Apache License v2.0 with LLVM Exceptions.
+beman.any_view is licensed under the Apache License v2.0 with LLVM Exceptions.
 
 ![Library Status](https://raw.githubusercontent.com/bemanproject/beman/refs/heads/main/images/badges/beman_badge-beman_library_under_development.svg)
 ![Continuous Integration Tests](https://github.com/bemanproject/any_view/actions/workflows/ci_tests.yml/badge.svg)
