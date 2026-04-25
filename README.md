@@ -25,6 +25,10 @@ As a return type, `any_view` grants a library author the freedom to change how t
 the view without modifying its interface. As a parameter type, it allows users to call the library function with any
 range as an argument that can be consumed directly, rather than copying it into some bespoke, library-specific type.
 
+## License
+
+beman.any_view is licensed under the Apache License v2.0 with LLVM Exceptions.
+
 ## Usage
 
 ### Basic Example: Library Function with Type Erasure
