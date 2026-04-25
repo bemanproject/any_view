@@ -1,5 +1,12 @@
 # beman.any_view: A generalized type-erased view with customizable properties
 
+<<<<<<< HEAD
+=======
+## License
+
+beman.any_view is licensed under the Apache License v2.0 with LLVM Exceptions.
+
+>>>>>>> 5eb77bf018857f8ad66f936e62a60a2619fb4c39
 ![Library Status](https://raw.githubusercontent.com/bemanproject/beman/refs/heads/main/images/badges/beman_badge-beman_library_under_development.svg)
 ![Continuous Integration Tests](https://github.com/bemanproject/any_view/actions/workflows/ci_tests.yml/badge.svg)
 ![Lint Check (pre-commit)](https://github.com/bemanproject/any_view/actions/workflows/pre-commit.yml/badge.svg)
