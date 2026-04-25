@@ -1,8 +1,8 @@
+# beman.any_view: A generalized type-erased view with customizable properties
+
 <!--
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# beman.any_view: A generalized type-erased view with customizable properties
 
 ![Library Status](https://raw.githubusercontent.com/bemanproject/beman/refs/heads/main/images/badges/beman_badge-beman_library_under_development.svg)
 ![Continuous Integration Tests](https://github.com/bemanproject/any_view/actions/workflows/ci_tests.yml/badge.svg)
@@ -24,6 +24,10 @@ type-erased views, the library can be compiled separately.
 As a return type, `any_view` grants a library author the freedom to change how the function is implemented to return
 the view without modifying its interface. As a parameter type, it allows users to call the library function with any
 range as an argument that can be consumed directly, rather than copying it into some bespoke, library-specific type.
+
+## License
+
+beman.any_view is licensed under the Apache License v2.0 with LLVM Exceptions.
 
 ## Usage
 
