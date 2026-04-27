@@ -1,16 +1,17 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-function(beman_add_examples)
-    foreach(name ${ARGN})
-        beman_add_executable(
-                TARGET ${name}
-                SOURCES ${name}.cpp
-                CATEGORY examples
-        )
-    endforeach()
-endfunction()
+set(ALL_EXAMPLES istream sum_views)
+message("Examples to be built: ${ALL_EXAMPLES}")
 
-beman_add_examples(
-    istream
-    sum_views
-)
+foreach(example ${ALL_EXAMPLES})
+    add_executable(beman.any_view.examples.${example})
+    target_compile_features(
+        beman.any_view.examples.${example}
+        PRIVATE cxx_std_20
+    )
+    target_sources(beman.any_view.examples.${example} PRIVATE ${example}.cpp)
+    target_link_libraries(
+        beman.any_view.examples.${example}
+        PRIVATE beman::any_view
+    )
+endforeach()

@@ -1,68 +1,51 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-include(FetchContent)
-# Fetch Benchmark
-FetchContent_Declare(
-    benchmark
-    GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG v1.9.2
-    EXCLUDE_FROM_ALL
-)
+find_package(GTest REQUIRED)
 set(BENCHMARK_ENABLE_TESTING OFF)
-# Fetch GoogleTest
-FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.14.0
-    EXCLUDE_FROM_ALL
-)
-set(INSTALL_GTEST OFF) # Disable GoogleTest installation
-FetchContent_MakeAvailable(benchmark googletest)
+find_package(benchmark REQUIRED)
 
 include(GoogleTest)
 
+set(BENCHMARK_DETAIL_SOURCES
+    detail/eager.cpp
+    detail/fused.cpp
+    detail/lazy.cpp
+    detail/products.cpp
+    detail/reserved.cpp
+)
+
 function(beman_add_benchmark name)
-    beman_add_executable(
-        TARGET ${name}
-        SOURCES ${name}.benchmark.cpp ${ARGN}
-        CATEGORY benchmarks
-        LIBRARIES benchmark::benchmark
+    set(target beman.any_view.benchmarks.${name})
+    add_executable(${target})
+    target_compile_features(${target} PRIVATE cxx_std_20)
+    target_sources(${target} PRIVATE ${name}.benchmark.cpp ${ARGN})
+    target_link_libraries(
+        ${target}
+        PRIVATE beman::any_view benchmark::benchmark
     )
+
+    if(NOT TARGET beman.any_view.benchmarks)
+        add_custom_target(beman.any_view.benchmarks)
+    endif()
+
+    add_dependencies(beman.any_view.benchmarks ${target})
 endfunction()
 
 function(beman_add_tests)
     foreach(name ${ARGN})
-        beman_add_executable(
-            TARGET ${name}
-            SOURCES ${name}.test.cpp
-            CATEGORY tests
-            LIBRARIES GTest::gtest GTest::gtest_main
+        set(target beman.any_view.tests.${name})
+        add_executable(${target})
+        target_compile_features(${target} PRIVATE cxx_std_20)
+        target_sources(${target} PRIVATE ${name}.test.cpp)
+        target_link_libraries(
+            ${target}
+            PRIVATE beman::any_view GTest::gtest GTest::gtest_main
         )
-        gtest_discover_tests(beman.any_view.tests.${name})
+        gtest_discover_tests(${target})
     endforeach()
 endfunction()
 
-beman_add_benchmark(
-    all
-    detail/eager.cpp
-    detail/fused.cpp
-    detail/lazy.cpp
-    detail/products.cpp
-    detail/reserved.cpp
-)
-beman_add_benchmark(
-    take
-    detail/eager.cpp
-    detail/fused.cpp
-    detail/lazy.cpp
-    detail/products.cpp
-    detail/reserved.cpp
-)
+beman_add_benchmark(all ${BENCHMARK_DETAIL_SOURCES})
+beman_add_benchmark(take ${BENCHMARK_DETAIL_SOURCES})
 
-beman_add_tests(
-    concepts
-    constexpr
-    iterator
-    sfinae
-    type_traits
-)
+beman_add_tests(concepts constexpr iterator sfinae type_traits)

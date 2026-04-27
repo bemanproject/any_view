@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.30...4.3)
 
-# [CMAKE.PROJECT_NAME]
 project(
-    beman.any_view
+    beman.any_view # CMake Project Name, which is also the name of the top-level
+    # targets (e.g., library, executable, etc.).
     DESCRIPTION "A generalized type-erased view with customizable properties"
     LANGUAGES CXX
+    VERSION 0.1.0
 )
 
 # [CMAKE.SKIP_TESTS]
@@ -23,104 +24,27 @@ option(
     ${PROJECT_IS_TOP_LEVEL}
 )
 
-option(
-    BEMAN_ANY_VIEW_INSTALL_CONFIG_FILE_PACKAGE
-    "Enable creating and installing a CMake config-file package. Default: ${PROJECT_IS_TOP_LEVEL}. Values: { ON, OFF }."
-    ${PROJECT_IS_TOP_LEVEL}
-)
+# for find of beman_install_library and configure_build_telemetry
+include(infra/cmake/beman-install-library.cmake)
+include(infra/cmake/BuildTelemetryConfig.cmake)
 
-# [CMAKE.LIBRARY_NAME]
 add_library(beman.any_view INTERFACE)
-# [CMAKE.LIBRARY_ALIAS]
 add_library(beman::any_view ALIAS beman.any_view)
-
-set_target_properties(
-    beman.any_view
-    PROPERTIES
-        #
-        VERIFY_INTERFACE_HEADER_SETS ON
-        EXPORT_NAME any_view
-)
 
 target_sources(
     beman.any_view
-    PUBLIC
-        FILE_SET HEADERS
-        BASE_DIRS #
-            include
-        FILES
-            include/beman/any_view/detail/adaptors.hpp
-            include/beman/any_view/detail/compressed_ptr.hpp
-            include/beman/any_view/detail/concepts.hpp
-            include/beman/any_view/detail/default_iterator.hpp
-            include/beman/any_view/detail/default_view.hpp
-            include/beman/any_view/detail/iterator.hpp
-            include/beman/any_view/detail/no_unique_address.hpp
-            include/beman/any_view/detail/polymorphic_iterator.hpp
-            include/beman/any_view/detail/polymorphic_view.hpp
-            include/beman/any_view/detail/polymorphic.hpp
-            include/beman/any_view/detail/protocols.hpp
-            include/beman/any_view/detail/reference_converts_from_temporary.hpp
-            include/beman/any_view/detail/small_storage.hpp
-            include/beman/any_view/detail/unreachable.hpp
-            include/beman/any_view/detail/witness.hpp
-            include/beman/any_view/any_view_options.hpp
-            include/beman/any_view/any_view.hpp
-            include/beman/any_view/concepts.hpp
-            include/beman/any_view/reserve_hint.hpp
+    PUBLIC FILE_SET HEADERS BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
-include(GNUInstallDirs)
-
-install(
-    #
-    TARGETS beman.any_view
-    EXPORT beman.any_view-targets
-    FILE_SET HEADERS
+set_target_properties(
+    beman.any_view
+    PROPERTIES VERIFY_INTERFACE_HEADER_SETS ${PROJECT_IS_TOP_LEVEL}
 )
 
-if(BEMAN_ANY_VIEW_INSTALL_CONFIG_FILE_PACKAGE)
-    install(
-        EXPORT beman.any_view-targets
-        FILE beman.any_view-config.cmake
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/beman.any_view
-        NAMESPACE beman::
-    )
-endif()
+add_subdirectory(include/beman/any_view)
 
-function(beman_add_executable)
-    set(options)
-    set(oneValueArgs CATEGORY TARGET)
-    set(multiValueArgs SOURCES LIBRARIES)
-
-    cmake_parse_arguments(
-        beman_executable
-        "${options}"
-        "${oneValueArgs}"
-        "${multiValueArgs}"
-        ${ARGN}
-    )
-
-    # [CMAKE.TARGET_NAMES]
-    set(category beman.any_view.${beman_executable_CATEGORY})
-    set(target ${category}.${beman_executable_TARGET})
-
-    add_executable(${target})
-    # [CMAKE.PASSIVE_PROJECTS]
-    # set features on executables, not on interface library
-    target_compile_features(${target} PRIVATE cxx_std_20)
-    target_sources(${target} PRIVATE ${beman_executable_SOURCES})
-    target_link_libraries(
-        ${target}
-        PRIVATE beman::any_view ${beman_executable_LIBRARIES}
-    )
-
-    if(NOT TARGET ${category})
-        add_custom_target(${category})
-    endif()
-
-    add_dependencies(${category} ${target})
-endfunction()
+beman_install_library(beman.any_view TARGETS beman.any_view)
+configure_build_telemetry()
 
 if(BEMAN_ANY_VIEW_BUILD_TESTS)
     enable_testing()
