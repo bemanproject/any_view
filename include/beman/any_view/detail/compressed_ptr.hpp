@@ -33,7 +33,7 @@ class compressed_ptr<T> {
 #if _MSC_VER
     template <class MemberT, class BaseT>
         requires std::derived_from<T, BaseT>
-    [[nodiscard]] constexpr const MemberT& operator->*(MemberT BaseT::*member_ptr) const noexcept {
+    [[nodiscard]] constexpr const MemberT& operator->*(MemberT BaseT::* member_ptr) const noexcept {
         return value->*member_ptr;
     }
 #endif // _MSC_VER

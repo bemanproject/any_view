@@ -9,14 +9,14 @@ template <class T, class U>
 inline constexpr bool reference_converts_from_temporary_v = false;
 
 #ifdef __has_builtin
-#if __has_builtin(__reference_converts_from_temporary)
+    #if __has_builtin(__reference_converts_from_temporary)
 
 template <class T, class U>
     requires true
 inline constexpr bool reference_converts_from_temporary_v<T, U> = __reference_converts_from_temporary(T, U);
 
-#endif // __has_builtin(__reference_converts_from_temporary)
-#endif // __has_builtin
+    #endif // __has_builtin(__reference_converts_from_temporary)
+#endif     // __has_builtin
 
 } // namespace beman::any_view::detail
 
