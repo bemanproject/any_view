@@ -4,11 +4,8 @@
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-![Library Status](https://raw.githubusercontent.com/bemanproject/beman/refs/heads/main/images/badges/beman_badge-beman_library_under_development.svg)
-![Continuous Integration Tests](https://github.com/bemanproject/any_view/actions/workflows/ci_tests.yml/badge.svg)
-![Lint Check (pre-commit)](https://github.com/bemanproject/any_view/actions/workflows/pre-commit.yml/badge.svg)
-![Standard Target](https://github.com/bemanproject/beman/blob/main/images/badges/cpp29.svg)
-[![Compiler Explorer Example](https://img.shields.io/badge/Try%20it%20on%20Compiler%20Explorer-grey?logo=compilerexplorer&logoColor=67c52a)](https://godbolt.org/z/Y5hefMj65)
+<!-- markdownlint-disable-next-line line-length -->
+![Library Status](https://raw.githubusercontent.com/bemanproject/beman/refs/heads/main/images/badges/beman_badge-beman_library_under_development.svg) ![Continuous Integration Tests](https://github.com/bemanproject/any_view/actions/workflows/ci_tests.yml/badge.svg) ![Lint Check (pre-commit)](https://github.com/bemanproject/any_view/actions/workflows/pre-commit-check.yml/badge.svg) [![Coverage](https://coveralls.io/repos/github/bemanproject/any_view/badge.svg?branch=main)](https://coveralls.io/github/bemanproject/any_view?branch=main) ![Standard Target](https://github.com/bemanproject/beman/blob/main/images/badges/cpp29.svg) [![Compiler Explorer Example](https://img.shields.io/badge/Try%20it%20on%20Compiler%20Explorer-grey?logo=compilerexplorer&logoColor=67c52a)](https://godbolt.org/z/Y5hefMj65)
 
 **Implements**: `std::ranges::any_view` proposed in [any_view (P3411)](https://wg21.link/p3411).
 
@@ -28,7 +25,7 @@ range as an argument that can be consumed directly, rather than copying it into 
 
 ## License
 
-beman.any_view is licensed under the Apache License v2.0 with LLVM Exceptions.
+`beman.any_view` is licensed under the Apache License v2.0 with LLVM Exceptions.
 
 ## Usage
 
@@ -118,33 +115,122 @@ It decouples library interfaces from implementation, allowing users to pass any 
 The type may additionally model concepts like `std::ranges::contiguous_range`, `std::ranges::sized_range`,
 `std::ranges::borrowed_range`, and `std::copyable` depending on configuration.
 
+Full runnable examples can be found in [`examples/`](examples/).
+
+## Dependencies
+
+### Build Environment
+
+This project requires at least the following to build:
+
+* A C++ compiler that conforms to the C++20 standard or greater
+* CMake 3.30 or later
+* (Test Only) GoogleTest
+* (Benchmark Only) Google Benchmark
+
+You can disable building tests by setting CMake option `BEMAN_ANY_VIEW_BUILD_TESTS` to
+`OFF` when configuring the project.
+
+### Supported Platforms
+
+| Compiler   | Version | C++ Standards | Standard Library  |
+|------------|---------|---------------|-------------------|
+| GCC        | 15-13   | C++26-C++20   | libstdc++         |
+| GCC        | 12      | C++23, C++20  | libstdc++         |
+| Clang      | 22-19   | C++26-C++20   | libstdc++, libc++ |
+| Clang      | 18      | C++26-C++20   | libc++            |
+| Clang      | 18      | C++23, C++20  | libstdc++         |
+| AppleClang | latest  | C++26-C++20   | libc++            |
+| MSVC       | latest  | C++23         | MSVC STL          |
+
+## Development
+
+See the [Contributing Guidelines](CONTRIBUTING.md).
+
 ## Integrate beman.any_view into your project
 
-<details>
-<summary>Use <code>beman.any_view</code> directly from CMake</summary>
+### Build
 
-For CMake based projects, you can include it as a dependency using the `FetchContent` module:
+You can build any_view using a CMake workflow preset:
 
-```cmake
-include(FetchContent)
-
-FetchContent_Declare(
-    beman.any_view
-    GIT_REPOSITORY https://github.com/bemanproject/any_view.git
-    GIT_TAG main
-    EXCLUDE_FROM_ALL
-)
-FetchContent_MakeAvailable(beman.any_view)
+```bash
+cmake --workflow --preset gcc-release
 ```
 
-You will also need to add `beman::any_view` to the link libraries of any targets that include `beman/any_view/*.hpp` in
-their source or header files:
+To list available workflow presets, you can invoke:
+
+```bash
+cmake --list-presets=workflow
+```
+
+For details on building beman.any_view without using a CMake preset, refer to the
+[Contributing Guidelines](CONTRIBUTING.md).
+
+### Installation
+
+To install beman.any_view globally after building with the `gcc-release` preset, you can
+run:
+
+```bash
+sudo cmake --install build/gcc-release
+```
+
+Alternatively, to install to a prefix, for example `/opt/beman`, you can run:
+
+```bash
+sudo cmake --install build/gcc-release --prefix /opt/beman
+```
+
+This will generate the following directory structure:
+
+```txt
+/opt/beman
+├── include
+│   └── beman
+│       └── any_view
+│           ├── any_view.hpp
+│           └── ...
+└── lib
+    └── cmake
+        └── beman.any_view
+            ├── beman.any_view-config-version.cmake
+            ├── beman.any_view-config.cmake
+            └── beman.any_view-targets.cmake
+```
+
+### CMake Configuration
+
+If you installed beman.any_view to a prefix, you can specify that prefix to your CMake
+project using `CMAKE_PREFIX_PATH`; for example, `-DCMAKE_PREFIX_PATH=/opt/beman`.
+
+You need to bring in the `beman.any_view` package to define the `beman::any_view` CMake
+target:
+
+```cmake
+find_package(beman.any_view REQUIRED)
+```
+
+You will then need to add `beman::any_view` to the link libraries of any libraries or
+executables that include `beman.any_view` headers.
 
 ```cmake
 target_link_libraries(yourlib PUBLIC beman::any_view)
 ```
 
-</details>
+### Using beman.any_view
+
+To use `beman.any_view` in your C++ project,
+include an appropriate `beman.any_view` header from your source code.
+
+```c++
+#include <beman/any_view/any_view.hpp>
+```
+
+> [!NOTE]
+>
+> `beman.any_view` headers are to be included with the `beman/any_view/` prefix.
+> Altering include search paths to spell the include target another way (e.g.
+> `#include <any_view.hpp>`) is unsupported.
 
 ## Reference
 
@@ -274,112 +360,6 @@ Most code only needs to specify `ElementT` and `OptsV`; other parameters take se
 - The range type is known and fixed at compile time
 - Maximum performance is critical and you can't afford runtime polymorphism overhead
 - You only handle a single range type
-
-## Building
-
-There are workflows available in CMake presets such as `gcc-debug`:
-
-```bash
-cmake --workflow --preset gcc-debug
-```
-
-Alternatively you can manually configure, build, and test with CMake and CTest:
-
-```bash
-cmake -B build
-cmake --build build
-ctest --test-dir build
-```
-
-<details>
-<summary>Possible output</summary>
-
-```text
-Executing workflow step 1 of 3: configure preset "gcc-debug"
-
-Preset CMake variables:
-
-  BEMAN_BUILDSYS_SANITIZER="MaxSan"
-  CMAKE_BUILD_TYPE="Debug"
-  CMAKE_EXPORT_COMPILE_COMMANDS:BOOL="TRUE"
-  CMAKE_TOOLCHAIN_FILE="cmake/gnu-toolchain.cmake"
-
--- The CXX compiler identification is GNU 15.0.0
--- Detecting CXX compiler ABI info
--- Detecting CXX compiler ABI info - done
--- Check for working CXX compiler: /usr/bin/g++ - skipped
--- Detecting CXX compile features
--- Detecting CXX compile features - done
--- The C compiler identification is GNU 15.0.0
--- Detecting C compiler ABI info
--- Detecting C compiler ABI info - done
--- Check for working C compiler: /usr/bin/gcc - skipped
--- Detecting C compile features
--- Detecting C compile features - done
--- Found Python3: /usr/bin/python3.12 (found version "3.12.7") found components: Interpreter
--- Performing Test CMAKE_HAVE_LIBC_PTHREAD
--- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
--- Found Threads: TRUE
--- Configuring done (2.7s)
--- Generating done (0.0s)
--- Build files have been written to: /home/patrick/projects/any_view/build/gcc-debug
-
-Executing workflow step 2 of 3: build preset "gcc-debug"
-
-[12/12] Linking CXX executable tests/beman/any_view/beman.any_view.tests.constexpr
-
-Executing workflow step 3 of 3: test preset "gcc-debug"
-
-Test project /home/patrick/projects/any_view/build/gcc-debug
-      Start  1: ConceptsTest.iterator_concept
- 1/21 Test  #1: ConceptsTest.iterator_concept ...................   Passed    0.01 sec
-      Start  2: ConceptsTest.sized_concept
- 2/21 Test  #2: ConceptsTest.sized_concept ......................   Passed    0.01 sec
-      Start  3: ConceptsTest.borrowed_concept
- 3/21 Test  #3: ConceptsTest.borrowed_concept ...................   Passed    0.01 sec
-      Start  4: ConceptsTest.copyable_concept
- 4/21 Test  #4: ConceptsTest.copyable_concept ...................   Passed    0.01 sec
-      Start  5: ConstexprTest.sum_vector_of_vector
- 5/21 Test  #5: ConstexprTest.sum_vector_of_vector ..............   Passed    0.01 sec
-      Start  6: ConstexprTest.sum_transform_view_of_iota_view
- 6/21 Test  #6: ConstexprTest.sum_transform_view_of_iota_view ...   Passed    0.01 sec
-      Start  7: ConstexprTest.sum_vector_of_iota_view
- 7/21 Test  #7: ConstexprTest.sum_vector_of_iota_view ...........   Passed    0.01 sec
-      Start  8: ConstexprTest.sort_vector
- 8/21 Test  #8: ConstexprTest.sort_vector .......................   Passed    0.01 sec
-      Start  9: SfinaeTest.istream_view
- 9/21 Test  #9: SfinaeTest.istream_view .........................   Passed    0.01 sec
-      Start 10: SfinaeTest.forward_list
-10/21 Test #10: SfinaeTest.forward_list .........................   Passed    0.01 sec
-      Start 11: SfinaeTest.list
-11/21 Test #11: SfinaeTest.list .................................   Passed    0.01 sec
-      Start 12: SfinaeTest.deque
-12/21 Test #12: SfinaeTest.deque ................................   Passed    0.01 sec
-      Start 13: SfinaeTest.vector
-13/21 Test #13: SfinaeTest.vector ...............................   Passed    0.01 sec
-      Start 14: SfinaeTest.vector_of_bool
-14/21 Test #14: SfinaeTest.vector_of_bool .......................   Passed    0.01 sec
-      Start 15: SfinaeTest.span
-15/21 Test #15: SfinaeTest.span .................................   Passed    0.01 sec
-      Start 16: TypeTraitsTest.value_type
-16/21 Test #16: TypeTraitsTest.value_type .......................   Passed    0.01 sec
-      Start 17: TypeTraitsTest.reference_type
-17/21 Test #17: TypeTraitsTest.reference_type ...................   Passed    0.01 sec
-      Start 18: TypeTraitsTest.rvalue_reference_type
-18/21 Test #18: TypeTraitsTest.rvalue_reference_type ............   Passed    0.01 sec
-      Start 19: TypeTraitsTest.difference_type
-19/21 Test #19: TypeTraitsTest.difference_type ..................   Passed    0.01 sec
-      Start 20: TypeTraitsTest.size_type
-20/21 Test #20: TypeTraitsTest.size_type ........................   Passed    0.01 sec
-      Start 21: TypeTraitsTest.borrowed_iterator_type
-21/21 Test #21: TypeTraitsTest.borrowed_iterator_type ...........   Passed    0.01 sec
-
-100% tests passed, 0 tests failed out of 21
-
-Total Test time (real) =   0.15 sec
-```
-
-</details>
 
 ## Performance
 
