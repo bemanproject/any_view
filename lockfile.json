@@ -12,8 +12,8 @@
     {
       "name": "benchmark",
       "package_name": "benchmark",
-      "git_repository": "https://github.com/ednolan/benchmark.git",
-      "git_tag": "1e122ad5693ee068a6133f7df67805c4cacfe64d",
+      "git_repository": "https://github.com/google/benchmark.git",
+      "git_tag": "v1.9.5",
       "cmake_args": {
         "BENCHMARK_ENABLE_WERROR": "OFF"
       }
