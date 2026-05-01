@@ -41,7 +41,7 @@ function(beman_add_tests)
             ${target}
             PRIVATE beman::any_view GTest::gtest GTest::gtest_main
         )
-        gtest_discover_tests(${target})
+        gtest_discover_tests(${target} DISCOVERY_TIMEOUT 60)
     endforeach()
 endfunction()
 

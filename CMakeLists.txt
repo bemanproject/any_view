@@ -3,11 +3,10 @@
 cmake_minimum_required(VERSION 3.30...4.3)
 
 project(
-    beman.any_view # CMake Project Name, which is also the name of the top-level
-    # targets (e.g., library, executable, etc.).
+    beman.any_view
     DESCRIPTION "A generalized type-erased view with customizable properties"
     LANGUAGES CXX
-    VERSION 0.1.0
+    VERSION 1.1.0
 )
 
 # [CMAKE.SKIP_TESTS]

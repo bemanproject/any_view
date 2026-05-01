@@ -168,6 +168,17 @@ For details on building beman.any_view without using a CMake preset, refer to th
 
 ### Installation
 
+#### Vcpkg
+
+The preferred way to install any_view is via vcpkg. To do so, after installing vcpkg
+itself, you need to add support for the Beman project's [vcpkg
+registry](https://github.com/bemanproject/vcpkg-registry) by configuring a
+`vcpkg-configuration.json` file (which any_view [provides](vcpkg-configuration.json)).
+
+Then, simply run `vcpkg install beman-any-view`.
+
+#### Manual
+
 To install beman.any_view globally after building with the `gcc-release` preset, you can
 run:
 
