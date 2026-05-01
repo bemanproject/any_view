@@ -135,7 +135,7 @@ You can disable building tests by setting CMake option `BEMAN_ANY_VIEW_BUILD_TES
 
 | Compiler   | Version | C++ Standards | Standard Library  |
 |------------|---------|---------------|-------------------|
-| GCC        | 15-13   | C++26-C++20   | libstdc++         |
+| GCC        | 16-13   | C++26-C++20   | libstdc++         |
 | GCC        | 12      | C++23, C++20  | libstdc++         |
 | Clang      | 22-19   | C++26-C++20   | libstdc++, libc++ |
 | Clang      | 18      | C++26-C++20   | libc++            |
