@@ -187,13 +187,13 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
 
     [[nodiscard]] constexpr sentinel end() { return std::default_sentinel; }
 
-    [[nodiscard]] constexpr size_type size() const
+    [[nodiscard]] constexpr size_type size()
         requires sized
     {
         return dispatch<detail::reserve_hint_t<DiffT>>(poly);
     }
 
-    [[nodiscard]] constexpr size_type reserve_hint() const
+    [[nodiscard]] constexpr size_type reserve_hint()
         requires approximately_sized
     {
         return dispatch<detail::reserve_hint_t<DiffT>>(poly);
