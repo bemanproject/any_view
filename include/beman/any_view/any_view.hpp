@@ -185,7 +185,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
         }
     }
 
-    [[nodiscard]] constexpr sentinel end() { return std::default_sentinel; }
+    [[nodiscard]] constexpr sentinel end() noexcept { return std::default_sentinel; }
 
     [[nodiscard]] constexpr size_type size()
         requires sized
