@@ -60,7 +60,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
     template <std::ranges::view ViewT>
     using adaptor_for = detail::view_adaptor<ViewT, OptsV>;
 
-    static constexpr polymorphic_type make_default() {
+    static constexpr polymorphic_type make_default() noexcept {
         return polymorphic_type(
             std::in_place_type<adaptor_for<detail::default_view<ElementT, RefT, RValueRefT, DiffT>>>);
     }
@@ -154,7 +154,7 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
         requires copyable
     = default;
 
-    constexpr any_view(any_view&& other) noexcept { swap(other); }
+    constexpr any_view(any_view&& other) noexcept : poly(std::move(other).polymorphic()) {}
 
     constexpr any_view& operator=(const any_view&)
         requires copyable
