@@ -3,9 +3,11 @@
 #ifndef BEMAN_ANY_VIEW_ANY_VIEW_OPTIONS_HPP
 #define BEMAN_ANY_VIEW_ANY_VIEW_OPTIONS_HPP
 
+#include <cstdint>
+
 namespace beman::any_view {
 
-enum class any_view_options {
+enum class any_view_options : std::uint_least32_t {
     input               = 0b000000001,
     forward             = 0b000000011,
     bidirectional       = 0b000000111,
@@ -18,11 +20,11 @@ enum class any_view_options {
 };
 
 [[nodiscard]] constexpr any_view_options operator|(any_view_options l, any_view_options r) noexcept {
-    return any_view_options(static_cast<int>(l) | static_cast<int>(r));
+    return any_view_options(static_cast<std::uint_least32_t>(l) | static_cast<std::uint_least32_t>(r));
 }
 
 [[nodiscard]] constexpr any_view_options operator&(any_view_options l, any_view_options r) noexcept {
-    return any_view_options(static_cast<int>(l) & static_cast<int>(r));
+    return any_view_options(static_cast<std::uint_least32_t>(l) & static_cast<std::uint_least32_t>(r));
 }
 
 } // namespace beman::any_view
