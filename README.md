@@ -4,8 +4,14 @@
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-<!-- markdownlint-disable-next-line line-length -->
-![Library Status](https://raw.githubusercontent.com/bemanproject/beman/refs/heads/main/images/badges/beman_badge-beman_library_under_development.svg) ![Continuous Integration Tests](https://github.com/bemanproject/any_view/actions/workflows/ci_tests.yml/badge.svg) ![Lint Check (pre-commit)](https://github.com/bemanproject/any_view/actions/workflows/pre-commit-check.yml/badge.svg) [![Coverage](https://coveralls.io/repos/github/bemanproject/any_view/badge.svg?branch=main)](https://coveralls.io/github/bemanproject/any_view?branch=main) ![Standard Target](https://github.com/bemanproject/beman/blob/main/images/badges/cpp29.svg) [![Compiler Explorer Example](https://img.shields.io/badge/Try%20it%20on%20Compiler%20Explorer-grey?logo=compilerexplorer&logoColor=67c52a)](https://godbolt.org/z/Y5hefMj65)
+<!-- markdownlint-disable line-length -->
+[![Library Status](https://raw.githubusercontent.com/bemanproject/beman/refs/heads/main/images/badges/beman_badge-beman_library_under_development.svg)](https://github.com/bemanproject/beman/blob/main/docs/beman_library_maturity_model.md#the-beman-library-maturity-model)
+[![Continuous Integration Tests](https://github.com/bemanproject/any_view/actions/workflows/ci_tests.yml/badge.svg)](https://github.com/bemanproject/any_view/actions/workflows/ci_tests.yml)
+[![Lint Check (pre-commit)](https://github.com/bemanproject/any_view/actions/workflows/pre-commit-check.yml/badge.svg)](https://github.com/bemanproject/any_view/actions/workflows/pre-commit-check.yml)
+[![Coverage](https://coveralls.io/repos/github/bemanproject/any_view/badge.svg?branch=main)](https://coveralls.io/github/bemanproject/any_view?branch=main)
+![Standard Target](https://github.com/bemanproject/beman/blob/main/images/badges/cpp29.svg)
+[![Compiler Explorer Example](https://img.shields.io/badge/Try%20it%20on%20Compiler%20Explorer-grey?logo=compilerexplorer&logoColor=67c52a)](https://godbolt.org/z/Y5hefMj65)
+<!-- markdownlint-restore -->
 
 **Implements**: `std::ranges::any_view` proposed in [any_view (P3411)](https://wg21.link/p3411).
 
@@ -236,12 +242,6 @@ include an appropriate `beman.any_view` header from your source code.
 ```c++
 #include <beman/any_view/any_view.hpp>
 ```
-
-> [!NOTE]
->
-> `beman.any_view` headers are to be included with the `beman/any_view/` prefix.
-> Altering include search paths to spell the include target another way (e.g.
-> `#include <any_view.hpp>`) is unsupported.
 
 ## Reference
 
