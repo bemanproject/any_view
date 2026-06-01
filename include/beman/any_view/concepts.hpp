@@ -27,29 +27,9 @@ concept any_compatible_sized_range =
 
 template <class RangeT, any_view_options OptsV>
 concept any_compatible_borrowed_range =
-    not flag_is_set<OptsV, any_view_options::borrowed> or std::ranges::borrowed_range<RangeT>;
-
-template <class ViewT, any_view_options OptsV>
-concept any_compatible_copyable_view = not flag_is_set<OptsV, any_view_options::copyable> or std::copyable<ViewT>;
-
-template <class ViewT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
-concept any_compatible_view =
-    any_compatible_iterator<std::ranges::iterator_t<ViewT>, RefT, RValueRefT, DiffT, OptsV> and
-    any_compatible_sized_range<ViewT, OptsV> and any_compatible_borrowed_range<ViewT, OptsV>;
-
-template <class RangeT>
-struct make_view {
-    using type = std::views::all_t<RangeT>;
-};
-
-template <class RangeT>
-    requires std::ranges::enable_view<std::remove_cvref_t<RangeT>>
-struct make_view<RangeT> {
-    using type = std::remove_cvref_t<RangeT>;
-};
-
-template <class RangeT>
-using make_view_t = typename make_view<RangeT>::type;
+    not flag_is_set<OptsV, any_view_options::borrowed> or
+    (not std::ranges::enable_view<std::remove_cvref_t<RangeT>> and std::is_lvalue_reference_v<RangeT>) or
+    std::ranges::enable_borrowed_range<std::remove_cvref_t<RangeT>>;
 
 template <class T, class U>
 concept different_from = not std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
@@ -59,9 +39,8 @@ concept different_from = not std::same_as<std::remove_cvref_t<T>, std::remove_cv
 template <class RangeT, class RefT, class RValueRefT, class DiffT, any_view_options OptsV>
 concept ext_any_compatible_range =
     std::ranges::range<RangeT> and
-    detail::any_compatible_view<detail::make_view_t<RangeT>, RefT, RValueRefT, DiffT, OptsV> and
-    (std::ranges::enable_view<std::remove_cvref_t<RangeT>> or
-     detail::any_compatible_copyable_view<detail::make_view_t<RangeT>, OptsV>);
+    detail::any_compatible_iterator<std::ranges::iterator_t<RangeT>, RefT, RValueRefT, DiffT, OptsV> and
+    detail::any_compatible_sized_range<RangeT, OptsV> and detail::any_compatible_borrowed_range<RangeT, OptsV>;
 
 } // namespace beman::any_view
 

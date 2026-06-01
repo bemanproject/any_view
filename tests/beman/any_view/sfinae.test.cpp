@@ -31,7 +31,11 @@ TEST(SfinaeTest, forward_list) {
     static_assert(not std::constructible_from<any_view<int, input | approximately_sized>, std::forward_list<int>>);
     static_assert(not std::constructible_from<any_view<int, input | sized>, std::forward_list<int>>);
     static_assert(not std::constructible_from<any_view<int, input | borrowed>, std::forward_list<int>>);
-    static_assert(not std::constructible_from<any_view<int, input | copyable>, std::forward_list<int>>);
+#ifndef _MSC_VER
+    // error C2280: attempting to reference a deleted function
+    // copyable is mandated, not required
+    static_assert(std::constructible_from<any_view<int, input | copyable>, std::forward_list<int>>);
+#endif
 
     static_assert(std::constructible_from<any_view<int, input | borrowed>, std::forward_list<int>&>);
     static_assert(std::constructible_from<any_view<int, input | copyable>, std::forward_list<int>&>);
@@ -43,7 +47,11 @@ TEST(SfinaeTest, list) {
     static_assert(std::constructible_from<any_view<int, input | approximately_sized>, std::list<int>>);
     static_assert(std::constructible_from<any_view<int, input | sized>, std::list<int>>);
     static_assert(not std::constructible_from<any_view<int, input | borrowed>, std::list<int>>);
-    static_assert(not std::constructible_from<any_view<int, input | copyable>, std::list<int>>);
+#ifndef _MSC_VER
+    // error C2280: attempting to reference a deleted function
+    // copyable is mandated, not required
+    static_assert(std::constructible_from<any_view<int, input | copyable>, std::list<int>>);
+#endif
 
     static_assert(std::constructible_from<any_view<int, input | borrowed>, std::list<int>&>);
     static_assert(std::constructible_from<any_view<int, input | copyable>, std::list<int>&>);
@@ -55,7 +63,11 @@ TEST(SfinaeTest, deque) {
     static_assert(std::constructible_from<any_view<int, input | approximately_sized>, std::deque<int>>);
     static_assert(std::constructible_from<any_view<int, input | sized>, std::deque<int>>);
     static_assert(not std::constructible_from<any_view<int, input | borrowed>, std::deque<int>>);
-    static_assert(not std::constructible_from<any_view<int, input | copyable>, std::deque<int>>);
+#ifndef _MSC_VER
+    // error C2280: attempting to reference a deleted function
+    // copyable is mandated, not required
+    static_assert(std::constructible_from<any_view<int, input | copyable>, std::deque<int>>);
+#endif
 
     static_assert(std::constructible_from<any_view<int, input | borrowed>, std::deque<int>&>);
     static_assert(std::constructible_from<any_view<int, input | copyable>, std::deque<int>&>);
@@ -66,7 +78,11 @@ TEST(SfinaeTest, vector) {
     static_assert(std::constructible_from<any_view<int, input | approximately_sized>, std::vector<int>>);
     static_assert(std::constructible_from<any_view<int, input | sized>, std::vector<int>>);
     static_assert(not std::constructible_from<any_view<int, input | borrowed>, std::vector<int>>);
-    static_assert(not std::constructible_from<any_view<int, input | copyable>, std::vector<int>>);
+#ifndef _MSC_VER
+    // error C2280: attempting to reference a deleted function
+    // copyable is mandated, not required
+    static_assert(std::constructible_from<any_view<int, input | copyable>, std::vector<int>>);
+#endif
 
     static_assert(std::constructible_from<any_view<int, input | borrowed>, std::vector<int>&>);
     static_assert(std::constructible_from<any_view<int, input | copyable>, std::vector<int>&>);
@@ -77,7 +93,11 @@ TEST(SfinaeTest, vector_of_bool) {
     static_assert(std::constructible_from<any_view<bool, input | approximately_sized, bool>, std::vector<bool>>);
     static_assert(std::constructible_from<any_view<bool, input | sized, bool>, std::vector<bool>>);
     static_assert(not std::constructible_from<any_view<bool, input | borrowed, bool>, std::vector<bool>>);
-    static_assert(not std::constructible_from<any_view<bool, input | copyable, bool>, std::vector<bool>>);
+#ifndef _MSC_VER
+    // error C2280: attempting to reference a deleted function
+    // copyable is mandated, not required
+    static_assert(std::constructible_from<any_view<bool, input | copyable, bool>, std::vector<bool>>);
+#endif
 
     static_assert(std::constructible_from<any_view<bool, input | borrowed, bool>, std::vector<bool>&>);
     static_assert(std::constructible_from<any_view<bool, input | copyable, bool>, std::vector<bool>&>);
@@ -109,10 +129,26 @@ TEST(SfinaeTest, iota) {
 
 TEST(SfinaeTest, any_view) {
     static_assert(std::constructible_from<any_view<int>, any_view<int, input | copyable>>);
-    // does not copy construct copyable any_view because std::views::all decays it
+    // any_view<int> is not copyable
+    static_assert(not std::constructible_from<any_view<int>, any_view<int>&>);
+    static_assert(std::constructible_from<any_view<int>, any_view<int, input | copyable>&>);
+    // const any_view<int, input | copyable> does not model range
     static_assert(not std::constructible_from<any_view<int>, const any_view<int, input | copyable>&>);
 }
 
 TEST(SfinaeTest, default_view) {
     static_assert(std::default_initializable<any_view<int, contiguous | sized | borrowed | copyable>>);
+}
+
+template <class T>
+struct my_range {
+    my_range(T);
+
+    int* begin();
+    int* end();
+};
+
+TEST(SfinaeTest, user_range) {
+    // R5 any_view constructor causes constraint to depend on itself
+    static_assert(std::ranges::viewable_range<my_range<any_view<int>>>);
 }
