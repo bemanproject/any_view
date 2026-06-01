@@ -227,29 +227,38 @@ struct subtract_t : symmetric_binary_protocol {
 // inplace storage sufficient for two pointers
 using iterator_storage = small_storage<2 * sizeof(void*)>;
 
-template <class RefT, class RValueRefT>
-struct input_protocol : inherit<move_t<iterator_storage>,
-                                destroy_t<iterator_storage>,
-                                dereference_t<RefT>,
-                                iter_move_t<RValueRefT>,
-                                increment_t,
-                                sentinel_compare_t> {};
-
 template <class RefT>
 concept has_cache = not std::same_as<iter_cache_t<RefT>, no_cache>;
 
-template <class RefT>
-struct forward_cache_protocol : inherit<> {};
+template <class T>
+struct rvalue_ref {
+    using type = T;
+};
 
-template <has_cache RefT>
-struct forward_cache_protocol<RefT> : inherit<cache_t<RefT>, next_t<RefT>> {};
+template <class T>
+struct rvalue_ref<T&> {
+    using type = T&&;
+};
+
+template <class T>
+using rvalue_ref_t = typename rvalue_ref<T>::type;
 
 template <class RefT, class RValueRefT>
-struct forward_protocol : inherit<input_protocol<RefT, RValueRefT>,
-                                  copy_t<iterator_storage>,
-                                  forward_cache_protocol<RefT>,
-                                  type_t,
-                                  equality_compare_t> {};
+struct input_cache_protocol : inherit<dereference_t<RefT>, iter_move_t<RValueRefT>, increment_t> {};
+
+template <has_cache RefT, class RValueRefT>
+    requires convertible_to_borrowed<rvalue_ref_t<RefT>, RValueRefT>
+struct input_cache_protocol<RefT, RValueRefT> : inherit<cache_t<RefT>, next_t<RefT>> {};
+
+template <class RefT, class RValueRefT>
+struct input_protocol : inherit<move_t<iterator_storage>,
+                                destroy_t<iterator_storage>,
+                                input_cache_protocol<RefT, RValueRefT>,
+                                sentinel_compare_t> {};
+
+template <class RefT, class RValueRefT>
+struct forward_protocol
+    : inherit<input_protocol<RefT, RValueRefT>, copy_t<iterator_storage>, type_t, equality_compare_t> {};
 
 template <class RefT>
 struct bidirectional_cache_protocol : inherit<decrement_t> {};
