@@ -8,22 +8,6 @@
 #include <beman/any_view/detail/polymorphic_view.hpp>
 
 namespace beman::any_view {
-namespace detail {
-
-template <class T>
-struct rvalue_ref {
-    using type = T;
-};
-
-template <class T>
-struct rvalue_ref<T&> {
-    using type = T&&;
-};
-
-template <class T>
-using rvalue_ref_t = typename rvalue_ref<T>::type;
-
-} // namespace detail
 
 template <class ElementT,
           any_view_options OptsV = any_view_options::input,
