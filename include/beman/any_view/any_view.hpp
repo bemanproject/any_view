@@ -5,6 +5,7 @@
 
 #include <beman/any_view/concepts.hpp>
 #include <beman/any_view/detail/iterator.hpp>
+#include <beman/any_view/detail/lifetimebound.hpp>
 #include <beman/any_view/detail/polymorphic_view.hpp>
 
 namespace beman::any_view {
@@ -131,6 +132,20 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
                           "range must be convertible to copyable view if any_view is copyable");
         }
     }
+
+#ifdef BEMAN_ANY_VIEW_LIFETIMEBOUND
+    template <class RangeT>
+        requires(not std::ranges::enable_view<std::remove_cv_t<RangeT>>) and
+                ext_any_compatible_range<RangeT&, RefT, RValueRefT, DiffT, OptsV>
+    constexpr any_view(BEMAN_ANY_VIEW_LIFETIMEBOUND RangeT& range)
+        : poly(adaptor_for<std::views::all_t<RangeT&>>{.view = std::views::all(range)}) {
+        static_assert(std::ranges::viewable_range<RangeT&>, "range must be viewable");
+        if constexpr (copyable) {
+            static_assert(std::copyable<std::views::all_t<RangeT&>>,
+                          "range must be convertible to copyable view if any_view is copyable");
+        }
+    }
+#endif // BEMAN_ANY_VIEW_LIFETIMEBOUND
 
     constexpr any_view() noexcept = default;
 
