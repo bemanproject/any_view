@@ -15,6 +15,7 @@ target_sources(
                 detail/default_iterator.hpp
                 detail/default_view.hpp
                 detail/iterator.hpp
+                detail/lifetimebound.hpp
                 detail/no_unique_address.hpp
                 detail/polymorphic.hpp
                 detail/polymorphic_iterator.hpp
