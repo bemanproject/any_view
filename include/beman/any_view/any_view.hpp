@@ -155,9 +155,12 @@ class any_view : public std::ranges::view_interface<any_view<ElementT, OptsV, Re
 
     constexpr any_view(any_view&& other) noexcept : poly(std::move(other).polymorphic()) {}
 
-    constexpr any_view& operator=(const any_view&)
+    constexpr any_view& operator=(const any_view& other)
         requires copyable
-    = default;
+    {
+        any_view(other).swap(*this);
+        return *this;
+    }
 
     constexpr any_view& operator=(any_view&& other) noexcept {
         any_view(std::move(other)).swap(*this);
