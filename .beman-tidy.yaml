@@ -4,8 +4,7 @@
 # Check documentation for beman-tidy here:
 # https://github.com/bemanproject/beman-tidy/blob/main/README.md
 
-disabled_rules:
-    # None
+disabled_rules: []
 ignored_paths:
     - tests/beman/any_view/detail
     - tests/beman/any_view/all.benchmark.cpp
