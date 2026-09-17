@@ -146,7 +146,7 @@ You can disable building examples by setting CMake option `BEMAN_ANY_VIEW_BUILD_
 |------------|---------|---------------|-------------------|
 | GCC        | 16-13   | C++26-C++20   | libstdc++         |
 | GCC        | 12      | C++23, C++20  | libstdc++         |
-| Clang      | 22-19   | C++26-C++20   | libstdc++, libc++ |
+| Clang      | 23-19   | C++26-C++20   | libstdc++, libc++ |
 | Clang      | 18      | C++26-C++20   | libc++            |
 | Clang      | 18      | C++23, C++20  | libstdc++         |
 | AppleClang | latest  | C++26-C++20   | libc++            |
